@@ -41,6 +41,7 @@ const AnimatedBackground = () => {
       />
 
       {/* Sol aşağı */}
+      
       <div
         className="
           absolute
