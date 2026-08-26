@@ -5,6 +5,7 @@ import "./globals.css"
 
 import Navbar from "@/components/layout/Navbar"
 import AnimatedBackground from "@/components/ui/AnimatedBackground"
+import Footer from "@/components/layout/Footer"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,7 +46,7 @@ export default function RootLayout({
         <main className="jestdili-page-animation">
           {children}
         </main>
-
+        <Footer/>
       </body>
     </html>
   )
