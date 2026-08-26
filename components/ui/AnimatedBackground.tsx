@@ -1,16 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
-
-export default function AnimatedBackground() {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) return null
-
+const AnimatedBackground = () => {
   return (
     <div
       aria-hidden="true"
@@ -22,111 +12,63 @@ export default function AnimatedBackground() {
         overflow-hidden
       "
     >
-      {/* =====================================
-          SOFT GRID
-      ====================================== */}
-
+      {/* Sol üst */}
       <div
         className="
           absolute
-          inset-0
-          opacity-[0.035]
-          [background-image:linear-gradient(to_right,#000_1px,transparent_1px),linear-gradient(to_bottom,#000_1px,transparent_1px)]
-          [background-size:70px_70px]
-        "
-      />
-
-      {/* =====================================
-          ORB 1
-      ====================================== */}
-
-      <div
-        className="
-          absolute
-          -left-40
-          -top-40
-          h-[520px]
-          w-[520px]
-          rounded-full
-          bg-blue-300/25
-          blur-[100px]
-          animate-background-one
-        "
-      />
-
-      {/* =====================================
-          ORB 2
-      ====================================== */}
-
-      <div
-        className="
-          absolute
-          -right-40
-          top-[20%]
+          -left-32
+          -top-32
           h-[600px]
           w-[600px]
           rounded-full
-          bg-violet-300/20
-          blur-[110px]
-          animate-background-two
+          bg-blue-200/30
+          blur-[120px]
         "
       />
 
-      {/* =====================================
-          ORB 3
-      ====================================== */}
-
+      {/* Sağ üst */}
       <div
         className="
           absolute
-          bottom-[-180px]
-          left-[20%]
+          -right-32
+          top-[15%]
+          h-[700px]
+          w-[700px]
+          rounded-full
+          bg-purple-200/20
+          blur-[130px]
+        "
+      />
+
+      {/* Sol aşağı */}
+      <div
+        className="
+          absolute
+          -bottom-40
+          left-[10%]
           h-[500px]
           w-[500px]
           rounded-full
-          bg-cyan-300/20
-          blur-[110px]
-          animate-background-three
+          bg-pink-200/20
+          blur-[130px]
         "
       />
 
-      {/* =====================================
-          ORB 4
-      ====================================== */}
-
+      {/* Sağ aşağı */}
       <div
         className="
           absolute
-          bottom-[-150px]
-          right-[10%]
-          h-[450px]
-          w-[450px]
+          -bottom-40
+          -right-32
+          h-[500px]
+          w-[500px]
           rounded-full
-          bg-pink-300/15
-          blur-[110px]
-          animate-background-four
-        "
-      />
-
-      {/* =====================================
-          MOVING LIGHT
-      ====================================== */}
-
-      <div
-        className="
-          absolute
-          left-1/2
-          top-1/2
-          h-[300px]
-          w-[300px]
-          -translate-x-1/2
-          -translate-y-1/2
-          rounded-full
-          bg-blue-200/10
-          blur-[100px]
-          animate-background-center
+          bg-cyan-200/20
+          blur-[130px]
         "
       />
     </div>
   )
 }
+
+export default AnimatedBackground
