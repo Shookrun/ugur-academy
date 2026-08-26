@@ -43,7 +43,6 @@ export default function RootLayout({
             <Navbar />
           </div>
 
-          {/* Content */}
           <main className="page-enter">
             {children}
           </main>
