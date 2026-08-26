@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { PointerEvent } from "react"
 
 const partners = [
@@ -43,6 +43,7 @@ const partners = [
 ]
 
 export default function Partners() {
+  const sectionRef = useRef<HTMLElement>(null)
   const sliderRef = useRef<HTMLDivElement>(null)
 
   const isDragging = useRef(false)
@@ -52,6 +53,31 @@ export default function Partners() {
   const activePointerId = useRef<number | null>(null)
 
   const [dragging, setDragging] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
+
+  /* =========================================================
+     SECTION SCROLL ANIMATION
+  ========================================================= */
+
+  useEffect(() => {
+    const section = sectionRef.current
+
+    if (!section) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting)
+      },
+      {
+        threshold: 0.12,
+        rootMargin: "0px 0px -80px 0px",
+      }
+    )
+
+    observer.observe(section)
+
+    return () => observer.disconnect()
+  }, [])
 
   /* =========================================================
      KART + GAP ÖLÇÜSÜ
@@ -81,7 +107,7 @@ export default function Partners() {
   }
 
   /* =========================================================
-     NEXT SLIDE
+     NEXT
   ========================================================= */
 
   const nextSlide = () => {
@@ -89,14 +115,24 @@ export default function Partners() {
 
     if (!slider) return
 
+    const amount = getScrollAmount()
+
+    const maxScroll =
+      slider.scrollWidth - slider.clientWidth
+
+    const nextPosition = Math.min(
+      slider.scrollLeft + amount,
+      maxScroll
+    )
+
     slider.scrollTo({
-      left: slider.scrollLeft + getScrollAmount(),
+      left: nextPosition,
       behavior: "smooth",
     })
   }
 
   /* =========================================================
-     PREVIOUS SLIDE
+     PREVIOUS
   ========================================================= */
 
   const previousSlide = () => {
@@ -104,10 +140,12 @@ export default function Partners() {
 
     if (!slider) return
 
+    const amount = getScrollAmount()
+
     slider.scrollTo({
       left: Math.max(
         0,
-        slider.scrollLeft - getScrollAmount()
+        slider.scrollLeft - amount
       ),
       behavior: "smooth",
     })
@@ -126,9 +164,6 @@ export default function Partners() {
 
     const target = event.target as HTMLElement
 
-    /*
-     * Button üzərində drag başlamasın.
-     */
     if (
       target.closest("button") ||
       target.closest("a")
@@ -136,9 +171,6 @@ export default function Partners() {
       return
     }
 
-    /*
-     * Mouse üçün yalnız sol düymə.
-     */
     if (
       event.pointerType === "mouse" &&
       event.button !== 0
@@ -158,9 +190,7 @@ export default function Partners() {
 
     try {
       slider.setPointerCapture(event.pointerId)
-    } catch {
-      // Browser pointer capture dəstəkləmirsə problem yaratmasın.
-    }
+    } catch {}
   }
 
   /* =========================================================
@@ -183,9 +213,6 @@ export default function Partners() {
     const distance =
       event.clientX - startX.current
 
-    /*
-     * 5px-dən çox hərəkət varsa bunu drag hesab edirik.
-     */
     if (Math.abs(distance) > 5) {
       hasMoved.current = true
     }
@@ -194,9 +221,6 @@ export default function Partners() {
       return
     }
 
-    /*
-     * Slider-i manual sürüşdür.
-     */
     slider.scrollLeft =
       startScrollLeft.current - distance
 
@@ -206,11 +230,11 @@ export default function Partners() {
   }
 
   /* =========================================================
-     POINTER UP
+     STOP DRAGGING
   ========================================================= */
 
-  const handlePointerUp = (
-    event: PointerEvent<HTMLDivElement>
+  const stopDragging = (
+    event?: PointerEvent<HTMLDivElement>
   ) => {
     const slider = sliderRef.current
 
@@ -218,19 +242,20 @@ export default function Partners() {
       return
     }
 
-    const pointerId = event.pointerId
-
     if (
       slider &&
-      activePointerId.current === pointerId
+      event &&
+      activePointerId.current === event.pointerId
     ) {
       try {
-        if (slider.hasPointerCapture(pointerId)) {
-          slider.releasePointerCapture(pointerId)
+        if (
+          slider.hasPointerCapture(event.pointerId)
+        ) {
+          slider.releasePointerCapture(
+            event.pointerId
+          )
         }
-      } catch {
-        // Problem yoxdur.
-      }
+      } catch {}
     }
 
     isDragging.current = false
@@ -264,9 +289,7 @@ export default function Partners() {
             event.pointerId
           )
         }
-      } catch {
-        // Problem yoxdur.
-      }
+      } catch {}
     }
 
     isDragging.current = false
@@ -296,11 +319,14 @@ export default function Partners() {
   }
 
   return (
-    <section className="relative overflow-hidden bg-white">
+    <section
+      ref={sectionRef}
+      className="relative overflow-hidden "
+    >
       <div
         className="
           mx-auto
-          max-w-[1840px]
+          max-w-full
           px-6
           py-24
           sm:px-8
@@ -311,32 +337,36 @@ export default function Partners() {
             HEADER
         ====================================================== */}
 
-        <div
-          className="
-            mb-14
-            grid
-            gap-10
-            lg:grid-cols-2
-            lg:items-end
-          "
-        >
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-end">
           {/* LEFT */}
 
-          <div className="max-w-2xl">
-            <div
-              className="
-                mb-6
-                flex
-                items-center
-                gap-3
-              "
-            >
+          <div
+            className={`
+              max-w-2xl
+              transform
+              transition-all
+              duration-1000
+              ease-[cubic-bezier(0.22,1,0.36,1)]
+              ${
+                isVisible
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-12 opacity-0"
+              }
+            `}
+          >
+            <div className="mb-6 flex items-center gap-3">
               <span
-                className="
+                className={`
                   h-px
-                  w-8
                   bg-black
-                "
+                  transition-all
+                  duration-700
+                  ${
+                    isVisible
+                      ? "w-8 opacity-100"
+                      : "w-0 opacity-0"
+                  }
+                `}
               />
 
               <span
@@ -371,10 +401,20 @@ export default function Partners() {
           {/* RIGHT */}
 
           <div
-            className="
+            className={`
               max-w-xl
               lg:ml-auto
-            "
+              transform
+              transition-all
+              delay-150
+              duration-1000
+              ease-[cubic-bezier(0.22,1,0.36,1)]
+              ${
+                isVisible
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-12 opacity-0"
+              }
+            `}
           >
             <p
               className="
@@ -392,10 +432,24 @@ export default function Partners() {
         </div>
 
         {/* =====================================================
-            SLIDER WRAPPER
+            SLIDER
         ====================================================== */}
 
-        <div className="relative">
+        <div
+          className={`
+            relative
+            mt-14
+            transform
+            transition-all
+            duration-1000
+            ease-[cubic-bezier(0.22,1,0.36,1)]
+            ${
+              isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-16 opacity-0"
+            }
+          `}
+        >
           {/* LEFT FADE */}
 
           <div
@@ -409,7 +463,7 @@ export default function Partners() {
               w-16
               bg-gradient-to-r
               from-white
-              via-white/80
+              via-white/5
               to-transparent
               sm:w-32
             "
@@ -428,15 +482,11 @@ export default function Partners() {
               w-16
               bg-gradient-to-l
               from-white
-              via-white/80
+              via-white/5
               to-transparent
               sm:w-32
             "
           />
-
-          {/* =================================================
-              SLIDER
-          ================================================== */}
 
           <div
             ref={sliderRef}
@@ -456,22 +506,14 @@ export default function Partners() {
               }
             `}
             style={{
-              /*
-               * Vertical touch scroll browser-ə verilir.
-               * Horizontal scroll isə bizim drag sistemi
-               * tərəfindən idarə olunur.
-               */
               touchAction: "pan-y",
-
               WebkitOverflowScrolling: "touch",
-
               userSelect: "none",
-
               scrollbarWidth: "none",
             }}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
+            onPointerUp={stopDragging}
             onPointerCancel={handlePointerCancel}
             onLostPointerCapture={
               handleLostPointerCapture
@@ -481,7 +523,7 @@ export default function Partners() {
               <article
                 key={partner.name}
                 data-partner-card
-                className="
+                className={`
                   group
                   relative
                   w-[300px]
@@ -492,13 +534,27 @@ export default function Partners() {
                   border-gray-100
                   bg-white
                   shadow-sm
+
+                  transform
+
                   transition-all
-                  duration-500
+                  duration-700
+                  ease-[cubic-bezier(0.22,1,0.36,1)]
+
                   hover:-translate-y-2
                   hover:shadow-xl
-                  sm:w-[350px]
-                  lg:w-[380px]
-                "
+
+                  ${
+                    isVisible
+                      ? "translate-y-0 opacity-100"
+                      : "translate-y-20 opacity-0"
+                  }
+                `}
+                style={{
+                  transitionDelay: isVisible
+                    ? `${250 + index * 100}ms`
+                    : "0ms",
+                }}
               >
                 {/* =================================================
                     IMAGE
@@ -532,8 +588,6 @@ export default function Partners() {
                       group-hover:scale-105
                     "
                   />
-
-                  {/* IMAGE GRADIENT */}
 
                   <div
                     className="
@@ -593,7 +647,7 @@ export default function Partners() {
                 </div>
 
                 {/* =================================================
-                    CARD INFO
+                    INFO
                 ================================================== */}
 
                 <div
@@ -603,8 +657,6 @@ export default function Partners() {
                     pt-6
                   "
                 >
-                  {/* LABEL */}
-
                   <div
                     className="
                       mb-5
@@ -634,8 +686,6 @@ export default function Partners() {
                     </span>
                   </div>
 
-                  {/* NAME */}
-
                   <h3
                     className="
                       text-xl
@@ -648,8 +698,6 @@ export default function Partners() {
                     {partner.name}
                   </h3>
 
-                  {/* POSITION */}
-
                   <p
                     className="
                       mt-2
@@ -660,8 +708,6 @@ export default function Partners() {
                   >
                     {partner.position}
                   </p>
-
-                  {/* CARD FOOTER */}
 
                   <div
                     className="
@@ -717,23 +763,23 @@ export default function Partners() {
           ====================================================== */}
 
           <div
-            className="
+            className={`
               mt-6
               flex
               items-center
               justify-between
-            "
+              transform
+              transition-all
+              delay-700
+              duration-700
+              ${
+                isVisible
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-8 opacity-0"
+              }
+            `}
           >
-            {/* INFO */}
-
-            <div
-              className="
-                hidden
-                items-center
-                gap-3
-                sm:flex
-              "
-            >
+            <div className="hidden items-center gap-3 sm:flex">
               <span
                 className="
                   text-xs
@@ -762,18 +808,7 @@ export default function Partners() {
               </span>
             </div>
 
-            {/* BUTTONS */}
-
-            <div
-              className="
-                ml-auto
-                flex
-                items-center
-                gap-2
-              "
-            >
-              {/* PREVIOUS */}
-
+            <div className="ml-auto flex items-center gap-2">
               <button
                 type="button"
                 aria-label="Əvvəlki əməkdaş"
@@ -802,8 +837,6 @@ export default function Partners() {
               >
                 ←
               </button>
-
-              {/* NEXT */}
 
               <button
                 type="button"
@@ -838,7 +871,7 @@ export default function Partners() {
         ====================================================== */}
 
         <div
-          className="
+          className={`
             mt-12
             flex
             items-center
@@ -846,7 +879,18 @@ export default function Partners() {
             border-t
             border-gray-100
             pt-6
-          "
+
+            transform
+            transition-all
+            delay-700
+            duration-700
+
+            ${
+              isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-6 opacity-0"
+            }
+          `}
         >
           <p
             className="
@@ -859,13 +903,7 @@ export default function Partners() {
             Komandamız
           </p>
 
-          <div
-            className="
-              flex
-              items-center
-              gap-2
-            "
-          >
+          <div className="flex items-center gap-2">
             <span
               className="
                 h-1.5
@@ -896,9 +934,7 @@ export default function Partners() {
         </div>
       </div>
 
-      {/* =======================================================
-          SECTION LINE
-      ======================================================= */}
+      {/* SECTION LINE */}
 
       <div
         className="

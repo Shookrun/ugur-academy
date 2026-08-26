@@ -81,84 +81,269 @@ const CourseSection = () => {
   }
 
   return (
-    <section className="bg-white px-6 py-24 sm:px-8 lg:px-10">
-      <div className="mx-auto max-w-[1840px]">
+    <section className="relative overflow-hidden bg-transparent px-6 py-24 sm:px-8 lg:px-10 lg:py-32">
+      {/* =====================================================
+          DECORATIVE BACKGROUND
+      ====================================================== */}
 
-        {/* Başlıq */}
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute
+          -right-40
+          top-20
+          h-[500px]
+          w-[500px]
+          rounded-full
+          bg-gray-100/60
+          blur-[120px]
+          animate-course-glow
+        "
+      />
+
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none
+          absolute
+          -left-40
+          bottom-0
+          h-[450px]
+          w-[450px]
+          rounded-full
+          bg-gray-100/50
+          blur-[120px]
+          animate-course-glow-reverse
+        "
+      />
+
+      <div className="relative z-10 mx-auto max-w-[1840px]">
+
+        {/* ===================================================
+            HEADER
+        ==================================================== */}
+
         <div className="mb-14 grid gap-8 lg:grid-cols-[1fr_400px] lg:items-end">
-          <div>
+
+          <div
+            className="
+              animate-course-header
+            "
+          >
+            {/* Label */}
+
             <div className="mb-5 flex items-center gap-3">
-              <span className="h-px w-8 bg-gray-900" />
+              <span className="h-px w-10 bg-gray-950" />
 
               <span className="text-sm font-medium tracking-wide text-gray-500">
                 Kurslarımız
               </span>
             </div>
 
-            <h2 className="max-w-3xl text-4xl font-semibold leading-tight tracking-[-0.04em] text-gray-950 sm:text-5xl lg:text-6xl">
+            {/* Title */}
+
+            <h2 className="max-w-3xl text-4xl font-semibold leading-[1.02] tracking-[-0.05em] text-gray-950 sm:text-5xl lg:text-6xl">
               Öyrənmək üçün
               <br />
-              <span className="text-gray-400">
+
+              <span className="relative text-gray-400">
                 doğru istiqaməti seç.
+
+                <span
+                  aria-hidden="true"
+                  className="
+                    absolute
+                    -bottom-2
+                    left-0
+                    h-[2px]
+                    w-full
+                    origin-left
+                    scale-x-0
+                    rounded-full
+                    bg-gray-300
+                    animate-course-title-line
+                  "
+                />
               </span>
             </h2>
           </div>
 
-          <p className="max-w-md text-sm leading-7 text-gray-500 sm:text-base">
+          {/* Description */}
+
+          <p
+            className="
+              max-w-md
+              text-sm
+              leading-7
+              text-gray-500
+              sm:text-base
+              animate-course-description
+            "
+          >
             Müxtəlif sahələr üzrə hazırladığımız təhsil və xidmət
             proqramlarından sənə uyğun olanı seç və inkişafına başla.
           </p>
         </div>
 
-        {/* Kartlar */}
+        {/* ===================================================
+            COURSE GRID
+        ==================================================== */}
+
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-          {courses.map((course) => {
+          {courses.map((course, index) => {
             const isOpen = openCourse === course.id
 
             return (
-              <div
+              <article
                 key={course.id}
                 className="
-                  group overflow-hidden
-                  rounded-[1.5rem]
-                  border border-gray-200
-                  bg-white
-                  transition-all duration-500
-                  hover:-translate-y-1
+                  course-card
+                  group
+                  relative
+                  overflow-hidden
+                  rounded-[1.75rem]
+                  border
+                  border-gray-200/80
+                  bg-white/90
+                  shadow-sm
+                  backdrop-blur-sm
+                  transition-all
+                  duration-500
+                  hover:-translate-y-2
                   hover:border-gray-300
-                  hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)]
+                  hover:shadow-[0_25px_60px_rgba(0,0,0,0.09)]
                 "
+                style={{
+                  animationDelay: `${250 + index * 100}ms`,
+                }}
               >
-                {/* Şəkil */}
-                <div className="relative aspect-[16/9] w-full overflow-hidden bg-gray-100">
+
+                {/* =================================================
+                    IMAGE
+                ================================================== */}
+
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-gray-100">
+
                   <Image
                     src={course.image}
                     alt={course.title}
                     fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                    priority={course.id <= 3}
+                    sizes="
+                      (max-width: 640px) 100vw,
+                      (max-width: 1280px) 50vw,
+                      25vw
+                    "
+                    loading="lazy"
                     className="
                       object-cover
-                      transition-transform duration-700
-                      group-hover:scale-105
+                      transition-transform
+                      duration-[1000ms]
+                      ease-out
+                      group-hover:scale-110
                     "
                   />
 
-                  {/* Şəkil üzərində yüngül overlay */}
-                  <div className="absolute inset-0 bg-black/0 transition-all duration-500 group-hover:bg-black/5" />
+                  {/* Dark overlay */}
 
-                  {/* Nömrə */}
-                  <div className="absolute left-5 top-5 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-xs font-semibold text-gray-900 shadow-sm">
+                  <div
+                    className="
+                      absolute
+                      inset-0
+                      bg-gradient-to-t
+                      from-black/20
+                      via-transparent
+                      to-transparent
+                      opacity-0
+                      transition-opacity
+                      duration-500
+                      group-hover:opacity-100
+                    "
+                  />
+
+                  {/* Number */}
+
+                  <div
+                    className="
+                      absolute
+                      left-5
+                      top-5
+                      flex
+                      h-10
+                      w-10
+                      items-center
+                      justify-center
+                      rounded-full
+                      border
+                      border-white/40
+                      bg-white/90
+                      text-xs
+                      font-semibold
+                      text-gray-900
+                      shadow-lg
+                      backdrop-blur-md
+                      transition-all
+                      duration-500
+                      group-hover:scale-110
+                      group-hover:bg-gray-950
+                      group-hover:text-white
+                    "
+                  >
                     {String(course.id).padStart(2, "0")}
                   </div>
+
+                  {/* Top right dot */}
+
+                  <span
+                    className="
+                      absolute
+                      right-6
+                      top-6
+                      h-2
+                      w-2
+                      rounded-full
+                      bg-white
+                      opacity-70
+                      shadow
+                      transition-transform
+                      duration-500
+                      group-hover:scale-150
+                    "
+                  />
+
+                  {/* Image corner */}
+
+                  <span
+                    className="
+                      absolute
+                      bottom-5
+                      right-5
+                      h-8
+                      w-8
+                      border-b
+                      border-r
+                      border-white/70
+                      opacity-0
+                      transition-all
+                      duration-500
+                      group-hover:opacity-100
+                    "
+                  />
                 </div>
 
-                {/* Məzmun */}
+                {/* =================================================
+                    CONTENT
+                ================================================== */}
+
                 <div className="p-6">
+
                   <div className="flex items-start justify-between gap-4">
-                    <h3 className="text-xl font-semibold tracking-tight text-gray-950">
+
+                    <h3 className="text-xl font-semibold tracking-[-0.025em] text-gray-950 sm:text-[22px]">
                       {course.title}
                     </h3>
+
+                    {/* CHILD BUTTON */}
 
                     {course.hasChildren ? (
                       <button
@@ -167,15 +352,23 @@ const CourseSection = () => {
                         aria-label={`${course.title} alt istiqamətləri`}
                         aria-expanded={isOpen}
                         className="
-                          flex h-9 w-9 shrink-0
+                          flex
+                          h-9
+                          w-9
+                          shrink-0
                           cursor-pointer
-                          items-center justify-center
+                          items-center
+                          justify-center
                           rounded-full
-                          border border-gray-200
+                          border
+                          border-gray-200
                           text-gray-900
-                          transition-all duration-300
+                          transition-all
+                          duration-300
+                          hover:border-gray-950
                           hover:bg-gray-950
                           hover:text-white
+                          active:scale-90
                         "
                       >
                         <svg
@@ -184,6 +377,7 @@ const CourseSection = () => {
                           }`}
                           viewBox="0 0 20 20"
                           fill="none"
+                          aria-hidden="true"
                         >
                           <path
                             d="M5 7.5L10 12.5L15 7.5"
@@ -197,13 +391,19 @@ const CourseSection = () => {
                     ) : (
                       <span
                         className="
-                          flex h-9 w-9 shrink-0
-                          items-center justify-center
+                          flex
+                          h-9
+                          w-9
+                          shrink-0
+                          items-center
+                          justify-center
                           rounded-full
-                          border border-gray-200
+                          border
+                          border-gray-200
                           text-gray-500
-                          transition-all duration-300
-                          group-hover:border-gray-900
+                          transition-all
+                          duration-300
+                          group-hover:border-gray-950
                           group-hover:bg-gray-950
                           group-hover:text-white
                         "
@@ -213,62 +413,94 @@ const CourseSection = () => {
                     )}
                   </div>
 
+                  {/* Description */}
+
                   <p className="mt-3 text-sm leading-6 text-gray-500">
                     {course.description}
                   </p>
 
-                  {/* Alt istiqamətlər */}
+                  {/* =================================================
+                      CHILDREN
+                  ================================================== */}
+
                   {course.hasChildren && (
                     <div
-                      className={`overflow-hidden transition-all duration-500 ${
+                      className={`grid transition-all duration-500 ease-out ${
                         isOpen
-                          ? "mt-5 max-h-60 opacity-100"
-                          : "max-h-0 opacity-0"
+                          ? "mt-5 grid-rows-[1fr] opacity-100"
+                          : "grid-rows-[0fr] opacity-0"
                       }`}
                     >
-                      <div className="border-t border-gray-100 pt-4">
-                        <p className="mb-3 text-xs font-medium uppercase tracking-wider text-gray-400">
-                          İstiqamətlər
-                        </p>
+                      <div className="overflow-hidden">
 
-                        <div className="space-y-2">
-                          {course.children?.map((child) => (
-                            <Link
-                              key={child}
-                              href="/kurslar"
-                              className="
-                                flex cursor-pointer
-                                items-center gap-3
-                                rounded-lg
-                                px-2 py-2
-                                text-sm text-gray-700
-                                transition-all duration-200
-                                hover:translate-x-1
-                                hover:bg-gray-50
-                                hover:text-gray-950
-                              "
-                            >
-                              <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-                              {child}
-                            </Link>
-                          ))}
+                        <div className="border-t border-gray-100 pt-4">
+
+                          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-400">
+                            İstiqamətlər
+                          </p>
+
+                          <div className="space-y-1.5">
+                            {course.children?.map((child) => (
+                              <Link
+                                key={child}
+                                href="/kurslar"
+                                className="
+                                  group/child
+                                  flex
+                                  items-center
+                                  gap-3
+                                  rounded-xl
+                                  px-2
+                                  py-2.5
+                                  text-sm
+                                  text-gray-700
+                                  transition-all
+                                  duration-200
+                                  hover:translate-x-1
+                                  hover:bg-gray-50
+                                  hover:text-gray-950
+                                "
+                              >
+                                <span
+                                  className="
+                                    h-1.5
+                                    w-1.5
+                                    shrink-0
+                                    rounded-full
+                                    bg-gray-300
+                                    transition-colors
+                                    duration-200
+                                    group-hover/child:bg-gray-950
+                                  "
+                                />
+
+                                {child}
+                              </Link>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Aşağı hissə */}
+                  {/* =================================================
+                      FOOTER
+                  ================================================== */}
+
                   <div className="mt-6 border-t border-gray-100 pt-5">
+
                     {course.hasChildren ? (
                       <button
                         type="button"
                         onClick={() => toggleCourse(course.id)}
                         className="
-                          flex w-full
+                          flex
+                          w-full
                           cursor-pointer
                           items-center
                           justify-between
-                          text-sm font-medium
+                          text-sm
+                          font-medium
                           text-gray-950
                         "
                       >
@@ -280,10 +512,12 @@ const CourseSection = () => {
 
                         <span
                           className={`transition-transform duration-300 ${
-                            isOpen ? "rotate-180" : ""
+                            isOpen
+                              ? "rotate-180"
+                              : "group-hover:translate-x-1"
                           }`}
                         >
-                          ↓
+                          →
                         </span>
                       </button>
                     ) : (
@@ -291,10 +525,10 @@ const CourseSection = () => {
                         href="/kurslar"
                         className="
                           flex
-                          cursor-pointer
                           items-center
                           justify-between
-                          text-sm font-medium
+                          text-sm
+                          font-medium
                           text-gray-950
                         "
                       >
@@ -307,9 +541,67 @@ const CourseSection = () => {
                     )}
                   </div>
                 </div>
-              </div>
+
+                {/* Hover line */}
+
+                <div
+                  className="
+                    absolute
+                    bottom-0
+                    left-0
+                    h-[2px]
+                    w-0
+                    bg-gray-950
+                    transition-all
+                    duration-500
+                    group-hover:w-full
+                  "
+                />
+              </article>
             )
           })}
+        </div>
+
+        {/* ===================================================
+            BOTTOM
+        ==================================================== */}
+
+        <div
+          className="
+            mt-10
+            flex
+            items-center
+            justify-between
+            border-t
+            border-gray-100
+            pt-6
+            animate-course-bottom
+          "
+        >
+          <span className="text-xs font-medium uppercase tracking-[0.16em] text-gray-300">
+            Təhsil • İnkişaf • Gələcək
+          </span>
+
+          <Link
+            href="/kurslar"
+            className="
+              group
+              flex
+              items-center
+              gap-2
+              text-xs
+              font-medium
+              text-gray-500
+              transition-colors
+              hover:text-gray-950
+            "
+          >
+            Bütün kurslar
+
+            <span className="transition-transform duration-300 group-hover:translate-x-1">
+              →
+            </span>
+          </Link>
         </div>
       </div>
     </section>
