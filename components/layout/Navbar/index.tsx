@@ -103,14 +103,14 @@ const Navbar = () => {
             isScrolled
               ? `
                 border-gray-200/70
-                bg-white/80
+                
                 py-2
                 shadow-[0_12px_40px_rgba(0,0,0,0.08)]
                 backdrop-blur-2xl
               `
               : `
                 border-white/30
-                bg-white/45
+                
                 py-2.5
                 backdrop-blur-xl
               `

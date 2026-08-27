@@ -478,7 +478,7 @@ const Hero = () => {
                     h-2.5
                     w-2.5
                     rounded-full
-                    bg-white
+                    
                     shadow-lg
                     animate-hero-dot
                   "

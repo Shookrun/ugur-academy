@@ -450,43 +450,9 @@ export default function Partners() {
             }
           `}
         >
-          {/* LEFT FADE */}
 
-          <div
-            className="
-              pointer-events-none
-              absolute
-              left-0
-              top-0
-              z-20
-              h-full
-              w-16
-              bg-gradient-to-r
-              from-white
-              via-white/5
-              to-transparent
-              sm:w-32
-            "
-          />
 
-          {/* RIGHT FADE */}
-
-          <div
-            className="
-              pointer-events-none
-              absolute
-              right-0
-              top-0
-              z-20
-              h-full
-              w-16
-              bg-gradient-to-l
-              from-white
-              via-white/5
-              to-transparent
-              sm:w-32
-            "
-          />
+          
 
           <div
             ref={sliderRef}
@@ -532,7 +498,7 @@ export default function Partners() {
                   rounded-[2rem]
                   border
                   border-gray-100
-                  bg-white
+                  
                   shadow-sm
 
                   transform
@@ -640,7 +606,7 @@ export default function Partners() {
                       h-2
                       w-2
                       rounded-full
-                      bg-white
+                      
                       shadow
                     "
                   />
@@ -822,7 +788,7 @@ export default function Partners() {
                   rounded-full
                   border
                   border-gray-200
-                  bg-white
+                  
                   text-lg
                   text-gray-950
                   shadow-sm

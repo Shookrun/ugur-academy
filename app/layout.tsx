@@ -30,23 +30,27 @@ export default function RootLayout({
       lang="az"
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
-      <body className="min-h-screen bg-white">
+      {/* relative z-0 əlavə olundu */}
+      <body className="relative z-0 min-h-screen bg-slate-50 text-slate-900">
 
-        {/* Background */}
-        <div className="jestdili-background-animation">
+        {/* Background - z-index -1 ilə ən arxaya keçirilir */}
+        <div className="jestdili-background-animation pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <AnimatedBackground />
         </div>
 
-        {/* Navbar */}
-        <div className="jestdili-navbar-animation">
-          <Navbar />
+        {/* Məzmun z-10 ilə yuxarı qaldırılır */}
+        <div className="relative z-10 flex min-h-screen flex-col">
+          <div className="jestdili-navbar-animation">
+            <Navbar />
+          </div>
+
+          <main className="jestdili-page-animation flex-1">
+            {children}
+          </main>
+
+          <Footer />
         </div>
 
-        {/* Main content */}
-        <main className="jestdili-page-animation">
-          {children}
-        </main>
-        <Footer/>
       </body>
     </html>
   )

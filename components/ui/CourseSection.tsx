@@ -302,7 +302,7 @@ const CourseSection = () => {
                       h-2
                       w-2
                       rounded-full
-                      bg-white
+                     
                       opacity-70
                       shadow
                       transition-transform

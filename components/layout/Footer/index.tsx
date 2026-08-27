@@ -38,7 +38,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="relative overflow-hidden bg-white">
+    <footer className="relative overflow-hidden ">
 
       {/* =====================================================
           TOP LINE
@@ -202,7 +202,7 @@ export default function Footer() {
                   rounded-full
                   border
                   border-gray-200
-                  bg-white
+                  
                   text-sm
                   font-semibold
                   text-gray-500
@@ -234,7 +234,7 @@ export default function Footer() {
                   rounded-full
                   border
                   border-gray-200
-                  bg-white
+                  
                   text-sm
                   font-semibold
                   text-gray-500
@@ -264,7 +264,7 @@ export default function Footer() {
                   rounded-full
                   border
                   border-gray-200
-                  bg-white
+                  
                   text-sm
                   font-semibold
                   text-gray-500
@@ -485,7 +485,7 @@ export default function Footer() {
                   rounded-2xl
                   border
                   border-gray-200
-                  bg-white
+                  
                   p-1
                   transition-all
                   duration-300
@@ -592,7 +592,7 @@ export default function Footer() {
               h-64
               w-64
               rounded-full
-              bg-white/10
+              /10
               blur-[80px]
             "
           />
@@ -649,7 +649,7 @@ export default function Footer() {
                 rounded-full
                 border
                 border-white/15
-                bg-white
+                
                 px-5
                 py-3
                 text-sm
