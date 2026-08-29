@@ -1,8 +1,19 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import type { PointerEvent } from "react"
+
+const partnerSlugMap: Record<string, string> = {
+  "Mehman Bayramov": "mehman-bayramov",
+  "Aynur Ələkbərova": "aynur-elekberova",
+  "Könül Əsədova": "konul-esedova",
+  "Gülnaz Cəfərova": "gulnaz-ceferova",
+  "Səkinə Babayeva": "sekine-babayeva",
+  "Fidan Məmmədli": "fidan-memmedli",
+  "Günay Məmmədova": "gunay-memmedova",
+}
 
 const partners = [
   {
@@ -694,10 +705,11 @@ export default function Partners() {
                         text-gray-400
                       "
                     >
-                      JestDili
+                      Uğur Şəxsi İnkişaf Mərkəzi
                     </span>
 
-                    <span
+                    <Link
+                      href={`/emekdaslar/${partnerSlugMap[partner.name]}`}
                       className="
                         flex
                         h-9
@@ -717,7 +729,7 @@ export default function Partners() {
                       "
                     >
                       ↗
-                    </span>
+                    </Link>
                   </div>
                 </div>
               </article>

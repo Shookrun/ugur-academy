@@ -4,6 +4,16 @@ import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 
+const courseSlugMap: Record<number, string> = {
+  1: "komputer",
+  2: "tibb",
+  3: "psixoloq-xidmeti",
+  4: "loqoped-xidmeti",
+  5: "baytarliq",
+  6: "mektebeqeder-ve-ibtidai",
+  7: "miq",
+}
+
 const courses = [
   {
     id: 1,
@@ -443,7 +453,7 @@ const CourseSection = () => {
                             {course.children?.map((child) => (
                               <Link
                                 key={child}
-                                href="/kurslar"
+                                href={`/kurslar/${courseSlugMap[course.id]}`}
                                 className="
                                   group/child
                                   flex
@@ -522,7 +532,7 @@ const CourseSection = () => {
                       </button>
                     ) : (
                       <Link
-                        href="/kurslar"
+                        href={`/kurslar/${courseSlugMap[course.id]}`}
                         className="
                           flex
                           items-center

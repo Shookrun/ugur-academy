@@ -137,7 +137,7 @@ export default function Footer() {
               >
                 <img
                   src="/logo.png"
-                  alt="JestDili"
+                  alt="Uğur Şəxsi İnkişaf Mərkəzi"
                   className="
                     h-12
                     w-12
@@ -702,7 +702,7 @@ export default function Footer() {
               text-gray-400
             "
           >
-            © {new Date().getFullYear()} JestDili. Bütün hüquqlar qorunur.
+            © {new Date().getFullYear()} Uğur Şəxsi İnkişaf Mərkəzi. Bütün hüquqlar qorunur.
           </p>
 
           <div className="flex items-center gap-5">

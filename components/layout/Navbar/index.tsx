@@ -140,7 +140,7 @@ const Navbar = () => {
         <Link
           href="/"
           onClick={closeMenu}
-          aria-label="JestDili ana səhifə"
+          aria-label="Uğur Şəxsi İnkişaf Mərkəzi ana səhifə"
           className="
             group
             relative
@@ -177,7 +177,7 @@ const Navbar = () => {
             src="/logo.png"
             width={190}
             height={190}
-            alt="JestDili"
+            alt="Uğur Şəxsi İnkişaf Mərkəzi"
             priority
             className={`
               relative
