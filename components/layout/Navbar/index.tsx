@@ -9,6 +9,7 @@ const navItems = [
   { name: "Kurslarımız", href: "/#kurslar" },
   { name: "Xəbərlər", href: "/#xeberler" },
   { name: "Haqqımızda", href: "/#haqqimizda" },
+  { name: "Galereya", href: "/galereya" },
   { name: "Əlaqə", href: "/#elaqe" },
   { name: "Media", href: "/#media" },
   { name: "Arxiv", href: "/#arxiv" },
@@ -102,16 +103,17 @@ const Navbar = () => {
           ${
             isScrolled
               ? `
-                border-gray-200/70
-                
+                border-white/60
+                bg-white/90
                 py-2
-                shadow-[0_12px_40px_rgba(0,0,0,0.08)]
+                shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)]
                 backdrop-blur-2xl
               `
               : `
-                border-white/30
-                
+                border-white/25
+                bg-white/75
                 py-2.5
+                shadow-[0_4px_24px_rgba(0,0,0,0.08)]
                 backdrop-blur-xl
               `
           }
