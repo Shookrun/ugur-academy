@@ -54,8 +54,20 @@ const partners = [
 ]
 
 export default function Partners() {
+  const [partnerList, setPartnerList] = useState(partners)
   const sectionRef = useRef<HTMLElement>(null)
   const sliderRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetch("/api/partners")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data) && data.length > 0) {
+          setPartnerList(data)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const isDragging = useRef(false)
   const hasMoved = useRef(false)
@@ -201,7 +213,7 @@ export default function Partners() {
 
     try {
       slider.setPointerCapture(event.pointerId)
-    } catch {}
+    } catch { }
   }
 
   /* =========================================================
@@ -266,7 +278,7 @@ export default function Partners() {
             event.pointerId
           )
         }
-      } catch {}
+      } catch { }
     }
 
     isDragging.current = false
@@ -300,7 +312,7 @@ export default function Partners() {
             event.pointerId
           )
         }
-      } catch {}
+      } catch { }
     }
 
     isDragging.current = false
@@ -358,10 +370,9 @@ export default function Partners() {
               transition-all
               duration-1000
               ease-[cubic-bezier(0.22,1,0.36,1)]
-              ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-12 opacity-0"
+              ${isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-12 opacity-0"
               }
             `}
           >
@@ -372,10 +383,9 @@ export default function Partners() {
                   bg-black
                   transition-all
                   duration-700
-                  ${
-                    isVisible
-                      ? "w-8 opacity-100"
-                      : "w-0 opacity-0"
+                  ${isVisible
+                    ? "w-8 opacity-100"
+                    : "w-0 opacity-0"
                   }
                 `}
               />
@@ -420,10 +430,9 @@ export default function Partners() {
               delay-150
               duration-1000
               ease-[cubic-bezier(0.22,1,0.36,1)]
-              ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-12 opacity-0"
+              ${isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-12 opacity-0"
               }
             `}
           >
@@ -454,16 +463,15 @@ export default function Partners() {
             transition-all
             duration-1000
             ease-[cubic-bezier(0.22,1,0.36,1)]
-            ${
-              isVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-16 opacity-0"
+            ${isVisible
+              ? "translate-y-0 opacity-100"
+              : "translate-y-16 opacity-0"
             }
           `}
         >
 
 
-          
+
 
           <div
             ref={sliderRef}
@@ -476,10 +484,9 @@ export default function Partners() {
               select-none
               [scrollbar-width:none]
               [&::-webkit-scrollbar]:hidden
-              ${
-                dragging
-                  ? "cursor-grabbing"
-                  : "cursor-grab"
+              ${dragging
+                ? "cursor-grabbing"
+                : "cursor-grab"
               }
             `}
             style={{
@@ -496,7 +503,7 @@ export default function Partners() {
               handleLostPointerCapture
             }
           >
-            {partners.map((partner, index) => (
+            {partnerList.map((partner, index) => (
               <article
                 key={partner.name}
                 data-partner-card
@@ -521,10 +528,9 @@ export default function Partners() {
                   hover:-translate-y-2
                   hover:shadow-xl
 
-                  ${
-                    isVisible
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-20 opacity-0"
+                  ${isVisible
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-20 opacity-0"
                   }
                 `}
                 style={{
@@ -750,41 +756,12 @@ export default function Partners() {
               transition-all
               delay-700
               duration-700
-              ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-8 opacity-0"
+              ${isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-8 opacity-0"
               }
             `}
           >
-            <div className="hidden items-center gap-3 sm:flex">
-              <span
-                className="
-                  text-xs
-                  font-medium
-                  text-gray-400
-                "
-              >
-                Sürüşdürərək baxın
-              </span>
-
-              <span
-                className="
-                  h-px
-                  w-8
-                  bg-gray-200
-                "
-              />
-
-              <span
-                className="
-                  text-xs
-                  text-gray-300
-                "
-              >
-                {partners.length} əməkdaş
-              </span>
-            </div>
 
             <div className="ml-auto flex items-center gap-2">
               <button
@@ -848,68 +825,7 @@ export default function Partners() {
             BOTTOM
         ====================================================== */}
 
-        <div
-          className={`
-            mt-12
-            flex
-            items-center
-            justify-between
-            border-t
-            border-gray-100
-            pt-6
 
-            transform
-            transition-all
-            delay-700
-            duration-700
-
-            ${
-              isVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-6 opacity-0"
-            }
-          `}
-        >
-          <p
-            className="
-              text-xs
-              font-medium
-              tracking-wide
-              text-gray-400
-            "
-          >
-            Komandamız
-          </p>
-
-          <div className="flex items-center gap-2">
-            <span
-              className="
-                h-1.5
-                w-8
-                rounded-full
-                bg-black
-              "
-            />
-
-            <span
-              className="
-                h-1.5
-                w-1.5
-                rounded-full
-                bg-gray-200
-              "
-            />
-
-            <span
-              className="
-                h-1.5
-                w-1.5
-                rounded-full
-                bg-gray-200
-              "
-            />
-          </div>
-        </div>
       </div>
 
       {/* SECTION LINE */}

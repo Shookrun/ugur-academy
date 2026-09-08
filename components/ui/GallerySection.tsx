@@ -8,7 +8,22 @@ import { galleryItems } from "@/data/gallery"
 const SLIDE_INTERVAL = 4500
 
 export default function GallerySection() {
-  const featured = galleryItems.filter((item) => item.featured)
+  const [items, setItems] = useState(galleryItems)
+
+  useEffect(() => {
+    fetch("/api/gallery")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data) && data.length > 0) {
+          setItems(data)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const featured = items.filter((item) => item.featured).length > 0
+    ? items.filter((item) => item.featured)
+    : items
   const [current, setCurrent] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [isHovered, setIsHovered] = useState(false)

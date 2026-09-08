@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
+import fs from "fs/promises"
+import path from "path"
 import { partnersData } from "@/data/partners"
 
 export const metadata: Metadata = {
@@ -8,17 +10,25 @@ export const metadata: Metadata = {
   description: "Uğur Şəxsi İnkişaf Mərkəzinin peşəkar əməkdaşları və təlimçiləri ilə tanış olun.",
 }
 
-export default function PartnersCatalogPage() {
+async function getLivePartners() {
+  try {
+    const dataFilePath = path.join(process.cwd(), "data", "dynamic_partners.json")
+    const file = await fs.readFile(dataFilePath, "utf-8")
+    return JSON.parse(file)
+  } catch {
+    return partnersData
+  }
+}
+
+export default async function PartnersCatalogPage() {
+  const livePartners = await getLivePartners()
+
   return (
     <div className="relative min-h-screen pt-28 pb-20 sm:pt-32">
       <div className="mx-auto max-w-[1840px] px-6 sm:px-8 lg:px-10">
         {/* Header */}
         <div className="mb-14 max-w-3xl">
           <div className="mb-4 flex items-center gap-3">
-            <span className="h-px w-10 bg-slate-950" />
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Komandamız
-            </span>
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
             Dəyərli Əməkdaşlarımız
@@ -30,7 +40,7 @@ export default function PartnersCatalogPage() {
 
         {/* Grid */}
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {partnersData.map((partner, idx) => (
+          {livePartners.map((partner: any, idx: number) => (
             <article
               key={partner.id}
               className="group relative flex flex-col overflow-hidden rounded-[2.2rem] border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl"

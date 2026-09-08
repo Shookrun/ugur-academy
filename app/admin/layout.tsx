@@ -14,7 +14,7 @@ export default function AdminLayout({
 }) {
   return (
     <AdminSessionProvider>
-      <div className="min-h-screen bg-slate-900 text-white">
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 antialiased">
         {children}
       </div>
     </AdminSessionProvider>

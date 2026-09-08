@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useState } from "react"
 
 const footerLinks = [
@@ -21,8 +22,13 @@ const services = [
 ]
 
 export default function Footer() {
+  const pathname = usePathname()
   const [email, setEmail] = useState("")
   const [submitted, setSubmitted] = useState(false)
+
+  if (pathname?.startsWith("/admin")) {
+    return null
+  }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()

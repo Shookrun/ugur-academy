@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
+import fs from "fs/promises"
+import path from "path"
 import { coursesData } from "@/data/courses"
 
 export const metadata: Metadata = {
@@ -8,7 +10,19 @@ export const metadata: Metadata = {
   description: "Uğur Şəxsi İnkişaf Mərkəzinin peşəkar İT, tibb, psixologiya, loqopediya, pedaqogika və MİQ hazırlıq kursları.",
 }
 
-export default function CoursesCatalogPage() {
+async function getLiveCourses() {
+  try {
+    const dataFilePath = path.join(process.cwd(), "data", "dynamic_courses.json")
+    const file = await fs.readFile(dataFilePath, "utf-8")
+    return JSON.parse(file)
+  } catch {
+    return coursesData
+  }
+}
+
+export default async function CoursesCatalogPage() {
+  const liveCourses = await getLiveCourses()
+
   return (
     <div className="relative min-h-screen pt-28 pb-20 sm:pt-32">
       <div className="mx-auto max-w-[1840px] px-6 sm:px-8 lg:px-10">
@@ -30,7 +44,7 @@ export default function CoursesCatalogPage() {
 
         {/* Grid */}
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {coursesData.map((course, idx) => (
+          {liveCourses.map((course: any, idx: number) => (
             <article
               key={course.id}
               className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl"
@@ -60,7 +74,7 @@ export default function CoursesCatalogPage() {
 
                 {course.hasChildren && course.children && (
                   <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
-                    {course.children.map((ch) => (
+                    {course.children.map((ch: string) => (
                       <span
                         key={ch}
                         className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"

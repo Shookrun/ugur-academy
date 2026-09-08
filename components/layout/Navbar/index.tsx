@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 
 const navItems = [
@@ -16,8 +17,13 @@ const navItems = [
 ]
 
 const Navbar = () => {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+
+  if (pathname?.startsWith("/admin")) {
+    return null
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -103,25 +109,24 @@ const Navbar = () => {
           ${
             isScrolled
               ? `
-                border-white/60
-                bg-white/90
+                border-slate-200/70
+                bg-white/80
                 py-2
-                shadow-[0_8px_32px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.06)]
-                backdrop-blur-2xl
+                shadow-[0_8px_30px_rgba(0,0,0,0.06)]
+                backdrop-blur-md
               `
               : `
-                border-white/25
-                bg-white/75
+                border-transparent
+                bg-transparent
                 py-2.5
-                shadow-[0_4px_24px_rgba(0,0,0,0.08)]
-                backdrop-blur-xl
+                shadow-none
               `
           }
         `}
       >
-        {/* Decorative shine */}
+        {/* Decorative shine when scrolled */}
         <div
-          className="
+          className={`
             pointer-events-none
             absolute
             inset-x-0
@@ -129,10 +134,12 @@ const Navbar = () => {
             h-px
             bg-gradient-to-r
             from-transparent
-            via-white
+            via-slate-200/70
             to-transparent
-            opacity-80
-          "
+            transition-opacity
+            duration-500
+            ${isScrolled ? "opacity-100" : "opacity-0"}
+          `}
         />
 
         {/* =========================================
@@ -164,7 +171,7 @@ const Navbar = () => {
               -translate-x-1/2
               -translate-y-1/2
               rounded-full
-              bg-blue-400/20
+              bg-slate-200/40
               opacity-0
               blur-2xl
               transition-all

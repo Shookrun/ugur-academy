@@ -4,124 +4,90 @@ import { useEffect, useState } from "react"
 import Image from "next/image"
 
 export default function PageLoader() {
-  const [visible, setVisible] = useState(true)
+  const [progress, setProgress] = useState(0)
   const [fadeOut, setFadeOut] = useState(false)
+  const [hidden, setHidden] = useState(false)
 
   useEffect(() => {
-    // Start fade out after 1.5s
-    const fadeTimer = setTimeout(() => setFadeOut(true), 1500)
-    // Remove from DOM after fade completes
-    const removeTimer = setTimeout(() => setVisible(false), 2100)
-    return () => {
-      clearTimeout(fadeTimer)
-      clearTimeout(removeTimer)
-    }
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval)
+          return 100
+        }
+        const step = prev < 50 ? Math.floor(Math.random() * 20) + 15 : Math.floor(Math.random() * 25) + 15
+        const next = prev + step
+        return next > 100 ? 100 : next
+      })
+    }, 50)
+
+    return () => clearInterval(interval)
   }, [])
 
-  if (!visible) return null
+  useEffect(() => {
+    if (progress === 100) {
+      const fadeTimer = setTimeout(() => {
+        setFadeOut(true)
+      }, 200)
+
+      const hideTimer = setTimeout(() => {
+        setHidden(true)
+      }, 550)
+
+      return () => {
+        clearTimeout(fadeTimer)
+        clearTimeout(hideTimer)
+      }
+    }
+  }, [progress])
+
+  if (hidden) return null
 
   return (
     <div
-      aria-label="Yüklənir..."
+      aria-label="Səhifə yüklənir..."
       role="status"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 9999,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
-        transition: "opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
-        opacity: fadeOut ? 0 : 1,
-        pointerEvents: fadeOut ? "none" : "all",
-      }}
+      className={`
+        fixed inset-0 z-[99999] flex flex-col items-center justify-center
+        bg-white text-slate-900 select-none
+        transition-opacity duration-350 ease-out
+        ${fadeOut ? "pointer-events-none opacity-0" : "opacity-100"}
+      `}
     >
-      {/* Logo */}
-      <div
-        style={{
-          animation: "loader-logo-pulse 1.6s ease-in-out infinite",
-          marginBottom: "2rem",
-        }}
-      >
-        <Image
-          src="/logo.png"
-          alt="Uğur Akademiyası"
-          width={100}
-          height={100}
-          priority
-          style={{ objectFit: "contain", filter: "drop-shadow(0 0 32px rgba(129,140,248,0.6))" }}
-        />
+      {/* Central Content */}
+      <div className="flex flex-col items-center">
+        {/* Logo */}
+        <div className="mb-6">
+          <Image
+            src="/logo.png"
+            alt="Uğur Academy"
+            width={85}
+            height={85}
+            priority
+            className="h-auto w-20 object-contain"
+          />
+        </div>
+
+        {/* Brand Name */}
+        <h2 className="text-xs font-bold uppercase tracking-[0.25em] text-[#1e3a47]">
+          Uğur İnkişaf Mərkəzi
+        </h2>
+
+        {/* Clean Minimal Progress Bar */}
+        <div className="mt-6 w-48 sm:w-56">
+          <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-full rounded-full bg-[#1e3a47] transition-all duration-150 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          <div className="mt-2.5 flex items-center justify-between text-[11px] font-medium text-slate-400">
+            <span>Yüklənir...</span>
+            <span className="font-semibold text-slate-600">{progress}%</span>
+          </div>
+        </div>
       </div>
-
-      {/* Spinner ring */}
-      <div style={{ position: "relative", width: 64, height: 64 }}>
-        {/* Outer ring */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "50%",
-            border: "3px solid rgba(255,255,255,0.08)",
-          }}
-        />
-        {/* Spinning arc */}
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "50%",
-            border: "3px solid transparent",
-            borderTopColor: "#818cf8",
-            borderRightColor: "#a78bfa",
-            animation: "loader-spin 0.9s linear infinite",
-          }}
-        />
-        {/* Inner dot */}
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: "linear-gradient(135deg, #818cf8, #a78bfa)",
-            animation: "loader-logo-pulse 1.6s ease-in-out infinite",
-          }}
-        />
-      </div>
-
-      {/* Text */}
-      <p
-        style={{
-          marginTop: "1.5rem",
-          color: "rgba(255,255,255,0.5)",
-          fontSize: "0.8rem",
-          letterSpacing: "0.15em",
-          textTransform: "uppercase",
-          fontFamily: "var(--font-geist-sans), sans-serif",
-          animation: "loader-fade-text 1.6s ease-in-out infinite",
-        }}
-      >
-        Yüklənir...
-      </p>
-
-      <style>{`
-        @keyframes loader-spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes loader-logo-pulse {
-          0%, 100% { transform: scale(1); opacity: 0.9; }
-          50% { transform: scale(1.08); opacity: 1; }
-        }
-        @keyframes loader-fade-text {
-          0%, 100% { opacity: 0.4; }
-          50% { opacity: 0.8; }
-        }
-      `}</style>
     </div>
   )
 }

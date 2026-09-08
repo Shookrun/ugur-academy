@@ -1,9 +1,15 @@
 "use client"
 
+import { usePathname } from "next/navigation"
 import { useEffect, useRef } from "react"
 
 export default function AnimatedBackground() {
+  const pathname = usePathname()
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+
+  if (pathname?.startsWith("/admin")) {
+    return null
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -61,9 +67,10 @@ export default function AnimatedBackground() {
     }
 
     const colors = [
-      "rgba(148, 163, 184, ", // slate-400
-      "rgba(100, 116, 139, ", // slate-500
-      "rgba(203, 213, 225, ", // slate-300
+      "rgba(30, 58, 71, ",
+      "rgba(14, 116, 144, ",
+      "rgba(2, 132, 199, ",
+      "rgba(148, 163, 184, ",
     ]
 
     const particles: Particle[] = Array.from({ length: particleCount }, () => {
@@ -153,75 +160,75 @@ export default function AnimatedBackground() {
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 -z-10 h-full w-full overflow-hidden bg-slate-50 select-none"
     >
-      {/* 0. JetSchool-style Amber Gradient Glow — Top Left */}
+      {/* 0. Saytın brend rənginə uyğun Gradient Parıltı — Sol Üst */}
       <div
         aria-hidden="true"
-        className="absolute left-0 top-0 z-0 pointer-events-none"
+        className="pointer-events-none absolute left-0 top-0 z-0"
         style={{
-          width: "min(85vw, 560px)",
-          height: "min(55vh, 440px)",
+          width: "min(88vw, 640px)",
+          height: "min(60vh, 480px)",
           background:
-            "radial-gradient(ellipse 95% 90% at 0% 0%, rgba(252, 174, 30, 0.55) 0%, rgba(252, 174, 30, 0.22) 38%, rgba(252, 174, 30, 0.10) 58%, transparent 72%)",
-          animation: "jetAmberGlow 7s ease-in-out infinite",
+            "radial-gradient(ellipse 95% 90% at 0% 0%, rgba(30, 58, 71, 0.52) 0%, rgba(14, 116, 144, 0.32) 36%, rgba(2, 132, 199, 0.16) 56%, transparent 75%)",
+          animation: "siteBrandGlow 8s ease-in-out infinite",
         }}
       />
 
       {/* 1. Subtle Architectural Blueprint Grid */}
       <div
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.035]"
         style={{
           backgroundImage: `
-            radial-gradient(circle at 1px 1px, rgba(15, 23, 42, 0.8) 1px, transparent 0)
+            radial-gradient(circle at 1px 1px, rgba(30, 58, 71, 0.7) 1px, transparent 0)
           `,
           backgroundSize: "36px 36px",
         }}
       />
 
-      {/* 2. Soft Neutral Ambient Lighting Orbs */}
+      {/* 2. Saytın əsas rənglərinə uyğunlaşdırılmış Ambient Orblar */}
       <div className="absolute inset-0 overflow-hidden blur-[120px]">
-        {/* Orb 1 - Top Left */}
+        {/* Orb 1 - Sol üst (Brend Tünd Neft/Göyü - #1e3a47) */}
         <div
           className="
             absolute -left-20 -top-20
-            h-[500px] w-[500px]
+            h-[520px] w-[520px]
             rounded-full
-            bg-slate-200/50
+            bg-[#1e3a47]/30
             transform-gpu will-change-transform
             animate-ambient-flow-1
           "
         />
 
-        {/* Orb 2 - Top Right */}
+        {/* Orb 2 - Sağ üst (Açıq Səma Göyü - Sky Blue) */}
         <div
           className="
-            absolute -right-24 top-[15%]
-            h-[550px] w-[550px]
+            absolute -right-24 top-[10%]
+            h-[600px] w-[600px]
             rounded-full
-            bg-slate-300/40
+            bg-sky-500/25
             transform-gpu will-change-transform
             animate-ambient-flow-2
           "
         />
 
-        {/* Orb 3 - Bottom Left */}
+        {/* Orb 3 - Sol aşağı (Canlı Mavi - Azure/Blue) */}
         <div
           className="
             absolute -bottom-28 left-[10%]
             h-[500px] w-[500px]
             rounded-full
-            bg-slate-200/45
+            bg-blue-600/20
             transform-gpu will-change-transform
             animate-ambient-flow-3
           "
         />
 
-        {/* Orb 4 - Bottom Right */}
+        {/* Orb 4 - Sağ aşağı (Brend Tünd Göyü - #1e3a47) */}
         <div
           className="
             absolute -bottom-24 -right-24
-            h-[500px] w-[500px]
+            h-[520px] w-[520px]
             rounded-full
-            bg-slate-300/40
+            bg-[#1e3a47]/25
             transform-gpu will-change-transform
             animate-ambient-flow-4
           "
@@ -231,7 +238,7 @@ export default function AnimatedBackground() {
       {/* 3. Interactive Subtle Stardust Canvas */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 h-full w-full opacity-70"
+        className="absolute inset-0 h-full w-full opacity-65"
       />
     </div>
   )

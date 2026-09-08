@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import fs from "fs/promises"
+import path from "path"
 
 export const metadata: Metadata = {
   title: "Əlaqə | Uğur Şəxsi İnkişaf Mərkəzi",
@@ -6,7 +8,7 @@ export const metadata: Metadata = {
     "Hacıqabul və Şirvan filiallarımızla əlaqə saxlayın. Ünvanlar, telefon nömrələri, Google Xəritə.",
 }
 
-const branches = [
+const defaultBranches = [
   {
     id: "haciqabul",
     city: "Hacıqabul",
@@ -20,8 +22,8 @@ const branches = [
       "https://maps.google.com/maps?q=Hac%C4%B1qabul&t=&z=13&ie=UTF8&iwloc=&output=embed",
     colorFrom: "#fffbeb",
     colorTo: "#fff7ed",
-    accent: "#f59e0b",
-    borderColor: "#fde68a",
+    accent: "#1e3a47",
+    borderColor: "#e2e8f0",
   },
   {
     id: "sirvan",
@@ -36,12 +38,23 @@ const branches = [
       "https://maps.google.com/maps?q=%C5%9Eirvan+Az%C9%99rbaycan&t=&z=13&ie=UTF8&iwloc=&output=embed",
     colorFrom: "#eff6ff",
     colorTo: "#eef2ff",
-    accent: "#2563eb",
-    borderColor: "#bfdbfe",
+    accent: "#0ea5e9",
+    borderColor: "#e2e8f0",
   },
 ]
 
-export default function ContactPage() {
+async function getLiveBranches() {
+  try {
+    const dataFilePath = path.join(process.cwd(), "data", "dynamic_branches.json")
+    const file = await fs.readFile(dataFilePath, "utf-8")
+    return JSON.parse(file)
+  } catch {
+    return defaultBranches
+  }
+}
+
+export default async function ContactPage() {
+  const branches = await getLiveBranches()
   return (
     <div className="relative min-h-screen pt-28 pb-24 sm:pt-32">
       <div className="mx-auto max-w-[1400px] px-6 sm:px-8 lg:px-10">
@@ -66,7 +79,7 @@ export default function ContactPage() {
 
         {/* Branch Cards */}
         <div className="grid gap-10 lg:grid-cols-2">
-          {branches.map((branch) => (
+          {branches.map((branch: any) => (
             <div
               key={branch.id}
               id={branch.id}
@@ -86,12 +99,7 @@ export default function ContactPage() {
 
                 {/* City header */}
                 <div className="mb-6 flex items-center gap-4">
-                  <div
-                    className="flex h-14 w-14 items-center justify-center rounded-2xl text-2xl text-white shadow-lg"
-                    style={{ background: branch.accent }}
-                  >
-                    {branch.emoji}
-                  </div>
+
                   <div>
                     <h2 className="text-2xl font-extrabold tracking-tight text-slate-950">
                       {branch.city}

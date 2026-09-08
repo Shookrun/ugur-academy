@@ -5,31 +5,43 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { galleryCategories, galleryItems, type GalleryCategory } from "@/data/gallery"
 
 export default function GalereyaPage() {
-  const [activeCategory, setActiveCategory] = useState<GalleryCategory>("Hamısı")
-  const [lightbox, setLightbox] = useState<number | null>(null)
+  const [items, setItems] = useState<any[]>(galleryItems)
+  const [activeCategory, setActiveCategory] = useState<string>("Hamısı")
+  const [lightbox, setLightbox] = useState<number | string | null>(null)
   const thumbRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    fetch("/api/gallery")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data) && data.length > 0) {
+          setItems(data)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   const filtered =
     activeCategory === "Hamısı"
-      ? galleryItems
-      : galleryItems.filter((item) => item.category === activeCategory)
+      ? items
+      : items.filter((item) => item.category === activeCategory)
 
   /* ── Lightbox helpers ── */
-  const openLightbox = (id: number) => setLightbox(id)
+  const openLightbox = (id: number | string) => setLightbox(id)
   const closeLightbox = useCallback(() => setLightbox(null), [])
 
-  const lightboxIndex = lightbox !== null ? galleryItems.findIndex((i) => i.id === lightbox) : -1
-  const lightboxItem = lightboxIndex >= 0 ? galleryItems[lightboxIndex] : null
+  const lightboxIndex = lightbox !== null ? items.findIndex((i) => String(i.id) === String(lightbox)) : -1
+  const lightboxItem = lightboxIndex >= 0 ? items[lightboxIndex] : null
 
   const goNext = useCallback(() => {
     if (lightboxIndex < 0) return
-    setLightbox(galleryItems[(lightboxIndex + 1) % galleryItems.length].id)
-  }, [lightboxIndex])
+    setLightbox(items[(lightboxIndex + 1) % items.length].id)
+  }, [lightboxIndex, items])
 
   const goPrev = useCallback(() => {
     if (lightboxIndex < 0) return
-    setLightbox(galleryItems[(lightboxIndex - 1 + galleryItems.length) % galleryItems.length].id)
-  }, [lightboxIndex])
+    setLightbox(items[(lightboxIndex - 1 + items.length) % items.length].id)
+  }, [lightboxIndex, items])
 
   /* Keyboard */
   useEffect(() => {
