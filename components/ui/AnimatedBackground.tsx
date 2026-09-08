@@ -153,6 +153,19 @@ export default function AnimatedBackground() {
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 -z-10 h-full w-full overflow-hidden bg-slate-50 select-none"
     >
+      {/* 0. JetSchool-style Amber Gradient Glow — Top Left */}
+      <div
+        aria-hidden="true"
+        className="absolute left-0 top-0 z-0 pointer-events-none"
+        style={{
+          width: "min(85vw, 560px)",
+          height: "min(55vh, 440px)",
+          background:
+            "radial-gradient(ellipse 95% 90% at 0% 0%, rgba(252, 174, 30, 0.55) 0%, rgba(252, 174, 30, 0.22) 38%, rgba(252, 174, 30, 0.10) 58%, transparent 72%)",
+          animation: "jetAmberGlow 7s ease-in-out infinite",
+        }}
+      />
+
       {/* 1. Subtle Architectural Blueprint Grid */}
       <div
         className="absolute inset-0 opacity-[0.03]"

@@ -6,11 +6,11 @@ import { useEffect, useState } from "react"
 
 const navItems = [
   { name: "Əsas", href: "/" },
-  { name: "Kurslarımız", href: "/#kurslar" },
+  { name: "Kurslarımız", href: "/kurslar" },
   { name: "Xəbərlər", href: "/#xeberler" },
-  { name: "Haqqımızda", href: "/#haqqimizda" },
+  { name: "Haqqımızda", href: "/haqqimizda" },
   { name: "Galereya", href: "/galereya" },
-  { name: "Əlaqə", href: "/#elaqe" },
+  { name: "Əlaqə", href: "/elaqe" },
   { name: "Media", href: "/#media" },
   { name: "Arxiv", href: "/#arxiv" },
 ]

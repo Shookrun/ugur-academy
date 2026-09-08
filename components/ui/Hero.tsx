@@ -350,158 +350,104 @@ const Hero = () => {
               "
             />
 
-            {/* Image */}
+            {/* Two students layout */}
 
-            <div
-              className="
-                group
-                relative
-                w-full
-                max-w-[620px]
-                overflow-visible
-              "
-            >
+            <div className="relative w-full max-w-[620px] h-[480px] sm:h-[540px]">
 
-              {/* Image shadow/background */}
-
+              {/* BOY STUDENT — left, slightly lower */}
               <div
-                aria-hidden="true"
                 className="
+                  group
                   absolute
-                  inset-5
-                  rounded-[2.5rem]
-                  bg-gray-200/50
-                  blur-2xl
-                  transition-transform
-                  duration-700
-                  group-hover:scale-105
-                "
-              />
-
-              {/* Image container */}
-
-              <div
-                className="
-                  relative
+                  left-0
+                  bottom-0
+                  z-10
+                  w-[52%]
                   overflow-hidden
-                  rounded-[2.5rem]
-                  border
+                  rounded-[2rem]
+                  border-2
                   border-white
                   bg-gray-100
                   shadow-2xl
-                  shadow-gray-200/60
+                  shadow-gray-300/60
                   transition-transform
                   duration-700
-                  group-hover:-translate-y-2
+                  hover:-translate-y-2
+                  hover:shadow-3xl
                 "
+                style={{ aspectRatio: "3/4" }}
               >
                 <Image
-                  src="/hero.jpeg"
-                  width={1200}
-                  height={900}
-                  alt="Gələcəyə doğru inkişaf"
-                  priority
-                  sizes="
-                    (max-width: 1023px) 100vw,
-                    620px
-                  "
+                  src="/student_boy.jpg"
+                  fill
+                  alt="Gülərüz oğlan şagird"
+                  sizes="(max-width: 1023px) 50vw, 310px"
                   className="
-                    block
-                    h-auto
-                    w-full
                     object-cover
+                    object-top
                     transition-transform
                     duration-[1200ms]
                     group-hover:scale-[1.04]
                   "
                 />
-
-                {/* Image overlay */}
-
-                <div
-                  className="
-                    pointer-events-none
-                    absolute
-                    inset-0
-                    bg-gradient-to-t
-                    from-black/20
-                    via-transparent
-                    to-white/10
-                  "
-                />
-
-                {/* Top corner */}
-
-                <div
-                  className="
-                    absolute
-                    left-7
-                    top-7
-                    h-14
-                    w-14
-                    border-l
-                    border-t
-                    border-white/80
-                    transition-all
-                    duration-500
-                    group-hover:left-9
-                    group-hover:top-9
-                  "
-                />
-
-                {/* Bottom corner */}
-
-                <div
-                  className="
-                    absolute
-                    bottom-7
-                    right-7
-                    h-14
-                    w-14
-                    border-b
-                    border-r
-                    border-white/80
-                    transition-all
-                    duration-500
-                    group-hover:bottom-9
-                    group-hover:right-9
-                  "
-                />
-
-                {/* Dot */}
-
-                <div
-                  className="
-                    absolute
-                    right-8
-                    top-8
-                    h-2.5
-                    w-2.5
-                    rounded-full
-                    
-                    shadow-lg
-                    animate-hero-dot
-                  "
-                />
+                {/* overlay */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-white/5" />
               </div>
 
-              {/* =================================================
-                  FLOATING CARD
-              ================================================= */}
+              {/* GIRL STUDENT — right, slightly higher */}
+              <div
+                className="
+                  group
+                  absolute
+                  right-0
+                  top-0
+                  z-20
+                  w-[52%]
+                  overflow-hidden
+                  rounded-[2rem]
+                  border-2
+                  border-white
+                  bg-gray-100
+                  shadow-2xl
+                  shadow-gray-300/60
+                  transition-transform
+                  duration-700
+                  hover:-translate-y-2
+                  hover:shadow-3xl
+                "
+                style={{ aspectRatio: "3/4" }}
+              >
+                <Image
+                  src="/student_girl.jpg"
+                  fill
+                  alt="Gülərüz qız şagird"
+                  sizes="(max-width: 1023px) 50vw, 310px"
+                  className="
+                    object-cover
+                    object-top
+                    transition-transform
+                    duration-[1200ms]
+                    group-hover:scale-[1.04]
+                  "
+                />
+                {/* overlay */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-white/5" />
+              </div>
 
+              {/* Floating badge — bottom left */}
               <div
                 className="
                   absolute
-                  -bottom-7
-                  -left-5
-                  z-10
+                  -bottom-5
+                  left-4
+                  z-30
                   hidden
                   rounded-2xl
                   border
                   border-gray-100
                   bg-white/95
                   px-5
-                  py-4
+                  py-3
                   shadow-xl
                   backdrop-blur-md
                   sm:block
@@ -509,12 +455,11 @@ const Hero = () => {
                 "
               >
                 <div className="flex items-center gap-3">
-
                   <div
                     className="
                       flex
-                      h-10
-                      w-10
+                      h-9
+                      w-9
                       items-center
                       justify-center
                       rounded-full
@@ -528,34 +473,32 @@ const Hero = () => {
 
                   <div>
                     <p className="text-sm font-semibold text-gray-950">
-                      İnkişaf burada başlayır
+                      1000+ Tələbə
                     </p>
 
                     <p className="mt-0.5 text-xs text-gray-400">
-                      Öyrən • İnkişaf et
+                      Hər il böyüyürük
                     </p>
                   </div>
 
                 </div>
               </div>
 
-              {/* =================================================
-                  TOP LABEL
-              ================================================= */}
-
+              {/* Floating label — right */}
               <div
                 className="
                   absolute
-                  -right-4
-                  bottom-16
-                  z-10
+                  -right-3
+                  top-1/2
+                  z-30
                   hidden
+                  -translate-y-1/2
                   rounded-full
                   border
                   border-gray-100
                   bg-white/95
                   px-4
-                  py-2.5
+                  py-2
                   text-xs
                   font-medium
                   text-gray-700
