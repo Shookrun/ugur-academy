@@ -190,19 +190,19 @@ const Navbar = () => {
             priority
             className={`
               relative
-              h-[68px]
-              w-[68px]
+              h-[88px]
+              w-[88px]
               object-contain
               transition-all
               duration-500
               group-hover:scale-105
               group-hover:rotate-2
-              sm:h-[76px]
-              sm:w-[76px]
+              sm:h-[96px]
+              sm:w-[96px]
               ${
                 isScrolled
-                  ? "lg:h-[68px] lg:w-[68px]"
-                  : "lg:h-[78px] lg:w-[78px]"
+                  ? "lg:h-[88px] lg:w-[88px]"
+                  : "lg:h-[98px] lg:w-[98px]"
               }
             `}
           />

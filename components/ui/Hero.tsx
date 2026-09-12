@@ -114,11 +114,11 @@ const Hero = () => {
                 animationDelay: "200ms",
               }}
             >
-              Öyrən.
+              Öyrən,
               <br />
 
               <span className="relative inline-block">
-                İnkişaf et.
+                İnkişaf et,
 
                 <span
                   aria-hidden="true"
@@ -141,7 +141,7 @@ const Hero = () => {
               <br />
 
               <span className="text-gray-400">
-                Gələcəyini qur.
+                Gələcəyini qur !
               </span>
             </h1>
 

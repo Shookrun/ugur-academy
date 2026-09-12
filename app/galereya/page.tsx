@@ -2,11 +2,10 @@
 
 import Image from "next/image"
 import { useCallback, useEffect, useRef, useState } from "react"
-import { galleryCategories, galleryItems, type GalleryCategory } from "@/data/gallery"
+import { galleryItems } from "@/data/gallery"
 
 export default function GalereyaPage() {
   const [items, setItems] = useState<any[]>(galleryItems)
-  const [activeCategory, setActiveCategory] = useState<string>("Hamısı")
   const [lightbox, setLightbox] = useState<number | string | null>(null)
   const thumbRef = useRef<HTMLDivElement>(null)
 
@@ -21,10 +20,7 @@ export default function GalereyaPage() {
       .catch(() => {})
   }, [])
 
-  const filtered =
-    activeCategory === "Hamısı"
-      ? items
-      : items.filter((item) => item.category === activeCategory)
+  const filtered = items
 
   /* ── Lightbox helpers ── */
   const openLightbox = (id: number | string) => setLightbox(id)
@@ -86,7 +82,6 @@ export default function GalereyaPage() {
           <div className="mt-10 flex items-center justify-center gap-8 sm:gap-12">
             {[
               { value: `${galleryItems.length}+`, label: "Foto" },
-              { value: `${galleryCategories.length - 1}`, label: "Kateqoriya" },
               { value: "2024", label: "İl" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
@@ -98,27 +93,6 @@ export default function GalereyaPage() {
         </div>
       </section>
 
-      {/* ── Filter tabs ── */}
-      <section className="sticky top-[85px] z-30 border-b border-slate-100 bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-1 overflow-x-auto py-3 scrollbar-hide">
-            {galleryCategories.map((cat) => (
-              <button
-                key={cat}
-                id={`gallery-filter-${cat}`}
-                onClick={() => setActiveCategory(cat)}
-                className={`shrink-0 rounded-xl px-4 py-2 text-sm font-medium transition-all duration-300 ${
-                  activeCategory === cat
-                    ? "bg-indigo-600 text-white shadow-sm shadow-indigo-200"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── Grid ── */}
       <section className="py-12 sm:py-16">
