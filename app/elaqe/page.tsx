@@ -10,30 +10,13 @@ export const metadata: Metadata = {
 
 const defaultBranches = [
   {
-    id: "haciqabul",
-    city: "Hacıqabul",
-    emoji: "🏙️",
-    address: "Hacıqabul şəhəri, Mərkəzi küçə 12",
-    phone: "+994 50 000 00 01",
-    phoneRaw: "+994500000001",
-    whatsapp: "https://wa.me/994500000001",
-    instagram: "https://www.instagram.com/ugur.academy",
-    facebook: "https://www.facebook.com/ugur.academy",
-    mapSrc:
-      "https://maps.google.com/maps?q=Hac%C4%B1qabul&t=&z=13&ie=UTF8&iwloc=&output=embed",
-    colorFrom: "#f0fdf4",
-    colorTo: "#ecfdf5",
-    accent: "#16a34a",
-    borderColor: "#bbf7d0",
-  },
-  {
     id: "sirvan",
     city: "Şirvan",
     emoji: "🌆",
     address: "Şirvan şəhəri, İstiqlaliyyət küçəsi 7",
-    phone: "+994 50 000 00 02",
-    phoneRaw: "+994500000002",
-    whatsapp: "https://wa.me/994500000002",
+    phone: "070 670 30 20",
+    phoneRaw: "+994706703020",
+    whatsapp: "https://wa.me/994706703020",
     instagram: "https://www.instagram.com/ugur.academy.sirvan",
     facebook: "https://www.facebook.com/ugur.academy.sirvan",
     mapSrc:
@@ -43,13 +26,34 @@ const defaultBranches = [
     accent: "#7c3aed",
     borderColor: "#ddd6fe",
   },
+  {
+    id: "haciqabul",
+    city: "Hacıqabul",
+    emoji: "🏙️",
+    address: "Hacıqabul şəhəri, Mərkəzi küçə 12",
+    phone: "070 671 30 20",
+    phoneRaw: "+994706713020",
+    whatsapp: "https://wa.me/994706713020",
+    instagram: "https://www.instagram.com/ugur.academy",
+    facebook: "https://www.facebook.com/ugur.academy",
+    mapSrc:
+      "https://maps.google.com/maps?q=Hac%C4%B1qabul&t=&z=13&ie=UTF8&iwloc=&output=embed",
+    colorFrom: "#f0fdf4",
+    colorTo: "#ecfdf5",
+    accent: "#16a34a",
+    borderColor: "#bbf7d0",
+  },
 ]
 
 async function getLiveBranches() {
   try {
     const dataFilePath = path.join(process.cwd(), "data", "dynamic_branches.json")
     const file = await fs.readFile(dataFilePath, "utf-8")
-    return JSON.parse(file)
+    const dynamicList = JSON.parse(file)
+    return defaultBranches.map((def) => {
+      const match = dynamicList.find((d: any) => d.id === def.id)
+      return match ? { ...def, ...match, phoneRaw: match.phoneRaw || match.phone?.replace(/[^0-9+]/g, "") } : def
+    })
   } catch {
     return defaultBranches
   }
@@ -266,20 +270,34 @@ export default async function ContactPage() {
                 Sualınız var? Bizimlə əlaqə saxlayın.
               </p>
             </div>
-            <a
-              href="tel:+994500000001"
-              className="
-                group inline-flex w-fit items-center gap-3 rounded-full
-                border border-white/20 bg-white/10 px-6 py-3.5
-                text-sm font-semibold text-white backdrop-blur-sm
-                transition-all duration-300 hover:-translate-y-0.5
-                hover:bg-white hover:text-slate-950
-                hover:shadow-[0_15px_35px_rgba(255,255,255,0.2)]
-              "
-            >
-              📞 Zəng edin
-              <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-            </a>
+            <div className="flex flex-wrap items-center gap-3">
+              <a
+                href="tel:+994706703020"
+                className="
+                  group inline-flex items-center gap-2 rounded-full
+                  border border-white/20 bg-white/10 px-5 py-3
+                  text-sm font-semibold text-white backdrop-blur-sm
+                  transition-all duration-300 hover:-translate-y-0.5
+                  hover:bg-white hover:text-slate-950
+                  hover:shadow-[0_15px_35px_rgba(255,255,255,0.2)]
+                "
+              >
+                📞 Şirvan: 070 670 30 20
+              </a>
+              <a
+                href="tel:+994706713020"
+                className="
+                  group inline-flex items-center gap-2 rounded-full
+                  border border-white/20 bg-white/10 px-5 py-3
+                  text-sm font-semibold text-white backdrop-blur-sm
+                  transition-all duration-300 hover:-translate-y-0.5
+                  hover:bg-white hover:text-slate-950
+                  hover:shadow-[0_15px_35px_rgba(255,255,255,0.2)]
+                "
+              >
+                📞 Hacıqabul: 070 671 30 20
+              </a>
+            </div>
           </div>
         </div>
 

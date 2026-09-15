@@ -162,7 +162,7 @@ const Hero = () => {
                 animationDelay: "350ms",
               }}
             >
-              Müasir bilik və bacarıqları öyrənərək öz gələcəyini
+              Uğur Şəxsi İnkişaf Mərkəzi olaraq təhsil və inkişaf sahəsində yüzlərlə insanın həyatına pozitiv təsir etmişik. Hər yaş və peşə qrupuna uyğun kurslarla uğura aparan dəstəyi təqdim edirik.Müasir bilik və bacarıqları öyrənərək öz gələcəyini
               qur. Sənin inkişafın üçün lazım olan təhsil burada
               başlayır.
             </p>

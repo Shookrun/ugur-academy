@@ -6,22 +6,26 @@ const dataFilePath = path.join(process.cwd(), "data", "dynamic_branches.json")
 
 const defaultBranches = [
   {
-    id: "haciqabul",
-    city: "Hacıqabul",
-    address: "Hacıqabul şəhəri, Mərkəzi küçə 12",
-    phone: "+994 50 000 00 01",
-    instagram: "https://www.instagram.com/ugur.academy",
-    facebook: "https://www.facebook.com/ugur.academy",
-    mapSrc: "https://maps.google.com/maps?q=Hac%C4%B1qabul&t=&z=13&ie=UTF8&iwloc=&output=embed",
-  },
-  {
     id: "sirvan",
     city: "Şirvan",
     address: "Şirvan şəhəri, İstiqlaliyyət küçəsi 7",
-    phone: "+994 50 000 00 02",
+    phone: "070 670 30 20",
+    phoneRaw: "+994706703020",
+    whatsapp: "https://wa.me/994706703020",
     instagram: "https://www.instagram.com/ugur.academy.sirvan",
     facebook: "https://www.facebook.com/ugur.academy.sirvan",
     mapSrc: "https://maps.google.com/maps?q=%C5%9Eirvan+Az%C9%99rbaycan&t=&z=13&ie=UTF8&iwloc=&output=embed",
+  },
+  {
+    id: "haciqabul",
+    city: "Hacıqabul",
+    address: "Hacıqabul şəhəri, Mərkəzi küçə 12",
+    phone: "070 671 30 20",
+    phoneRaw: "+994706713020",
+    whatsapp: "https://wa.me/994706713020",
+    instagram: "https://www.instagram.com/ugur.academy",
+    facebook: "https://www.facebook.com/ugur.academy",
+    mapSrc: "https://maps.google.com/maps?q=Hac%C4%B1qabul&t=&z=13&ie=UTF8&iwloc=&output=embed",
   },
 ]
 

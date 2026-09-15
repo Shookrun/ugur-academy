@@ -84,10 +84,9 @@ const Navbar = () => {
         sm:px-5
         sm:pt-4
         lg:px-8
-        ${
-          isScrolled
-            ? "pt-2 sm:pt-3"
-            : ""
+        ${isScrolled
+          ? "pt-2 sm:pt-3"
+          : ""
         }
       `}
     >
@@ -106,16 +105,15 @@ const Navbar = () => {
           transition-all
           duration-500
           sm:px-5
-          ${
-            isScrolled
-              ? `
+          ${isScrolled
+            ? `
                 border-slate-200/70
                 bg-white/80
                 py-2
                 shadow-[0_8px_30px_rgba(0,0,0,0.06)]
                 backdrop-blur-md
               `
-              : `
+            : `
                 border-transparent
                 bg-transparent
                 py-2.5
@@ -199,10 +197,9 @@ const Navbar = () => {
               group-hover:rotate-2
               sm:h-[96px]
               sm:w-[96px]
-              ${
-                isScrolled
-                  ? "lg:h-[88px] lg:w-[88px]"
-                  : "lg:h-[98px] lg:w-[98px]"
+              ${isScrolled
+                ? "lg:h-[88px] lg:w-[88px]"
+                : "lg:h-[98px] lg:w-[98px]"
               }
             `}
           />
@@ -280,6 +277,110 @@ const Navbar = () => {
           ))}
 
           {/* =====================================
+              RFO BUTTON (Özəl & Diqqətçəkən Dizayn)
+          ====================================== */}
+
+          <Link
+            href="/rfo"
+            aria-label="Şirvan Regional RFO - Respublika Fənn Olimpiadaları Mərkəzi"
+            className="
+              group
+              relative
+              ml-2
+              flex
+              items-center
+              gap-2.5
+              overflow-hidden
+              rounded-2xl
+              border
+              border-blue-300/70
+              bg-gradient-to-r
+              from-blue-50/95
+              via-white
+              to-sky-50/95
+              p-1
+              pr-3
+              shadow-[0_4px_16px_rgba(30,120,255,0.15)]
+              backdrop-blur-md
+              transition-all
+              duration-300
+              hover:-translate-y-0.5
+              hover:border-blue-500
+              hover:shadow-[0_8px_25px_rgba(30,120,255,0.3)]
+              hover:from-blue-100/90
+              hover:to-sky-100/90
+              active:scale-95
+            "
+          >
+            {/* Shimmer light sweep */}
+            <span
+              className="
+                pointer-events-none
+                absolute
+                inset-y-0
+                -left-16
+                w-10
+                -skew-x-12
+                bg-gradient-to-r
+                from-transparent
+                via-white/80
+                to-transparent
+                transition-all
+                duration-1000
+                group-hover:left-[130%]
+              "
+            />
+
+            {/* RFO Image inside styled frame */}
+            <div
+              className="
+                relative
+                flex
+                h-8
+                w-11
+                shrink-0
+                items-center
+                justify-center
+                rounded-xl
+                bg-white
+                p-0.5
+                shadow-sm
+                ring-1
+                ring-blue-100
+                transition-transform
+                duration-300
+                group-hover:scale-105
+              "
+            >
+              <Image
+                src="/rfo-emblem.png"
+                alt="RFO"
+                width={56}
+                height={34}
+                className="h-full w-full object-contain drop-shadow-sm"
+              />
+            </div>
+
+            {/* Attention-grabbing text & pulse badge */}
+            <div className="flex flex-col text-left leading-none">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[13px] font-black tracking-tight text-slate-900 transition-colors group-hover:text-blue-600">
+                  RFO
+                </span>
+
+              </div>
+              <span className="text-[9.5px] font-semibold text-slate-500 mt-0.5">
+                Olimpiada Mərkəzi
+              </span>
+            </div>
+
+            {/* Arrow */}
+            <span className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all text-xs font-bold ml-0.5">
+              →
+            </span>
+          </Link>
+
+          {/* =====================================
               ONLINE İMTAHAN
           ====================================== */}
 
@@ -288,24 +389,24 @@ const Navbar = () => {
             className="
               group
               relative
-              ml-2
+              ml-1.5
               flex
               items-center
-              gap-2
+              gap-1.5
               overflow-hidden
-              rounded-xl
+              rounded-lg
               bg-gray-950
-              px-5
-              py-3
-              text-sm
-              font-semibold
+              px-3
+              py-1.5
+              text-xs
+              font-medium
               text-white
               shadow-sm
               transition-all
               duration-300
               hover:-translate-y-0.5
               hover:bg-gray-800
-              hover:shadow-[0_10px_25px_rgba(0,0,0,0.16)]
+              hover:shadow-md
             "
           >
             {/* shine */}
@@ -314,7 +415,7 @@ const Navbar = () => {
                 absolute
                 inset-y-0
                 -left-10
-                w-8
+                w-6
                 -skew-x-12
                 bg-white/20
                 transition-all
@@ -323,7 +424,7 @@ const Navbar = () => {
               "
             />
 
-            <span className="relative z-10">
+            <span className="relative z-10 text-[11px] sm:text-xs">
               Online İmtahan
             </span>
 
@@ -332,16 +433,16 @@ const Navbar = () => {
                 relative
                 z-10
                 flex
-                h-5
-                w-5
+                h-3.5
+                w-3.5
                 items-center
                 justify-center
                 rounded-full
                 bg-white/10
-                text-[11px]
+                text-[9px]
                 transition-transform
                 duration-300
-                group-hover:translate-x-1
+                group-hover:translate-x-0.5
               "
             >
               →
@@ -392,10 +493,9 @@ const Navbar = () => {
                 bg-gray-950
                 transition-all
                 duration-300
-                ${
-                  isOpen
-                    ? "top-[9px] rotate-45"
-                    : ""
+                ${isOpen
+                  ? "top-[9px] rotate-45"
+                  : ""
                 }
               `}
             />
@@ -412,10 +512,9 @@ const Navbar = () => {
                 bg-gray-950
                 transition-all
                 duration-300
-                ${
-                  isOpen
-                    ? "scale-x-0 opacity-0"
-                    : ""
+                ${isOpen
+                  ? "scale-x-0 opacity-0"
+                  : ""
                 }
               `}
             />
@@ -432,10 +531,9 @@ const Navbar = () => {
                 bg-gray-950
                 transition-all
                 duration-300
-                ${
-                  isOpen
-                    ? "top-[9px] -rotate-45"
-                    : ""
+                ${isOpen
+                  ? "top-[9px] -rotate-45"
+                  : ""
                 }
               `}
             />
@@ -458,10 +556,9 @@ const Navbar = () => {
           transition-all
           duration-500
           lg:hidden
-          ${
-            isOpen
-              ? "pointer-events-auto opacity-100"
-              : "pointer-events-none opacity-0"
+          ${isOpen
+            ? "pointer-events-auto opacity-100"
+            : "pointer-events-none opacity-0"
           }
         `}
       />
@@ -487,10 +584,9 @@ const Navbar = () => {
           transition-all
           duration-500
           lg:hidden
-          ${
-            isOpen
-              ? "max-h-[800px] translate-y-0 scale-100 opacity-100"
-              : "pointer-events-none max-h-0 -translate-y-4 scale-[0.98] opacity-0"
+          ${isOpen
+            ? "max-h-[800px] translate-y-0 scale-100 opacity-100"
+            : "pointer-events-none max-h-0 -translate-y-4 scale-[0.98] opacity-0"
           }
         `}
       >
@@ -531,10 +627,9 @@ const Navbar = () => {
                   hover:translate-x-1
                   hover:bg-gray-50
                   hover:text-gray-950
-                  ${
-                    isOpen
-                      ? "translate-x-0 opacity-100"
-                      : "translate-x-4 opacity-0"
+                  ${isOpen
+                    ? "translate-x-0 opacity-100"
+                    : "translate-x-4 opacity-0"
                   }
                 `}
                 style={{
@@ -584,13 +679,78 @@ const Navbar = () => {
               bg-gray-100
               transition-all
               duration-500
-              ${
-                isOpen
-                  ? "opacity-100"
-                  : "opacity-0"
+              ${isOpen
+                ? "opacity-100"
+                : "opacity-0"
               }
             `}
           />
+
+          {/* Mobile RFO button (Özəl & Diqqətçəkən) */}
+
+          <Link
+            href="/rfo"
+            onClick={closeMenu}
+            aria-label="Şirvan Regional RFO"
+            className={`
+              group
+              relative
+              mb-3
+              flex
+              items-center
+              gap-3
+              overflow-hidden
+              rounded-2xl
+              border
+              border-blue-300/80
+              bg-gradient-to-r
+              from-blue-50
+              via-white
+              to-sky-50
+              p-2.5
+              shadow-[0_4px_16px_rgba(30,120,255,0.12)]
+              transition-all
+              duration-300
+              hover:border-blue-500
+              hover:shadow-lg
+              ${isOpen
+                ? "translate-y-0 opacity-100"
+                : "translate-y-3 opacity-0"
+              }
+            `}
+            style={{
+              transitionDelay: isOpen ? "450ms" : "0ms",
+            }}
+          >
+            <div className="relative flex h-11 w-14 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-sm ring-1 ring-blue-100">
+              <Image
+                src="/rfo-emblem.png"
+                alt="RFO"
+                width={65}
+                height={40}
+                className="h-full w-full object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+
+            <div className="flex flex-col text-left">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-black tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
+                  RFO
+                </span>
+                <span className="flex items-center gap-1 rounded-full bg-blue-600 px-1.5 py-0.5 text-[9px] font-bold text-white">
+                  <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                  Özəl
+                </span>
+              </div>
+              <span className="text-[11px] font-medium text-slate-500 mt-0.5">
+                Respublika Fənn Olimpiadaları Mərkəzi
+              </span>
+            </div>
+
+            <span className="ml-auto text-sm text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all font-bold pr-1">
+              →
+            </span>
+          </Link>
 
           {/* Mobile exam button */}
 
@@ -605,7 +765,7 @@ const Navbar = () => {
               rounded-xl
               bg-gray-950
               px-4
-              py-4
+              py-3.5
               text-sm
               font-semibold
               text-white
@@ -613,15 +773,14 @@ const Navbar = () => {
               transition-all
               duration-300
               hover:bg-gray-800
-              ${
-                isOpen
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-3 opacity-0"
+              ${isOpen
+                ? "translate-y-0 opacity-100"
+                : "translate-y-3 opacity-0"
               }
             `}
             style={{
               transitionDelay: isOpen
-                ? "480ms"
+                ? "510ms"
                 : "0ms",
             }}
           >
@@ -632,8 +791,8 @@ const Navbar = () => {
             <span
               className="
                 flex
-                h-8
-                w-8
+                h-7
+                w-7
                 items-center
                 justify-center
                 rounded-full
