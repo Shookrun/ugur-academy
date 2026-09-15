@@ -5,7 +5,7 @@ import Link from "next/link"
 export const metadata: Metadata = {
   title: "RFO | Respublika Fənn Olimpiadaları Mərkəzi",
   description:
-    "Şirvan Regional Respublika Fənn Olimpiadaları Mərkəzi (RFO). Olimpiadalara peşəkar hazırlıq, fənn tədrisi və inkişaf proqramları.",
+    "Respublika Fənn Olimpiadaları Mərkəzi (RFO). Olimpiadalara peşəkar hazırlıq, fənn tədrisi və inkişaf proqramları.",
 }
 
 const subjects = [
