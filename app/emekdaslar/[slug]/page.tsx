@@ -3,11 +3,73 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import { partnersData, getPartnerBySlug, getAllPartnerSlugs } from "@/data/partners"
+import { partnersData, getPartnerBySlug, getAllPartnerSlugs, type Partner } from "@/data/partners"
 import PartnerContactForm from "@/components/partners/PartnerContactForm"
+import fs from "fs/promises"
+import path from "path"
+import os from "os"
 
 interface Props {
   params: Promise<{ slug: string }>
+}
+
+function formatPartnerData(p: any): Partner {
+  return {
+    id: typeof p.id === "number" ? p.id : Number(p.id) || 999,
+    slug: p.slug,
+    name: p.name,
+    position: p.position,
+    department: p.department || "Uğur Şəxsi İnkişaf Mərkəzi",
+    specialty: p.specialty || "",
+    isTeacher: p.isTeacher !== undefined ? p.isTeacher : Boolean(p.specialty && p.specialty.trim() !== ""),
+    logo: p.logo || "/Mehman Bayramov.jpg",
+    experienceYears: Number(p.experienceYears) || 1,
+    studentsCount: Number(p.studentsCount) || 0,
+    coursesCount: Number(p.coursesCount) || (Array.isArray(p.taughtCourses) ? p.taughtCourses.length : 0),
+    rating: Number(p.rating) || 5.0,
+    bio: p.bio || "Uğur Şəxsi İnkişaf Mərkəzinin əməkdaşı.",
+    detailedAbout: p.detailedAbout || p.bio || "Mütəxəssisimiz haqqında ətraflı məlumat tezliklə təqdim ediləcək.",
+    motto: p.motto || "Uğura gedən yolda birlikdə!",
+    email: p.email || "info@ugur.az",
+    phone: p.phone || "+994 50 000 00 00",
+    skills: Array.isArray(p.skills) && p.skills.length > 0 ? p.skills : (p.specialty ? [p.specialty] : ["Peşəkar yanaşma"]),
+    education: Array.isArray(p.education) ? p.education : [],
+    experience: Array.isArray(p.experience) ? p.experience : [],
+    certificates: Array.isArray(p.certificates) ? p.certificates : [],
+    taughtCourses: Array.isArray(p.taughtCourses) ? p.taughtCourses : [],
+    consultationTopics: Array.isArray(p.consultationTopics) ? p.consultationTopics : [],
+  }
+}
+
+async function findLivePartner(slug: string): Promise<Partner | undefined> {
+  // 1. In-memory
+  const mem = (globalThis as any).__partnersMemoryStore
+  if (Array.isArray(mem) && mem.length > 0) {
+    const found = mem.find((p: any) => p.slug === slug || String(p.id) === slug)
+    if (found) return formatPartnerData(found)
+  }
+
+  // 2. /tmp
+  try {
+    const tmp = await fs.readFile(path.join(os.tmpdir(), "dynamic_partners.json"), "utf-8")
+    const list = JSON.parse(tmp)
+    const found = list.find((p: any) => p.slug === slug || String(p.id) === slug)
+    if (found) return formatPartnerData(found)
+  } catch {}
+
+  // 3. local dynamic_partners.json
+  try {
+    const local = await fs.readFile(path.join(process.cwd(), "data", "dynamic_partners.json"), "utf-8")
+    const list = JSON.parse(local)
+    const found = list.find((p: any) => p.slug === slug || String(p.id) === slug)
+    if (found) return formatPartnerData(found)
+  } catch {}
+
+  // 4. static fallback
+  const staticP = getPartnerBySlug(slug)
+  if (staticP) return formatPartnerData(staticP)
+
+  return undefined
 }
 
 export async function generateStaticParams() {
@@ -17,7 +79,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const partner = getPartnerBySlug(slug)
+  const partner = await findLivePartner(slug)
 
   if (!partner) {
     return {
@@ -34,7 +96,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PartnerDetailPage({ params }: Props) {
   const { slug } = await params
-  const partner = getPartnerBySlug(slug)
+  const partner = await findLivePartner(slug)
 
   if (!partner) {
     notFound()
@@ -102,7 +164,8 @@ export default async function PartnerDetailPage({ params }: Props) {
               </h1>
 
               <p className="mt-2 text-base font-semibold text-slate-700 sm:text-lg">
-                {partner.position} • {partner.specialty}
+                {partner.position}
+                {partner.specialty ? ` • ${partner.specialty}` : ""}
               </p>
 
               <p className="mt-4 text-sm leading-relaxed text-slate-600 sm:text-base sm:leading-7">
@@ -204,56 +267,62 @@ export default async function PartnerDetailPage({ params }: Props) {
             </div>
 
             {/* Career & Education Timeline */}
-            <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm sm:p-8">
-              <div className="flex items-center gap-3">
-                <span className="h-px w-8 bg-slate-950" />
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                  Təcrübə & Təhsil
-                </span>
-              </div>
-              <h2 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
-                Karyera və Təhsil Xronologiyası
-              </h2>
-
-              <div className="mt-6 space-y-6">
-                <div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-                    İş Təcrübəsi
-                  </h3>
-                  <div className="mt-4 space-y-4 border-l-2 border-slate-200 pl-4">
-                    {partner.experience.map((exp, idx) => (
-                      <div key={idx} className="relative">
-                        <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-slate-950" />
-                        <h4 className="text-sm font-bold text-slate-900">{exp.role}</h4>
-                        <p className="text-xs font-semibold text-slate-700">
-                          {exp.organization} • {exp.period}
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500 sm:text-sm">
-                          {exp.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+            {(partner.experience.length > 0 || partner.education.length > 0) && (
+              <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm sm:p-8">
+                <div className="flex items-center gap-3">
+                  <span className="h-px w-8 bg-slate-950" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Təcrübə & Təhsil
+                  </span>
                 </div>
+                <h2 className="mt-2 text-xl font-bold text-slate-900 sm:text-2xl">
+                  Karyera və Təhsil Xronologiyası
+                </h2>
 
-                <div className="border-t border-slate-100 pt-6">
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-                    Ali Təhsil
-                  </h3>
-                  <div className="mt-4 space-y-4 border-l-2 border-slate-200 pl-4">
-                    {partner.education.map((edu, idx) => (
-                      <div key={idx} className="relative">
-                        <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-slate-950" />
-                        <h4 className="text-sm font-bold text-slate-900">{edu.degree}</h4>
-                        <p className="text-xs font-semibold text-slate-600">
-                          {edu.institution} ({edu.year})
-                        </p>
+                <div className="mt-6 space-y-6">
+                  {partner.experience.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
+                        İş Təcrübəsi
+                      </h3>
+                      <div className="mt-4 space-y-4 border-l-2 border-slate-200 pl-4">
+                        {partner.experience.map((exp, idx) => (
+                          <div key={idx} className="relative">
+                            <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-slate-950" />
+                            <h4 className="text-sm font-bold text-slate-900">{exp.role}</h4>
+                            <p className="text-xs font-semibold text-slate-700">
+                              {exp.organization} • {exp.period}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+                              {exp.description}
+                            </p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+
+                  {partner.education.length > 0 && (
+                    <div className={partner.experience.length > 0 ? "border-t border-slate-100 pt-6" : ""}>
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400">
+                        Ali Təhsil
+                      </h3>
+                      <div className="mt-4 space-y-4 border-l-2 border-slate-200 pl-4">
+                        {partner.education.map((edu, idx) => (
+                          <div key={idx} className="relative">
+                            <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-slate-950" />
+                            <h4 className="text-sm font-bold text-slate-900">{edu.degree}</h4>
+                            <p className="text-xs font-semibold text-slate-600">
+                              {edu.institution} ({edu.year})
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Taught Courses */}
             {partner.taughtCourses.length > 0 && (

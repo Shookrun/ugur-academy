@@ -83,7 +83,11 @@ export default async function PartnersCatalogPage() {
                 <div className="mt-auto pt-6">
                   <div className="flex items-center justify-between border-t border-slate-100 pt-4 text-xs font-semibold text-slate-600">
                     <span>Təcrübə: {partner.experienceYears} il</span>
-                    <span>{partner.studentsCount}+ Tələbə</span>
+                    {partner.studentsCount && partner.studentsCount > 0 ? (
+                      <span>{partner.studentsCount}+ Tələbə</span>
+                    ) : (
+                      <span className="text-slate-400 font-normal">Komanda üzvü</span>
+                    )}
                   </div>
 
                   <Link

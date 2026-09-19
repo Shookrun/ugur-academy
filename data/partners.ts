@@ -17,7 +17,8 @@ export interface Partner {
   name: string
   position: string
   department: string
-  specialty: string
+  specialty?: string
+  isTeacher?: boolean
   logo: string
   heroImage?: string
   experienceYears: number
