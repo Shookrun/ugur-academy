@@ -67,9 +67,9 @@ export default function AnimatedBackground() {
     }
 
     const colors = [
-      "rgba(30, 58, 71, ",
       "rgba(14, 116, 144, ",
       "rgba(2, 132, 199, ",
+      "rgba(37, 99, 235, ",
       "rgba(148, 163, 184, ",
     ]
 
@@ -160,39 +160,39 @@ export default function AnimatedBackground() {
       aria-hidden="true"
       className="pointer-events-none fixed inset-0 -z-10 h-full w-full overflow-hidden bg-slate-50 select-none"
     >
-      {/* 0. Saytın brend rənginə uyğun Gradient Parıltı — Sol Üst */}
+      {/* 0. Saytın brendinə uyğun İşıqlı & Şəffaf Gradient Parıltı — Sol Üst */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-0 top-0 z-0"
+        className="pointer-events-none absolute left-0 top-0 z-0 opacity-60 sm:opacity-75"
         style={{
           width: "min(88vw, 640px)",
           height: "min(60vh, 480px)",
           background:
-            "radial-gradient(ellipse 95% 90% at 0% 0%, rgba(30, 58, 71, 0.52) 0%, rgba(14, 116, 144, 0.32) 36%, rgba(2, 132, 199, 0.16) 56%, transparent 75%)",
+            "radial-gradient(ellipse 95% 90% at 0% 0%, rgba(186, 230, 253, 0.45) 0%, rgba(224, 242, 254, 0.28) 36%, rgba(219, 234, 254, 0.12) 56%, transparent 75%)",
           animation: "siteBrandGlow 8s ease-in-out infinite",
         }}
       />
 
-      {/* 1. Subtle Architectural Blueprint Grid */}
+      {/* 1. Zərif Memarlıq Blueprint Toru */}
       <div
-        className="absolute inset-0 opacity-[0.035]"
+        className="absolute inset-0 opacity-[0.025] sm:opacity-[0.035]"
         style={{
           backgroundImage: `
-            radial-gradient(circle at 1px 1px, rgba(30, 58, 71, 0.7) 1px, transparent 0)
+            radial-gradient(circle at 1px 1px, rgba(14, 116, 144, 0.4) 1px, transparent 0)
           `,
           backgroundSize: "36px 36px",
         }}
       />
 
-      {/* 2. Saytın əsas rənglərinə uyğunlaşdırılmış Ambient Orblar */}
+      {/* 2. Saytın əsas rənglərinə uyğunlaşdırılmış Aydın Ambient Orblar */}
       <div className="absolute inset-0 overflow-hidden blur-[120px]">
-        {/* Orb 1 - Sol üst (Brend Tünd Neft/Göyü - #1e3a47) */}
+        {/* Orb 1 - Sol üst (Yumşaq Səma Mavisi - Yazıların fonunu aydın saxlayır) */}
         <div
           className="
             absolute -left-20 -top-20
             h-[520px] w-[520px]
             rounded-full
-            bg-[#1e3a47]/30
+            bg-sky-200/40 sm:bg-sky-200/30
             transform-gpu will-change-transform
             animate-ambient-flow-1
           "
@@ -204,41 +204,41 @@ export default function AnimatedBackground() {
             absolute -right-24 top-[10%]
             h-[600px] w-[600px]
             rounded-full
-            bg-sky-500/25
+            bg-sky-400/20 sm:bg-sky-400/25
             transform-gpu will-change-transform
             animate-ambient-flow-2
           "
         />
 
-        {/* Orb 3 - Sol aşağı (Canlı Mavi - Azure/Blue) */}
+        {/* Orb 3 - Sol aşağı (Canlı Zərif Mavi) */}
         <div
           className="
             absolute -bottom-28 left-[10%]
             h-[500px] w-[500px]
             rounded-full
-            bg-blue-600/20
+            bg-blue-400/15 sm:bg-blue-500/15
             transform-gpu will-change-transform
             animate-ambient-flow-3
           "
         />
 
-        {/* Orb 4 - Sağ aşağı (Brend Tünd Göyü - #1e3a47) */}
+        {/* Orb 4 - Sağ aşağı (Açıq Neytral Fon) */}
         <div
           className="
             absolute -bottom-24 -right-24
             h-[520px] w-[520px]
             rounded-full
-            bg-[#1e3a47]/25
+            bg-slate-200/40 sm:bg-slate-200/50
             transform-gpu will-change-transform
             animate-ambient-flow-4
           "
         />
       </div>
 
-      {/* 3. Interactive Subtle Stardust Canvas */}
+      {/* 3. İnteraktiv Stardust Ulduz Zərrəcikləri */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 h-full w-full opacity-65"
+        className="absolute inset-0 h-full w-full opacity-40 sm:opacity-65"
       />
     </div>
   )

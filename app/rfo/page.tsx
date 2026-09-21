@@ -32,7 +32,7 @@ export default function RfoPage() {
 
       <div className="relative z-10 mx-auto max-w-[1400px] px-6 sm:px-8 lg:px-10">
         {/* Breadcrumb */}
-        <div className="mb-8 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+        <div className="mb-8 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
           <Link href="/" className="hover:text-slate-900 transition-colors">
             Əsas
           </Link>
