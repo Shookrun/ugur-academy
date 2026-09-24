@@ -224,7 +224,7 @@ export default function AdminPartnyorlarPage() {
         <div
           role="status"
           aria-live="polite"
-          className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-xl backdrop-blur-md transition-all duration-300 animate-in fade-in slide-in-from-top-4 ${
+          className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-xl backdrop-blur-md transition-all duration-300 ${
             toast.type === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-950"
               : toast.type === "error"
@@ -667,7 +667,7 @@ export default function AdminPartnyorlarPage() {
                 <button
                   type="button"
                   disabled={deleting}
-                  onClick={() => handleDelete(deleteId)}
+                  onClick={() => deleteId && handleDelete(deleteId)}
                   className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700 disabled:opacity-50"
                 >
                   {deleting ? (

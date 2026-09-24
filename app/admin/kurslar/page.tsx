@@ -258,7 +258,7 @@ export default function AdminKurslarPage() {
         {/* Modal: Add or Edit Course */}
         {modal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs">
-            <div className="w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-6 shadow-xl">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <h3 className="text-lg font-bold text-[#1e3a47]">
                   {modal === "add" ? "Yeni Kurs Əlavə Et" : "Kursu Redaktə Et"}
@@ -416,7 +416,7 @@ export default function AdminKurslarPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(deleteId)}
+                  onClick={() => deleteId && handleDelete(deleteId)}
                   className="rounded-xl bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700"
                 >
                   Bəli, Sil

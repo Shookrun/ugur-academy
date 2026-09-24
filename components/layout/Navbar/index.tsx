@@ -174,32 +174,32 @@ const Navbar = () => {
               blur-2xl
               transition-all
               duration-500
-              group-hover:h-20
-              group-hover:w-20
+              group-hover:h-24
+              group-hover:w-24
               group-hover:opacity-100
             "
           />
 
           <Image
             src="/logo.png"
-            width={190}
-            height={190}
+            width={220}
+            height={220}
             alt="Uğur Şəxsi İnkişaf Mərkəzi"
             priority
             className={`
               relative
-              h-[88px]
-              w-[88px]
+              h-[102px]
+              w-[102px]
               object-contain
               transition-all
               duration-500
               group-hover:scale-105
               group-hover:rotate-2
-              sm:h-[96px]
-              sm:w-[96px]
+              sm:h-[114px]
+              sm:w-[114px]
               ${isScrolled
-                ? "lg:h-[88px] lg:w-[88px]"
-                : "lg:h-[98px] lg:w-[98px]"
+                ? "lg:h-[102px] lg:w-[102px]"
+                : "lg:h-[118px] lg:w-[118px]"
               }
             `}
           />

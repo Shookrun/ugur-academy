@@ -326,7 +326,7 @@ export default function AdminElaqePage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDelete(deleteId)}
+                  onClick={() => deleteId && handleDelete(deleteId)}
                   className="rounded-xl bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700"
                 >
                   Bəli, Sil
