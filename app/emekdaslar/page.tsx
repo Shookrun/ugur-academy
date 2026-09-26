@@ -10,14 +10,31 @@ export const metadata: Metadata = {
   description: "Uğur Şəxsi İnkişaf Mərkəzinin peşəkar əməkdaşları və təlimçiləri ilə tanış olun.",
 }
 
+import os from "os"
+
 async function getLivePartners() {
+  // 1. In-memory store
+  const mem = (globalThis as any).__partnersMemoryStore
+  if (Array.isArray(mem) && mem.length > 0) {
+    return mem
+  }
+
+  // 2. /tmp directory
+  try {
+    const tmp = await fs.readFile(path.join(os.tmpdir(), "dynamic_partners.json"), "utf-8")
+    const list = JSON.parse(tmp)
+    if (Array.isArray(list) && list.length > 0) return list
+  } catch {}
+
+  // 3. Project data file
   try {
     const dataFilePath = path.join(process.cwd(), "data", "dynamic_partners.json")
     const file = await fs.readFile(dataFilePath, "utf-8")
-    return JSON.parse(file)
-  } catch {
-    return partnersData
-  }
+    const list = JSON.parse(file)
+    if (Array.isArray(list) && list.length > 0) return list
+  } catch {}
+
+  return partnersData
 }
 
 export default async function PartnersCatalogPage() {
@@ -57,7 +74,7 @@ export default async function PartnersCatalogPage() {
                   {String(idx + 1).padStart(2, "0")}
                 </div>
                 <div className="absolute right-4 top-4 rounded-full bg-slate-950/80 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-md">
-                  ★ {partner.rating}
+                  ★ {partner.rating || 5.0}
                 </div>
               </div>
 

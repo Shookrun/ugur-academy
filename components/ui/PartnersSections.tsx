@@ -715,7 +715,7 @@ export default function Partners() {
                     </span>
 
                     <Link
-                      href={`/emekdaslar/${partnerSlugMap[partner.name]}`}
+                      href={`/emekdaslar/${(partner as any).slug || partnerSlugMap[partner.name] || ""}`}
                       className="
                         flex
                         h-9

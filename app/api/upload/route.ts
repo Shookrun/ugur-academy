@@ -38,16 +38,23 @@ export async function POST(req: NextRequest) {
     const fileName = `${Date.now()}_${baseName}${ext}`
 
     // Determine save directory inside /public
-    const subDir = folder ? folder.replace(/[^a-zA-Z0-9/_-]/g, "") : "uploads"
-    const saveDir = path.join(process.cwd(), "public", subDir)
-    await fs.mkdir(saveDir, { recursive: true })
+    try {
+      const subDir = folder ? folder.replace(/[^a-zA-Z0-9/_-]/g, "") : "uploads"
+      const saveDir = path.join(process.cwd(), "public", subDir)
+      await fs.mkdir(saveDir, { recursive: true })
 
-    const savePath = path.join(saveDir, fileName)
-    await fs.writeFile(savePath, buffer)
+      const savePath = path.join(saveDir, fileName)
+      await fs.writeFile(savePath, buffer)
 
-    // Return public URL
-    const publicUrl = `/${subDir}/${fileName}`
-    return NextResponse.json({ url: publicUrl }, { status: 201 })
+      // Return public URL
+      const publicUrl = `/${subDir}/${fileName}`
+      return NextResponse.json({ url: publicUrl }, { status: 201 })
+    } catch (fsErr) {
+      console.warn("Could not save file to disk, falling back to base64 Data URL:", fsErr)
+      const mime = file.type || "image/jpeg"
+      const dataUrl = `data:${mime};base64,${buffer.toString("base64")}`
+      return NextResponse.json({ url: dataUrl }, { status: 201 })
+    }
   } catch (error) {
     console.error("Upload error:", error)
     return NextResponse.json({ error: "Fayl yüklənərkən xəta baş verdi" }, { status: 500 })

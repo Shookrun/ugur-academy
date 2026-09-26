@@ -178,6 +178,10 @@ export default function AdminPartnyorlarPage() {
         })
 
         if (res.ok) {
+          const newPartner = await res.json().catch(() => null)
+          if (newPartner && newPartner.id) {
+            setItems((prev) => [newPartner, ...prev.filter((p) => String(p.id) !== String(newPartner.id))])
+          }
           await fetchPartners()
           setModal(null)
           setForm({})
@@ -186,14 +190,29 @@ export default function AdminPartnyorlarPage() {
           const err = await res.json().catch(() => ({}))
           showToast(err.error || "Əməkdaş əlavə edilərkən xəta baş verdi.", "error")
         }
-      } else if (modal === "edit" && editItem) {
+      } else if (modal === "edit") {
+        const targetId = editItem?.id || form.id
+        const updatePayload = {
+          ...editItem,
+          ...payload,
+          id: targetId,
+        }
+
         const res = await fetch("/api/partners", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...editItem, ...payload }),
+          body: JSON.stringify(updatePayload),
         })
 
         if (res.ok) {
+          const updatedPartner = await res.json().catch(() => null)
+          if (updatedPartner && updatedPartner.id) {
+            setItems((prev) =>
+              prev.map((item) =>
+                String(item.id) === String(updatedPartner.id) ? { ...item, ...updatedPartner } : item
+              )
+            )
+          }
           await fetchPartners()
           setModal(null)
           setForm({})
@@ -547,7 +566,12 @@ export default function AdminPartnyorlarPage() {
                       type="number"
                       min={0}
                       value={form.experienceYears ?? 0}
-                      onChange={(e) => setForm({ ...form, experienceYears: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          experienceYears: e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0),
+                        })
+                      }
                       className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                     />
                   </div>
@@ -561,7 +585,12 @@ export default function AdminPartnyorlarPage() {
                         type="number"
                         min={0}
                         value={form.studentsCount ?? 0}
-                        onChange={(e) => setForm({ ...form, studentsCount: Number(e.target.value) })}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            studentsCount: e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0),
+                          })
+                        }
                         className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                       />
                     </div>
