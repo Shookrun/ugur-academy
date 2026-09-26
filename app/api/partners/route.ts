@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import fs from "fs/promises"
 import path from "path"
-import os from "os"
 import { partnersData } from "@/data/partners"
 
-const localDataFilePath = path.join(process.cwd(), "data", "dynamic_partners.json")
-const tmpDataFilePath = path.join(os.tmpdir(), "dynamic_partners.json")
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __partnersMemoryStore: any[] | undefined
-}
+const dataFilePath = path.join(process.cwd(), "data", "dynamic_partners.json")
 
 const initialPartners = partnersData.map((p) => ({
   id: String(p.id),
@@ -30,21 +23,13 @@ const initialPartners = partnersData.map((p) => ({
 
 function slugify(text: string): string {
   const azMap: Record<string, string> = {
-    ə: "e",
-    Ə: "e",
-    ı: "i",
-    I: "i",
-    İ: "i",
-    ö: "o",
-    Ö: "o",
-    ü: "u",
-    Ü: "u",
-    ğ: "g",
-    Ğ: "g",
-    ç: "c",
-    Ç: "c",
-    ş: "s",
-    Ş: "s",
+    ə: "e", Ə: "e",
+    ı: "i", I: "i", İ: "i",
+    ö: "o", Ö: "o",
+    ü: "u", Ü: "u",
+    ğ: "g", Ğ: "g",
+    ç: "c", Ç: "c",
+    ş: "s", Ş: "s",
   }
   return text
     .split("")
@@ -58,50 +43,26 @@ function slugify(text: string): string {
 }
 
 async function readPartners(): Promise<any[]> {
-  if (globalThis.__partnersMemoryStore && globalThis.__partnersMemoryStore.length > 0) {
-    return globalThis.__partnersMemoryStore
+  try {
+    const content = await fs.readFile(dataFilePath, "utf-8")
+    const parsed = JSON.parse(content)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed
+    }
+  } catch {
+    // File doesn't exist yet — seed it
   }
 
-  // 1. Try reading from /tmp (writable on Vercel)
+  // Write initial data if file is missing/empty
   try {
-    const tmpContent = await fs.readFile(tmpDataFilePath, "utf-8")
-    const parsed = JSON.parse(tmpContent)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__partnersMemoryStore = parsed
-      return parsed
-    }
+    await fs.writeFile(dataFilePath, JSON.stringify(initialPartners, null, 2), "utf-8")
   } catch {}
 
-  // 2. Try reading from local project data directory
-  try {
-    const localContent = await fs.readFile(localDataFilePath, "utf-8")
-    const parsed = JSON.parse(localContent)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__partnersMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
-
-  globalThis.__partnersMemoryStore = initialPartners
   return initialPartners
 }
 
 async function writePartners(data: any[]): Promise<void> {
-  globalThis.__partnersMemoryStore = data
-
-  // Write to /tmp (writable on Vercel)
-  try {
-    await fs.writeFile(tmpDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write to tmp directory:", err)
-  }
-
-  // Write to local data directory (local environment)
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch {
-    // Gracefully ignore on read-only environments like Vercel Lambda
-  }
+  await fs.writeFile(dataFilePath, JSON.stringify(data, null, 2), "utf-8")
 }
 
 export async function GET() {
@@ -120,7 +81,6 @@ export async function POST(req: NextRequest) {
     const partners = await readPartners()
 
     const generatedSlug = body.name ? slugify(body.name) : String(Date.now())
-    // ensure slug is unique
     let finalSlug = body.slug || generatedSlug
     if (partners.some((p) => p.slug === finalSlug)) {
       finalSlug = `${finalSlug}-${Date.now().toString().slice(-4)}`

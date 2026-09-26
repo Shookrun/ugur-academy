@@ -40,12 +40,36 @@ export default function AdminPartnyorlarPage() {
   const [deleting, setDeleting] = useState(false)
   const [isTeacher, setIsTeacher] = useState<boolean>(true)
   const [toast, setToast] = useState<Toast | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
     setToast({ message, type })
     setTimeout(() => {
       setToast((current) => (current?.message === message ? null : current))
     }, 4000)
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("folder", "team")
+      const res = await fetch("/api/upload", { method: "POST", body: fd })
+      if (res.ok) {
+        const data = await res.json()
+        setForm((prev) => ({ ...prev, logo: data.url }))
+      } else {
+        const err = await res.json().catch(() => ({}))
+        showToast(err.error || "Şəkil yüklənərkən xəta baş verdi.", "error")
+      }
+    } catch {
+      showToast("Şəbəkə xətası baş verdi.", "error")
+    } finally {
+      setUploading(false)
+    }
   }
 
   useEffect(() => {
@@ -575,32 +599,53 @@ export default function AdminPartnyorlarPage() {
                 {/* Fotoşəkil (Logo/Avatar) */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Fotoşəkil (fayl yolu və ya URL)
+                    Fotoşəkil
                   </label>
-                  <div className="flex items-center gap-3">
-                    <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                  <div className="flex items-start gap-3">
+                    {/* Preview */}
+                    <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
                       {form.logo ? (
                         <img
                           src={form.logo}
                           alt="Önbaxış"
                           className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = "none"
-                          }}
+                          onError={(e) => { (e.target as HTMLElement).style.display = "none" }}
                         />
                       ) : (
                         <span className="text-[10px] font-bold text-slate-400">Şəkil</span>
                       )}
+                      {uploading && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-full bg-white/70">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#1e3a47] border-t-transparent" />
+                        </div>
+                      )}
                     </div>
-                    <input
-                      type="text"
-                      value={form.logo || ""}
-                      onChange={(e) => setForm({ ...form, logo: e.target.value })}
-                      placeholder="/Mehman Bayramov.jpg və ya şəkil linki"
-                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
-                    />
+
+                    <div className="flex-1 space-y-2">
+                      <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-[#1e3a47] hover:bg-slate-100">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        {uploading ? "Yüklənir..." : "Foto yüklə"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploading}
+                          onChange={handleImageUpload}
+                        />
+                      </label>
+                      <input
+                        type="text"
+                        value={form.logo || ""}
+                        onChange={(e) => setForm({ ...form, logo: e.target.value })}
+                        placeholder="və ya yol yazın: /Ad Soyad.jpg"
+                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                      />
+                    </div>
                   </div>
                 </div>
+
 
                 {/* Bio / Haqqında */}
                 <div>

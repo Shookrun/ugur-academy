@@ -32,6 +32,7 @@ export default function AdminKurslarPage() {
   const [form, setForm] = useState<Partial<Course>>({})
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/admin")
@@ -118,6 +119,29 @@ export default function AdminKurslarPage() {
       }
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("folder", "courses")
+      const res = await fetch("/api/upload", { method: "POST", body: fd })
+      if (res.ok) {
+        const data = await res.json()
+        setForm((prev) => ({ ...prev, image: data.url }))
+      } else {
+        const err = await res.json().catch(() => ({}))
+        alert(err.error || "Şəkil yüklənərkən xəta baş verdi.")
+      }
+    } catch {
+      alert("Şəbəkə xətası baş verdi.")
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -332,6 +356,62 @@ export default function AdminKurslarPage() {
                     placeholder="Kurs haqqında qısa izahat..."
                     className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                   />
+                </div>
+
+                {/* Course Image Upload */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Kurs Şəkli
+                  </label>
+                  <div className="flex items-start gap-3">
+                    {/* Preview */}
+                    <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                      {form.image ? (
+                        <img
+                          src={form.image}
+                          alt="Kurs şəkli"
+                          className="h-full w-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).src = "/hero.jpeg" }}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <svg className="h-6 w-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                      {uploading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#1e3a47] border-t-transparent" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 space-y-2">
+                      {/* File upload button */}
+                      <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-[#1e3a47] hover:bg-slate-100">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        {uploading ? "Yüklənir..." : "Şəkil yüklə"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploading}
+                          onChange={handleImageUpload}
+                        />
+                      </label>
+                      {/* Or enter URL manually */}
+                      <input
+                        type="text"
+                        value={form.image || ""}
+                        onChange={(e) => setForm({ ...form, image: e.target.value })}
+                        placeholder="və ya şəkil yolunu yazın: /courses/img.jpg"
+                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
