@@ -92,7 +92,7 @@ const Hero = () => {
             >
               <span className="h-px w-10 bg-gray-950" />
 
-              <span className="text-sm font-medium tracking-wide text-gray-500">
+              <span className="text-sm font-semibold tracking-wide text-gray-800">
                 Təhsil və inkişaf platforması
               </span>
             </div>
@@ -140,7 +140,7 @@ const Hero = () => {
 
               <br />
 
-              <span className="text-gray-400">
+              <span className="text-gray-950">
                 Gələcəyini qur !
               </span>
             </h1>
@@ -153,7 +153,7 @@ const Hero = () => {
                 max-w-xl
                 text-base
                 leading-7
-                text-gray-500
+                text-gray-800
                 sm:text-lg
                 sm:leading-8
                 animate-hero-fade-up
