@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import fs from "fs/promises"
 import path from "path"
+import os from "os"
 import { coursesData } from "@/data/courses"
 
-const dataFilePath = path.join(process.cwd(), "data", "dynamic_courses.json")
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
+const localDataFilePath = path.join(process.cwd(), "data", "dynamic_courses.json")
+const tmpDataFilePath = path.join(os.tmpdir(), "dynamic_courses.json")
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __coursesMemoryStore: any[] | undefined
+}
 
 // Seed array with the exact 7 academy courses
 const initialCourses = coursesData.map((c) => ({
@@ -62,25 +73,66 @@ const initialCourses = coursesData.map((c) => ({
       : "award",
 }))
 
-async function readCourses() {
+async function readCourses(): Promise<any[]> {
+  // 1. Local file
   try {
-    const file = await fs.readFile(dataFilePath, "utf-8")
-    return JSON.parse(file)
-  } catch {
-    await fs.writeFile(dataFilePath, JSON.stringify(initialCourses, null, 2), "utf-8")
-    return initialCourses
+    const file = await fs.readFile(localDataFilePath, "utf-8")
+    const parsed = JSON.parse(file)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      globalThis.__coursesMemoryStore = parsed
+      return parsed
+    }
+  } catch {}
+
+  // 2. /tmp file
+  try {
+    const tmp = await fs.readFile(tmpDataFilePath, "utf-8")
+    const parsed = JSON.parse(tmp)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      globalThis.__coursesMemoryStore = parsed
+      return parsed
+    }
+  } catch {}
+
+  // 3. Memory store
+  if (Array.isArray(globalThis.__coursesMemoryStore) && globalThis.__coursesMemoryStore.length > 0) {
+    return globalThis.__coursesMemoryStore
   }
+
+  // 4. Initial fallback
+  globalThis.__coursesMemoryStore = [...initialCourses]
+  try {
+    await fs.writeFile(localDataFilePath, JSON.stringify(initialCourses, null, 2), "utf-8")
+  } catch {}
+  return initialCourses
 }
 
-async function writeCourses(data: unknown[]) {
-  await fs.writeFile(dataFilePath, JSON.stringify(data, null, 2), "utf-8")
+async function writeCourses(data: any[]): Promise<void> {
+  globalThis.__coursesMemoryStore = [...data]
+  try {
+    await fs.writeFile(localDataFilePath, JSON.stringify(data, null, 2), "utf-8")
+  } catch (err) {
+    console.warn("Could not write courses to local path:", err)
+  }
+  try {
+    await fs.writeFile(tmpDataFilePath, JSON.stringify(data, null, 2), "utf-8")
+  } catch (err) {
+    console.warn("Could not write courses to tmp path:", err)
+  }
 }
 
 export async function GET() {
   try {
     const courses = await readCourses()
-    return NextResponse.json(courses)
+    return NextResponse.json(courses, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    })
   } catch (error) {
+    console.error("GET /api/courses error:", error)
     return NextResponse.json({ error: "Failed to read courses" }, { status: 500 })
   }
 }
@@ -91,8 +143,8 @@ export async function POST(req: NextRequest) {
     const courses = await readCourses()
     const newCourse = {
       ...body,
-      id: body.id || String(Date.now()),
-      slug: body.slug || String(Date.now()),
+      id: body.id ? String(body.id).trim() : String(Date.now()),
+      slug: body.slug ? String(body.slug).trim() : String(Date.now()),
       neonColor: body.neonColor || "#0ea5e9",
       glowGradient: body.glowGradient || "rgba(14, 165, 233, 0.8)",
       iconType: body.iconType || "star",
@@ -100,8 +152,22 @@ export async function POST(req: NextRequest) {
     }
     courses.push(newCourse)
     await writeCourses(courses)
-    return NextResponse.json(newCourse, { status: 201 })
+
+    try {
+      revalidatePath("/admin/kurslar")
+      revalidatePath("/kurslar")
+      revalidatePath("/courses")
+      revalidatePath("/")
+    } catch {}
+
+    return NextResponse.json(newCourse, { 
+      status: 201,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    })
   } catch (error) {
+    console.error("POST /api/courses error:", error)
     return NextResponse.json({ error: "Failed to add course" }, { status: 500 })
   }
 }
@@ -110,14 +176,28 @@ export async function PUT(req: NextRequest) {
   try {
     const body = await req.json()
     const courses = await readCourses()
-    const index = courses.findIndex((c: { id: string }) => String(c.id) === String(body.id))
+    const targetId = String(body.id).trim()
+    const index = courses.findIndex((c: any) => String(c.id).trim() === targetId)
     if (index === -1) {
       return NextResponse.json({ error: "Course not found" }, { status: 404 })
     }
-    courses[index] = { ...courses[index], ...body }
+    courses[index] = { ...courses[index], ...body, id: targetId }
     await writeCourses(courses)
-    return NextResponse.json(courses[index])
+
+    try {
+      revalidatePath("/admin/kurslar")
+      revalidatePath("/kurslar")
+      revalidatePath("/courses")
+      revalidatePath("/")
+    } catch {}
+
+    return NextResponse.json(courses[index], {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    })
   } catch (error) {
+    console.error("PUT /api/courses error:", error)
     return NextResponse.json({ error: "Failed to update course" }, { status: 500 })
   }
 }
@@ -129,11 +209,26 @@ export async function DELETE(req: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: "ID required" }, { status: 400 })
     }
+    const cleanId = String(id).trim()
     let courses = await readCourses()
-    courses = courses.filter((c: { id: string }) => String(c.id) !== String(id))
+    courses = courses.filter((c: any) => String(c.id).trim() !== cleanId)
     await writeCourses(courses)
-    return NextResponse.json({ success: true })
+
+    try {
+      revalidatePath("/admin/kurslar")
+      revalidatePath("/kurslar")
+      revalidatePath("/courses")
+      revalidatePath("/")
+    } catch {}
+
+    return NextResponse.json({ success: true }, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    })
   } catch (error) {
+    console.error("DELETE /api/courses error:", error)
     return NextResponse.json({ error: "Failed to delete course" }, { status: 500 })
   }
 }
+

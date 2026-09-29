@@ -20,6 +20,11 @@ type Course = {
   neonColor?: string
 }
 
+type Toast = {
+  type: "success" | "error" | "info"
+  message: string
+}
+
 export default function AdminKurslarPage() {
   const { status } = useSession()
   const router = useRouter()
@@ -32,29 +37,49 @@ export default function AdminKurslarPage() {
   const [form, setForm] = useState<Partial<Course>>({})
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [toast, setToast] = useState<Toast | null>(null)
+
+  const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
+    setToast({ message, type })
+    setTimeout(() => {
+      setToast((curr) => (curr?.message === message ? null : curr))
+    }, 4000)
+  }
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/admin")
   }, [status, router])
 
-  const fetchCourses = async () => {
+  const fetchCourses = async (showLoading = true) => {
     try {
-      setLoading(true)
-      const res = await fetch("/api/courses")
+      if (showLoading) setLoading(true)
+      const res = await fetch(`/api/courses?t=${Date.now()}&_nonce=${Math.random().toString(36).slice(2)}`, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      })
       if (res.ok) {
         const data = await res.json()
-        setCourses(data)
+        if (Array.isArray(data)) {
+          setCourses(data)
+        }
+      } else {
+        showToast("Kursları yükləmək mümkün olmadı.", "error")
       }
     } catch (err) {
       console.error(err)
+      showToast("Şəbəkə xətası baş verdi.", "error")
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchCourses()
+    fetchCourses(true)
   }, [])
 
   const openAdd = () => {
@@ -75,50 +100,93 @@ export default function AdminKurslarPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.title || !form.category) return
+    if (!form.title?.trim() || !form.category?.trim()) {
+      showToast("Kursun adı və kateqoriyası daxil edilməlidir.", "error")
+      return
+    }
     setSaving(true)
 
     try {
       if (modal === "add") {
         const res = await fetch("/api/courses", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
           body: JSON.stringify(form),
         })
         if (res.ok) {
-          await fetchCourses()
+          const newCourse = await res.json().catch(() => null)
+          if (newCourse && newCourse.id) {
+            setCourses((prev) => [newCourse, ...prev])
+          }
           setModal(null)
           setForm({})
+          showToast("Yeni kurs uğurla əlavə edildi!", "success")
+          fetchCourses(false)
+        } else {
+          const err = await res.json().catch(() => ({}))
+          showToast(err.error || "Kurs əlavə edilərkən xəta baş verdi.", "error")
         }
       } else if (modal === "edit" && editItem) {
+        const targetId = String(editItem.id).trim()
+        const updatePayload = { ...editItem, ...form, id: targetId }
         const res = await fetch("/api/courses", {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...editItem, ...form }),
+          headers: { 
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
+          body: JSON.stringify(updatePayload),
         })
         if (res.ok) {
-          await fetchCourses()
+          const updated = await res.json().catch(() => null)
+          const merged = updated && updated.id ? updated : updatePayload
+          setCourses((prev) =>
+            prev.map((c) => (String(c.id).trim() === targetId ? { ...c, ...merged } : c))
+          )
           setModal(null)
           setForm({})
           setEditItem(null)
+          showToast("Kurs məlumatları uğurla yeniləndi!", "success")
+          fetchCourses(false)
+        } else {
+          const err = await res.json().catch(() => ({}))
+          showToast(err.error || "Kurs yenilənərkən xəta baş verdi.", "error")
         }
       }
     } catch (err) {
       console.error(err)
+      showToast("Serverlə əlaqə qurulmadı.", "error")
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: string) => {
+    setDeleting(true)
+    const cleanId = String(id).trim()
     try {
-      const res = await fetch(`/api/courses?id=${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/courses?id=${encodeURIComponent(cleanId)}&t=${Date.now()}`, { 
+        method: "DELETE",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+      })
       if (res.ok) {
-        setCourses(courses.filter((c) => c.id !== id))
+        setCourses((prev) => prev.filter((c) => String(c.id).trim() !== cleanId))
         setDeleteId(null)
+        showToast("Kurs uğurla silindi!", "success")
+        fetchCourses(false)
+      } else {
+        showToast("Kurs silinərkən xəta baş verdi.", "error")
       }
     } catch (err) {
       console.error(err)
+      showToast("Şəbəkə xətası baş verdi.", "error")
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -134,12 +202,13 @@ export default function AdminKurslarPage() {
       if (res.ok) {
         const data = await res.json()
         setForm((prev) => ({ ...prev, image: data.url }))
+        showToast("Şəkil uğurla yükləndi!", "success")
       } else {
         const err = await res.json().catch(() => ({}))
-        alert(err.error || "Şəkil yüklənərkən xəta baş verdi.")
+        showToast(err.error || "Şəkil yüklənərkən xəta baş verdi.", "error")
       }
     } catch {
-      alert("Şəbəkə xətası baş verdi.")
+      showToast("Şəbəkə xətası baş verdi.", "error")
     } finally {
       setUploading(false)
     }
@@ -165,6 +234,34 @@ export default function AdminKurslarPage() {
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
       <AdminSidebar />
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-xl backdrop-blur-md transition-all duration-300 ${
+            toast.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+              : toast.type === "error"
+              ? "border-rose-200 bg-rose-50 text-rose-950"
+              : "border-sky-200 bg-sky-50 text-sky-950"
+          }`}
+        >
+          <div
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+              toast.type === "success"
+                ? "bg-emerald-600 text-white"
+                : toast.type === "error"
+                ? "bg-rose-600 text-white"
+                : "bg-sky-600 text-white"
+            }`}
+          >
+            {toast.type === "success" ? "✓" : toast.type === "error" ? "✕" : "i"}
+          </div>
+          <span className="text-xs font-bold">{toast.message}</span>
+        </div>
+      )}
 
       <main className="flex-1 overflow-y-auto px-6 py-8 sm:px-10 lg:px-12">
         {/* Header */}

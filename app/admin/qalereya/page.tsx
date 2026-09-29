@@ -16,6 +16,11 @@ type GalleryItem = {
   featured?: boolean
 }
 
+type Toast = {
+  type: "success" | "error" | "info"
+  message: string
+}
+
 export default function AdminQalereyaPage() {
   const { status } = useSession()
   const router = useRouter()
@@ -27,28 +32,48 @@ export default function AdminQalereyaPage() {
   const [form, setForm] = useState<Partial<GalleryItem>>({})
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [toast, setToast] = useState<Toast | null>(null)
+
+  const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
+    setToast({ message, type })
+    setTimeout(() => {
+      setToast((curr) => (curr?.message === message ? null : curr))
+    }, 4000)
+  }
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/admin")
   }, [status, router])
 
-  const fetchGallery = async () => {
+  const fetchGallery = async (showLoading = true) => {
     try {
-      setLoading(true)
-      const res = await fetch("/api/gallery")
+      if (showLoading) setLoading(true)
+      const res = await fetch(`/api/gallery?t=${Date.now()}&_nonce=${Math.random().toString(36).slice(2)}`, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      })
       if (res.ok) {
         const data = await res.json()
-        setItems(data)
+        if (Array.isArray(data)) {
+          setItems(data)
+        }
+      } else {
+        showToast("Qalereyanı yükləmək mümkün olmadı.", "error")
       }
     } catch (err) {
       console.error(err)
+      showToast("Şəbəkə xətası baş verdi.", "error")
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchGallery()
+    fetchGallery(true)
   }, [])
 
   const openAdd = () => {
@@ -69,50 +94,93 @@ export default function AdminQalereyaPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.title || !form.src) return
+    if (!form.title?.trim() || !form.src?.trim()) {
+      showToast("Şəkil başlığı və fayl seçilməlidir.", "error")
+      return
+    }
     setSaving(true)
 
     try {
       if (modal === "add") {
         const res = await fetch("/api/gallery", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
           body: JSON.stringify(form),
         })
         if (res.ok) {
-          await fetchGallery()
+          const newItem = await res.json().catch(() => null)
+          if (newItem && newItem.id) {
+            setItems((prev) => [newItem, ...prev])
+          }
           setModal(null)
           setForm({})
+          showToast("Yeni şəkil uğurla əlavə edildi!", "success")
+          fetchGallery(false)
+        } else {
+          const err = await res.json().catch(() => ({}))
+          showToast(err.error || "Şəkil əlavə edilərkən xəta baş verdi.", "error")
         }
       } else if (modal === "edit" && editItem) {
+        const targetId = String(editItem.id).trim()
+        const updatePayload = { ...editItem, ...form, id: targetId }
         const res = await fetch("/api/gallery", {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...editItem, ...form }),
+          headers: { 
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
+          body: JSON.stringify(updatePayload),
         })
         if (res.ok) {
-          await fetchGallery()
+          const updated = await res.json().catch(() => null)
+          const merged = updated && updated.id ? updated : updatePayload
+          setItems((prev) =>
+            prev.map((i) => (String(i.id).trim() === targetId ? { ...i, ...merged } : i))
+          )
           setModal(null)
           setForm({})
           setEditItem(null)
+          showToast("Şəkil məlumatları uğurla yeniləndi!", "success")
+          fetchGallery(false)
+        } else {
+          const err = await res.json().catch(() => ({}))
+          showToast(err.error || "Şəkil yenilənərkən xəta baş verdi.", "error")
         }
       }
     } catch (err) {
       console.error(err)
+      showToast("Serverlə əlaqə qurulmadı.", "error")
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: string) => {
+    setDeleting(true)
+    const cleanId = String(id).trim()
     try {
-      const res = await fetch(`/api/gallery?id=${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/gallery?id=${encodeURIComponent(cleanId)}&t=${Date.now()}`, { 
+        method: "DELETE",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+      })
       if (res.ok) {
-        setItems(items.filter((item) => item.id !== id))
+        setItems((prev) => prev.filter((item) => String(item.id).trim() !== cleanId))
         setDeleteId(null)
+        showToast("Şəkil uğurla silindi!", "success")
+        fetchGallery(false)
+      } else {
+        showToast("Şəkil silinərkən xəta baş verdi.", "error")
       }
     } catch (err) {
       console.error(err)
+      showToast("Şəbəkə xətası baş verdi.", "error")
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -121,6 +189,34 @@ export default function AdminQalereyaPage() {
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
       <AdminSidebar />
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-xl backdrop-blur-md transition-all duration-300 ${
+            toast.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+              : toast.type === "error"
+              ? "border-rose-200 bg-rose-50 text-rose-950"
+              : "border-sky-200 bg-sky-50 text-sky-950"
+          }`}
+        >
+          <div
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+              toast.type === "success"
+                ? "bg-emerald-600 text-white"
+                : toast.type === "error"
+                ? "bg-rose-600 text-white"
+                : "bg-sky-600 text-white"
+            }`}
+          >
+            {toast.type === "success" ? "✓" : toast.type === "error" ? "✕" : "i"}
+          </div>
+          <span className="text-xs font-bold">{toast.message}</span>
+        </div>
+      )}
 
       <main className="flex-1 overflow-y-auto px-6 py-8 sm:px-10 lg:px-12">
         {/* Header */}

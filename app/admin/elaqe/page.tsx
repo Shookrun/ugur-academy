@@ -15,6 +15,11 @@ type BranchInfo = {
   mapSrc: string
 }
 
+type Toast = {
+  type: "success" | "error" | "info"
+  message: string
+}
+
 export default function AdminElaqePage() {
   const { status } = useSession()
   const router = useRouter()
@@ -26,28 +31,48 @@ export default function AdminElaqePage() {
   const [form, setForm] = useState<Partial<BranchInfo>>({})
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [toast, setToast] = useState<Toast | null>(null)
+
+  const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
+    setToast({ message, type })
+    setTimeout(() => {
+      setToast((curr) => (curr?.message === message ? null : curr))
+    }, 4000)
+  }
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/admin")
   }, [status, router])
 
-  const fetchBranches = async () => {
+  const fetchBranches = async (showLoading = true) => {
     try {
-      setLoading(true)
-      const res = await fetch("/api/contact")
+      if (showLoading) setLoading(true)
+      const res = await fetch(`/api/contact?t=${Date.now()}&_nonce=${Math.random().toString(36).slice(2)}`, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      })
       if (res.ok) {
         const data = await res.json()
-        setBranches(data)
+        if (Array.isArray(data)) {
+          setBranches(data)
+        }
+      } else {
+        showToast("Filialları yükləmək mümkün olmadı.", "error")
       }
     } catch (err) {
       console.error(err)
+      showToast("Şəbəkə xətası baş verdi.", "error")
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchBranches()
+    fetchBranches(true)
   }, [])
 
   const openAdd = () => {
@@ -70,56 +95,127 @@ export default function AdminElaqePage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.city || !form.address) return
+    if (!form.city?.trim() || !form.address?.trim()) {
+      showToast("Şəhər və ünvan qeyd olunmalıdır.", "error")
+      return
+    }
     setSaving(true)
 
     try {
       if (modal === "add") {
         const res = await fetch("/api/contact", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
           body: JSON.stringify(form),
         })
         if (res.ok) {
-          await fetchBranches()
+          const newBranch = await res.json().catch(() => null)
+          if (newBranch && newBranch.id) {
+            setBranches((prev) => [newBranch, ...prev])
+          }
           setModal(null)
           setForm({})
+          showToast("Yeni filial uğurla əlavə edildi!", "success")
+          fetchBranches(false)
+        } else {
+          const err = await res.json().catch(() => ({}))
+          showToast(err.error || "Filial əlavə edilərkən xəta baş verdi.", "error")
         }
       } else if (modal === "edit" && editItem) {
+        const targetId = String(editItem.id).trim()
+        const updatePayload = { ...editItem, ...form, id: targetId }
         const res = await fetch("/api/contact", {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...editItem, ...form }),
+          headers: { 
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
+          body: JSON.stringify(updatePayload),
         })
         if (res.ok) {
-          await fetchBranches()
+          const updated = await res.json().catch(() => null)
+          const merged = updated && updated.id ? updated : updatePayload
+          setBranches((prev) =>
+            prev.map((b) => (String(b.id).trim() === targetId ? { ...b, ...merged } : b))
+          )
           setModal(null)
           setForm({})
           setEditItem(null)
+          showToast("Filial məlumatları uğurla yeniləndi!", "success")
+          fetchBranches(false)
+        } else {
+          const err = await res.json().catch(() => ({}))
+          showToast(err.error || "Filial yenilənərkən xəta baş verdi.", "error")
         }
       }
     } catch (err) {
       console.error(err)
+      showToast("Serverlə əlaqə qurulmadı.", "error")
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: string) => {
+    setDeleting(true)
+    const cleanId = String(id).trim()
     try {
-      const res = await fetch(`/api/contact?id=${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/contact?id=${encodeURIComponent(cleanId)}&t=${Date.now()}`, { 
+        method: "DELETE",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+      })
       if (res.ok) {
-        setBranches(branches.filter((b) => b.id !== id))
+        setBranches((prev) => prev.filter((b) => String(b.id).trim() !== cleanId))
         setDeleteId(null)
+        showToast("Filial uğurla silindi!", "success")
+        fetchBranches(false)
+      } else {
+        showToast("Filial silinərkən xəta baş verdi.", "error")
       }
     } catch (err) {
       console.error(err)
+      showToast("Şəbəkə xətası baş verdi.", "error")
+    } finally {
+      setDeleting(false)
     }
   }
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
       <AdminSidebar />
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-xl backdrop-blur-md transition-all duration-300 ${
+            toast.type === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+              : toast.type === "error"
+              ? "border-rose-200 bg-rose-50 text-rose-950"
+              : "border-sky-200 bg-sky-50 text-sky-950"
+          }`}
+        >
+          <div
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+              toast.type === "success"
+                ? "bg-emerald-600 text-white"
+                : toast.type === "error"
+                ? "bg-rose-600 text-white"
+                : "bg-sky-600 text-white"
+            }`}
+          >
+            {toast.type === "success" ? "✓" : toast.type === "error" ? "✕" : "i"}
+          </div>
+          <span className="text-xs font-bold">{toast.message}</span>
+        </div>
+      )}
 
       <main className="flex-1 overflow-y-auto px-6 py-8 sm:px-10 lg:px-12">
         {/* Header */}

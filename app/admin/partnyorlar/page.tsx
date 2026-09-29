@@ -192,6 +192,7 @@ export default function AdminPartnyorlarPage() {
           setModal(null)
           setForm({})
           showToast("Yeni əməkdaş uğurla əlavə edildi!", "success")
+          fetchPartners(false)
         } else {
           const err = await res.json().catch(() => ({}))
           showToast(err.error || "Əməkdaş əlavə edilərkən xəta baş verdi.", "error")
@@ -229,6 +230,7 @@ export default function AdminPartnyorlarPage() {
           setForm({})
           setEditItem(null)
           showToast("Əməkdaş məlumatları uğurla yeniləndi!", "success")
+          fetchPartners(false)
         } else {
           const err = await res.json().catch(() => ({}))
           showToast(err.error || "Əməkdaş məlumatları yenilənərkən xəta baş verdi.", "error")
@@ -256,6 +258,7 @@ export default function AdminPartnyorlarPage() {
         setItems((prev) => prev.filter((item) => String(item.id).trim() !== String(id).trim() && item.slug !== String(id).trim()))
         setDeleteId(null)
         showToast("Əməkdaş uğurla silindi!", "success")
+        fetchPartners(false)
       } else {
         showToast("Əməkdaş silinərkən xəta baş verdi.", "error")
       }
