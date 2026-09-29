@@ -2,6 +2,13 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 
+import fs from "fs/promises"
+import path from "path"
+import os from "os"
+
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 export const metadata: Metadata = {
   title: "Haqqımızda | Uğur Şəxsi İnkişaf Mərkəzi",
   description:
@@ -38,7 +45,7 @@ const values = [
   },
 ]
 
-const teamMembers = [
+const fallbackTeam = [
   { name: "Aynur Ələkbərova", role: "Kurikulum Direktoru", image: "/Aynur Ələkbərova.jpg" },
   { name: "Fidan Məmmədli", role: "Tədris Koordinatoru", image: "/Fidan Məmmədli.jpg" },
   { name: "Gülnaz Cəfərova", role: "Psixoloq", image: "/Gülnaz Cəfərova.jpg" },
@@ -48,7 +55,39 @@ const teamMembers = [
   { name: "Səkinə Babayeva", role: "Riyaziyyat Müəllimi", image: "/Səkinə Babayeva.jpg" },
 ]
 
-export default function AboutPage() {
+async function getLiveTeam() {
+  try {
+    const dataFilePath = path.join(process.cwd(), "data", "dynamic_partners.json")
+    const file = await fs.readFile(dataFilePath, "utf-8")
+    const list = JSON.parse(file)
+    if (Array.isArray(list) && list.length > 0) {
+      return list.map((p: any) => ({
+        name: p.name,
+        role: p.position || "Əməkdaş",
+        image: p.logo || "/Mehman Bayramov.jpg",
+        slug: p.slug,
+      }))
+    }
+  } catch {}
+
+  try {
+    const tmp = await fs.readFile(path.join(os.tmpdir(), "dynamic_partners.json"), "utf-8")
+    const list = JSON.parse(tmp)
+    if (Array.isArray(list) && list.length > 0) {
+      return list.map((p: any) => ({
+        name: p.name,
+        role: p.position || "Əməkdaş",
+        image: p.logo || "/Mehman Bayramov.jpg",
+        slug: p.slug,
+      }))
+    }
+  } catch {}
+
+  return fallbackTeam
+}
+
+export default async function AboutPage() {
+  const teamMembers = await getLiveTeam()
   return (
     <div className="relative min-h-screen pt-28 pb-24 sm:pt-32">
       <div className="mx-auto max-w-[1400px] px-6 sm:px-8 lg:px-10">

@@ -59,7 +59,13 @@ export default function Partners() {
   const sliderRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    fetch(`/api/partners?t=${Date.now()}`, { cache: "no-store" })
+    fetch(`/api/partners?t=${Date.now()}&_nonce=${Math.random().toString(36).slice(2)}`, { 
+      cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+      }
+    })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && Array.isArray(data) && data.length > 0) {

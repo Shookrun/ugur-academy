@@ -167,6 +167,7 @@ export async function POST(req: NextRequest) {
       revalidatePath("/admin/partnyorlar")
       revalidatePath("/emekdaslar")
       revalidatePath("/emekdaslar/[slug]", "page")
+      revalidatePath("/haqqimizda")
       revalidatePath("/")
     } catch {}
 
@@ -238,6 +239,7 @@ export async function PUT(req: NextRequest) {
       revalidatePath("/admin/partnyorlar")
       revalidatePath("/emekdaslar")
       revalidatePath("/emekdaslar/[slug]", "page")
+      revalidatePath("/haqqimizda")
       revalidatePath("/")
     } catch {}
 
@@ -268,6 +270,7 @@ export async function DELETE(req: NextRequest) {
       revalidatePath("/admin/partnyorlar")
       revalidatePath("/emekdaslar")
       revalidatePath("/emekdaslar/[slug]", "page")
+      revalidatePath("/haqqimizda")
       revalidatePath("/")
     } catch {}
 

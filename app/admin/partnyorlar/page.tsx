@@ -80,10 +80,10 @@ export default function AdminPartnyorlarPage() {
   const fetchPartners = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true)
-      const res = await fetch(`/api/partners?t=${Date.now()}`, {
+      const res = await fetch(`/api/partners?t=${Date.now()}&_nonce=${Math.random().toString(36).slice(2)}`, {
         cache: "no-store",
         headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
           Pragma: "no-cache",
         },
       })
@@ -192,7 +192,6 @@ export default function AdminPartnyorlarPage() {
           setModal(null)
           setForm({})
           showToast("Yeni əməkdaş uğurla əlavə edildi!", "success")
-          fetchPartners(false)
         } else {
           const err = await res.json().catch(() => ({}))
           showToast(err.error || "Əməkdaş əlavə edilərkən xəta baş verdi.", "error")
@@ -209,27 +208,27 @@ export default function AdminPartnyorlarPage() {
           method: "PUT",
           headers: { 
             "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
           },
           body: JSON.stringify(updatePayload),
         })
 
         if (res.ok) {
           const updatedPartner = await res.json().catch(() => null)
-          if (updatedPartner && updatedPartner.id) {
-            setItems((prev) =>
-              prev.map((item) =>
-                String(item.id).trim() === String(updatedPartner.id).trim() || item.slug === updatedPartner.slug
-                  ? { ...item, ...updatedPartner }
-                  : item
-              )
+          const mergedPartner = updatedPartner && updatedPartner.id ? updatedPartner : updatePayload
+          
+          setItems((prev) =>
+            prev.map((item) =>
+              String(item.id).trim() === String(mergedPartner.id).trim() || (mergedPartner.slug && item.slug === mergedPartner.slug)
+                ? { ...item, ...mergedPartner }
+                : item
             )
-          }
+          )
           setModal(null)
           setForm({})
           setEditItem(null)
           showToast("Əməkdaş məlumatları uğurla yeniləndi!", "success")
-          fetchPartners(false)
         } else {
           const err = await res.json().catch(() => ({}))
           showToast(err.error || "Əməkdaş məlumatları yenilənərkən xəta baş verdi.", "error")
@@ -246,12 +245,17 @@ export default function AdminPartnyorlarPage() {
   const handleDelete = async (id: string) => {
     setDeleting(true)
     try {
-      const res = await fetch(`/api/partners?id=${encodeURIComponent(id)}`, { method: "DELETE" })
+      const res = await fetch(`/api/partners?id=${encodeURIComponent(id)}&t=${Date.now()}`, { 
+        method: "DELETE",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      })
       if (res.ok) {
         setItems((prev) => prev.filter((item) => String(item.id).trim() !== String(id).trim() && item.slug !== String(id).trim()))
         setDeleteId(null)
         showToast("Əməkdaş uğurla silindi!", "success")
-        fetchPartners(false)
       } else {
         showToast("Əməkdaş silinərkən xəta baş verdi.", "error")
       }

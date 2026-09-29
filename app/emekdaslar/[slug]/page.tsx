@@ -44,35 +44,34 @@ function formatPartnerData(p: any): Partner {
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-async function findLivePartner(slug: string): Promise<Partner | undefined> {
+async function getAllLivePartners(): Promise<Partner[]> {
   // 1. local dynamic_partners.json (primary source of truth)
   try {
     const local = await fs.readFile(path.join(process.cwd(), "data", "dynamic_partners.json"), "utf-8")
     const list = JSON.parse(local)
-    const found = list.find((p: any) => p.slug === slug || String(p.id) === slug)
-    if (found) return formatPartnerData(found)
+    if (Array.isArray(list) && list.length > 0) return list.map(formatPartnerData)
   } catch {}
 
   // 2. /tmp (writable in serverless environments)
   try {
     const tmp = await fs.readFile(path.join(os.tmpdir(), "dynamic_partners.json"), "utf-8")
     const list = JSON.parse(tmp)
-    const found = list.find((p: any) => p.slug === slug || String(p.id) === slug)
-    if (found) return formatPartnerData(found)
+    if (Array.isArray(list) && list.length > 0) return list.map(formatPartnerData)
   } catch {}
 
   // 3. in-memory
   const mem = (globalThis as any).__partnersMemoryStore
   if (Array.isArray(mem) && mem.length > 0) {
-    const found = mem.find((p: any) => p.slug === slug || String(p.id) === slug)
-    if (found) return formatPartnerData(found)
+    return mem.map(formatPartnerData)
   }
 
   // 4. static fallback
-  const staticP = getPartnerBySlug(slug)
-  if (staticP) return formatPartnerData(staticP)
+  return partnersData
+}
 
-  return undefined
+async function findLivePartner(slug: string): Promise<Partner | undefined> {
+  const all = await getAllLivePartners()
+  return all.find((p) => p.slug === slug || String(p.id) === slug)
 }
 
 export async function generateStaticParams() {
@@ -99,13 +98,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function PartnerDetailPage({ params }: Props) {
   const { slug } = await params
-  const partner = await findLivePartner(slug)
+  const allPartners = await getAllLivePartners()
+  const partner = allPartners.find((p) => p.slug === slug || String(p.id) === slug)
 
   if (!partner) {
     notFound()
   }
 
-  const otherPartners = partnersData.filter((p) => p.slug !== partner.slug).slice(0, 3)
+  const otherPartners = allPartners.filter((p) => p.slug !== partner.slug).slice(0, 3)
 
   return (
     <div className="relative min-h-screen pt-24 pb-20 sm:pt-28">
