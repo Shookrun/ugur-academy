@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
+import { revalidatePath } from "next/cache"
 import fs from "fs/promises"
 import path from "path"
 import os from "os"
 import { partnersData } from "@/data/partners"
+
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 const localDataFilePath = path.join(process.cwd(), "data", "dynamic_partners.json")
 const tmpDataFilePath = path.join(os.tmpdir(), "dynamic_partners.json")
@@ -51,22 +55,7 @@ function slugify(text: string): string {
 }
 
 async function readPartners(): Promise<any[]> {
-  // 1. In-memory store
-  if (Array.isArray(globalThis.__partnersMemoryStore) && globalThis.__partnersMemoryStore.length > 0) {
-    return globalThis.__partnersMemoryStore
-  }
-
-  // 2. Try reading from /tmp (writable in all serverless/container environments)
-  try {
-    const tmpContent = await fs.readFile(tmpDataFilePath, "utf-8")
-    const parsed = JSON.parse(tmpContent)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__partnersMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
-
-  // 3. Try reading from local project data directory
+  // 1. Try reading from local project data directory (primary source of truth)
   try {
     const localContent = await fs.readFile(localDataFilePath, "utf-8")
     const parsed = JSON.parse(localContent)
@@ -76,13 +65,28 @@ async function readPartners(): Promise<any[]> {
     }
   } catch {}
 
+  // 2. Try reading from /tmp (writable in serverless environments)
+  try {
+    const tmpContent = await fs.readFile(tmpDataFilePath, "utf-8")
+    const parsed = JSON.parse(tmpContent)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      globalThis.__partnersMemoryStore = parsed
+      return parsed
+    }
+  } catch {}
+
+  // 3. In-memory store
+  if (Array.isArray(globalThis.__partnersMemoryStore) && globalThis.__partnersMemoryStore.length > 0) {
+    return globalThis.__partnersMemoryStore
+  }
+
   // 4. Fallback to initial static seed data
   globalThis.__partnersMemoryStore = [...initialPartners]
   try {
-    await fs.writeFile(tmpDataFilePath, JSON.stringify(initialPartners, null, 2), "utf-8")
+    await fs.writeFile(localDataFilePath, JSON.stringify(initialPartners, null, 2), "utf-8")
   } catch {}
   try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(initialPartners, null, 2), "utf-8")
+    await fs.writeFile(tmpDataFilePath, JSON.stringify(initialPartners, null, 2), "utf-8")
   } catch {}
 
   return initialPartners
@@ -90,27 +94,33 @@ async function readPartners(): Promise<any[]> {
 
 async function writePartners(data: any[]): Promise<void> {
   // 1. Always keep current state in-memory
-  globalThis.__partnersMemoryStore = data
+  globalThis.__partnersMemoryStore = [...data]
 
-  // 2. Write to /tmp (guaranteed writable on Vercel / Linux / Windows)
+  // 2. Write to local project directory (local development & persistent systems)
+  try {
+    await fs.writeFile(localDataFilePath, JSON.stringify(data, null, 2), "utf-8")
+  } catch (err) {
+    console.warn("Could not write to local data directory:", err)
+  }
+
+  // 3. Write to /tmp (guaranteed writable on Vercel / Linux / Windows)
   try {
     await fs.writeFile(tmpDataFilePath, JSON.stringify(data, null, 2), "utf-8")
   } catch (err) {
     console.warn("Could not write to tmp directory:", err)
-  }
-
-  // 3. Write to local project directory (local development)
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch {
-    // Gracefully ignore on read-only environments like Vercel Lambda
   }
 }
 
 export async function GET() {
   try {
     const partners = await readPartners()
-    return NextResponse.json(partners)
+    return NextResponse.json(partners, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    })
   } catch (error) {
     console.error("GET /api/partners error:", error)
     return NextResponse.json({ error: "Failed to read partners" }, { status: 500 })
@@ -152,7 +162,20 @@ export async function POST(req: NextRequest) {
 
     partners.push(newPartner)
     await writePartners(partners)
-    return NextResponse.json(newPartner, { status: 201 })
+
+    try {
+      revalidatePath("/admin/partnyorlar")
+      revalidatePath("/emekdaslar")
+      revalidatePath("/emekdaslar/[slug]", "page")
+      revalidatePath("/")
+    } catch {}
+
+    return NextResponse.json(newPartner, {
+      status: 201,
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    })
   } catch (error) {
     console.error("POST /api/partners error:", error)
     return NextResponse.json({ error: "Əməkdaş əlavə edilərkən server xətası baş verdi" }, { status: 500 })
@@ -179,7 +202,7 @@ export async function PUT(req: NextRequest) {
       index = partners.findIndex((p: any) => p.slug === body.slug)
     }
     if (index === -1 && body.name) {
-      index = partners.findIndex((p: any) => p.name === body.name)
+      index = partners.findIndex((p: any) => p.name?.trim().toLowerCase() === String(body.name).trim().toLowerCase())
     }
 
     if (index === -1) {
@@ -210,7 +233,19 @@ export async function PUT(req: NextRequest) {
     }
 
     await writePartners(partners)
-    return NextResponse.json(partners[index])
+
+    try {
+      revalidatePath("/admin/partnyorlar")
+      revalidatePath("/emekdaslar")
+      revalidatePath("/emekdaslar/[slug]", "page")
+      revalidatePath("/")
+    } catch {}
+
+    return NextResponse.json(partners[index], {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    })
   } catch (error) {
     console.error("PUT /api/partners error:", error)
     return NextResponse.json({ error: "Əməkdaş məlumatları yenilənərkən server xətası baş verdi" }, { status: 500 })
@@ -228,7 +263,19 @@ export async function DELETE(req: NextRequest) {
     let partners = await readPartners()
     partners = partners.filter((p: any) => String(p.id).trim() !== cleanId && p.slug !== cleanId)
     await writePartners(partners)
-    return NextResponse.json({ success: true })
+
+    try {
+      revalidatePath("/admin/partnyorlar")
+      revalidatePath("/emekdaslar")
+      revalidatePath("/emekdaslar/[slug]", "page")
+      revalidatePath("/")
+    } catch {}
+
+    return NextResponse.json({ success: true }, {
+      headers: {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    })
   } catch (error) {
     console.error("DELETE /api/partners error:", error)
     return NextResponse.json({ error: "Failed to delete partner" }, { status: 500 })

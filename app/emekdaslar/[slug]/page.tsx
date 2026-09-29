@@ -41,15 +41,19 @@ function formatPartnerData(p: any): Partner {
   }
 }
 
-async function findLivePartner(slug: string): Promise<Partner | undefined> {
-  // 1. In-memory
-  const mem = (globalThis as any).__partnersMemoryStore
-  if (Array.isArray(mem) && mem.length > 0) {
-    const found = mem.find((p: any) => p.slug === slug || String(p.id) === slug)
-    if (found) return formatPartnerData(found)
-  }
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
-  // 2. /tmp
+async function findLivePartner(slug: string): Promise<Partner | undefined> {
+  // 1. local dynamic_partners.json (primary source of truth)
+  try {
+    const local = await fs.readFile(path.join(process.cwd(), "data", "dynamic_partners.json"), "utf-8")
+    const list = JSON.parse(local)
+    const found = list.find((p: any) => p.slug === slug || String(p.id) === slug)
+    if (found) return formatPartnerData(found)
+  } catch {}
+
+  // 2. /tmp (writable in serverless environments)
   try {
     const tmp = await fs.readFile(path.join(os.tmpdir(), "dynamic_partners.json"), "utf-8")
     const list = JSON.parse(tmp)
@@ -57,13 +61,12 @@ async function findLivePartner(slug: string): Promise<Partner | undefined> {
     if (found) return formatPartnerData(found)
   } catch {}
 
-  // 3. local dynamic_partners.json
-  try {
-    const local = await fs.readFile(path.join(process.cwd(), "data", "dynamic_partners.json"), "utf-8")
-    const list = JSON.parse(local)
-    const found = list.find((p: any) => p.slug === slug || String(p.id) === slug)
+  // 3. in-memory
+  const mem = (globalThis as any).__partnersMemoryStore
+  if (Array.isArray(mem) && mem.length > 0) {
+    const found = mem.find((p: any) => p.slug === slug || String(p.id) === slug)
     if (found) return formatPartnerData(found)
-  } catch {}
+  }
 
   // 4. static fallback
   const staticP = getPartnerBySlug(slug)

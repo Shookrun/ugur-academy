@@ -7,6 +7,7 @@ import AdminSidebar from "../AdminSidebar"
 
 type PartnerAdmin = {
   id: string
+  slug?: string
   name: string
   position: string
   department: string
@@ -76,13 +77,21 @@ export default function AdminPartnyorlarPage() {
     if (status === "unauthenticated") router.replace("/admin")
   }, [status, router])
 
-  const fetchPartners = async () => {
+  const fetchPartners = async (showLoading = true) => {
     try {
-      setLoading(true)
-      const res = await fetch("/api/partners")
+      if (showLoading) setLoading(true)
+      const res = await fetch(`/api/partners?t=${Date.now()}`, {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      })
       if (res.ok) {
         const data = await res.json()
-        setItems(data)
+        if (Array.isArray(data)) {
+          setItems(data)
+        }
       } else {
         showToast("Əməkdaşlar siyahısını yükləmək mümkün olmadı.", "error")
       }
@@ -90,12 +99,12 @@ export default function AdminPartnyorlarPage() {
       console.error(err)
       showToast("Şəbəkə xətası baş verdi.", "error")
     } finally {
-      setLoading(false)
+      if (showLoading) setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchPartners()
+    fetchPartners(true)
   }, [])
 
   const openAdd = () => {
@@ -147,11 +156,6 @@ export default function AdminPartnyorlarPage() {
       return
     }
 
-    if (isTeacher && !form.specialty?.trim()) {
-      showToast("Müəllim üçün ixtisas sahəsini qeyd etmək mütləqdir.", "error")
-      return
-    }
-
     setSaving(true)
 
     const payload = {
@@ -173,25 +177,28 @@ export default function AdminPartnyorlarPage() {
       if (modal === "add") {
         const res = await fetch("/api/partners", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
           body: JSON.stringify(payload),
         })
 
         if (res.ok) {
           const newPartner = await res.json().catch(() => null)
           if (newPartner && newPartner.id) {
-            setItems((prev) => [newPartner, ...prev.filter((p) => String(p.id) !== String(newPartner.id))])
+            setItems((prev) => [newPartner, ...prev.filter((p) => String(p.id).trim() !== String(newPartner.id).trim())])
           }
-          await fetchPartners()
           setModal(null)
           setForm({})
           showToast("Yeni əməkdaş uğurla əlavə edildi!", "success")
+          fetchPartners(false)
         } else {
           const err = await res.json().catch(() => ({}))
           showToast(err.error || "Əməkdaş əlavə edilərkən xəta baş verdi.", "error")
         }
       } else if (modal === "edit") {
-        const targetId = editItem?.id || form.id
+        const targetId = editItem?.id !== undefined ? String(editItem.id).trim() : (form.id !== undefined ? String(form.id).trim() : "")
         const updatePayload = {
           ...editItem,
           ...payload,
@@ -200,7 +207,10 @@ export default function AdminPartnyorlarPage() {
 
         const res = await fetch("/api/partners", {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache",
+          },
           body: JSON.stringify(updatePayload),
         })
 
@@ -209,15 +219,17 @@ export default function AdminPartnyorlarPage() {
           if (updatedPartner && updatedPartner.id) {
             setItems((prev) =>
               prev.map((item) =>
-                String(item.id) === String(updatedPartner.id) ? { ...item, ...updatedPartner } : item
+                String(item.id).trim() === String(updatedPartner.id).trim() || item.slug === updatedPartner.slug
+                  ? { ...item, ...updatedPartner }
+                  : item
               )
             )
           }
-          await fetchPartners()
           setModal(null)
           setForm({})
           setEditItem(null)
           showToast("Əməkdaş məlumatları uğurla yeniləndi!", "success")
+          fetchPartners(false)
         } else {
           const err = await res.json().catch(() => ({}))
           showToast(err.error || "Əməkdaş məlumatları yenilənərkən xəta baş verdi.", "error")
@@ -234,11 +246,12 @@ export default function AdminPartnyorlarPage() {
   const handleDelete = async (id: string) => {
     setDeleting(true)
     try {
-      const res = await fetch(`/api/partners?id=${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/partners?id=${encodeURIComponent(id)}`, { method: "DELETE" })
       if (res.ok) {
-        setItems((prev) => prev.filter((item) => item.id !== id))
+        setItems((prev) => prev.filter((item) => String(item.id).trim() !== String(id).trim() && item.slug !== String(id).trim()))
         setDeleteId(null)
         showToast("Əməkdaş uğurla silindi!", "success")
+        fetchPartners(false)
       } else {
         showToast("Əməkdaş silinərkən xəta baş verdi.", "error")
       }
