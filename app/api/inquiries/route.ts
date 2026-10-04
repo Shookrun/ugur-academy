@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
-import fs from "fs/promises"
-import path from "path"
-import os from "os"
+import { readSeeded } from "@/lib/collection"
+import { setCollection } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-const localDataFilePath = path.join(process.cwd(), "data", "dynamic_inquiries.json")
-const tmpDataFilePath = path.join(os.tmpdir(), "dynamic_inquiries.json")
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __inquiriesMemoryStore: any[] | undefined
-}
+const COLLECTION_KEY = "inquiries"
 
 const initialInquiries = [
   {
@@ -75,51 +68,11 @@ const initialInquiries = [
 ]
 
 async function readInquiries(): Promise<any[]> {
-  // 1. Try local project file
-  try {
-    const file = await fs.readFile(localDataFilePath, "utf-8")
-    const parsed = JSON.parse(file)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__inquiriesMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
-
-  // 2. Try tmp file
-  try {
-    const tmp = await fs.readFile(tmpDataFilePath, "utf-8")
-    const parsed = JSON.parse(tmp)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__inquiriesMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
-
-  // 3. Memory store
-  if (Array.isArray(globalThis.__inquiriesMemoryStore) && globalThis.__inquiriesMemoryStore.length > 0) {
-    return globalThis.__inquiriesMemoryStore
-  }
-
-  // 4. Fallback to initial
-  globalThis.__inquiriesMemoryStore = [...initialInquiries]
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(initialInquiries, null, 2), "utf-8")
-  } catch {}
-  return initialInquiries
+  return readSeeded(COLLECTION_KEY, "dynamic_inquiries.json", initialInquiries)
 }
 
 async function writeInquiries(data: any[]): Promise<void> {
-  globalThis.__inquiriesMemoryStore = [...data]
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write inquiries to local path:", err)
-  }
-  try {
-    await fs.writeFile(tmpDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write inquiries to tmp path:", err)
-  }
+  await setCollection(COLLECTION_KEY, data)
 }
 
 export async function GET() {

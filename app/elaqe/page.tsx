@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
-import fs from "fs/promises"
-import path from "path"
+import { readSeeded } from "@/lib/collection"
+
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export const metadata: Metadata = {
   title: "Əlaqə | Uğur Şəxsi İnkişaf Mərkəzi",
@@ -47,9 +49,7 @@ const defaultBranches = [
 
 async function getLiveBranches() {
   try {
-    const dataFilePath = path.join(process.cwd(), "data", "dynamic_branches.json")
-    const file = await fs.readFile(dataFilePath, "utf-8")
-    const dynamicList = JSON.parse(file)
+    const dynamicList = await readSeeded<any>("branches", "dynamic_branches.json", defaultBranches)
     return defaultBranches.map((def) => {
       const match = dynamicList.find((d: any) => d.id === def.id)
       return match ? { ...def, ...match, phoneRaw: match.phoneRaw || match.phone?.replace(/[^0-9+]/g, "") } : def

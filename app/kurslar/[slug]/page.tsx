@@ -3,7 +3,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
-import { coursesData, getCourseBySlug, getAllCourseSlugs } from "@/data/courses"
+import { getMergedCourseBySlug, getMergedCourses } from "@/lib/liveCourses"
 import CourseSyllabusAccordion from "@/components/courses/CourseSyllabusAccordion"
 import CourseEnrollmentForm from "@/components/courses/CourseEnrollmentForm"
 import CourseFaqAccordion from "@/components/courses/CourseFaqAccordion"
@@ -13,14 +13,12 @@ interface Props {
   params: Promise<{ slug: string }>
 }
 
-export async function generateStaticParams() {
-  const slugs = getAllCourseSlugs()
-  return slugs.map((slug) => ({ slug }))
-}
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
-  const course = getCourseBySlug(slug)
+  const course = await getMergedCourseBySlug(slug)
 
   if (!course) {
     return {
@@ -37,13 +35,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CourseDetailPage({ params }: Props) {
   const { slug } = await params
-  const course = getCourseBySlug(slug)
+  const course = await getMergedCourseBySlug(slug)
 
   if (!course) {
     notFound()
   }
 
-  const relatedCourses = coursesData.filter((c) => c.slug !== course.slug).slice(0, 3)
+  const relatedCourses = (await getMergedCourses()).filter((c) => c.slug !== course.slug).slice(0, 3)
 
   return (
     <div className="relative min-h-screen pt-24 pb-20 sm:pt-28">
@@ -139,6 +137,7 @@ export default async function CourseDetailPage({ params }: Props) {
             {/* ===================================================
                 WHAT YOU WILL LEARN
             ==================================================== */}
+            {course.whatYouWillLearn.length > 0 && (
             <div className="mt-10 rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm sm:p-8">
               <div className="flex items-center gap-3">
                 <span className="h-px w-8 bg-slate-950" />
@@ -166,10 +165,12 @@ export default async function CourseDetailPage({ params }: Props) {
                 ))}
               </div>
             </div>
+            )}
 
             {/* ===================================================
                 SYLLABUS / MODULES
             ==================================================== */}
+            {course.syllabus.length > 0 && (
             <div className="mt-10">
               <div className="mb-4 flex items-center justify-between">
                 <div>
@@ -190,10 +191,12 @@ export default async function CourseDetailPage({ params }: Props) {
 
               <CourseSyllabusAccordion syllabus={course.syllabus} />
             </div>
+            )}
 
             {/* ===================================================
                 CAREER & REQUIREMENTS
             ==================================================== */}
+            {(course.careerOpportunities.length > 0 || course.requirements.length > 0) && (
             <div className="mt-10 grid gap-6 sm:grid-cols-2">
               {/* Career Opportunities */}
               <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
@@ -231,10 +234,12 @@ export default async function CourseDetailPage({ params }: Props) {
                 </ul>
               </div>
             </div>
+            )}
 
             {/* ===================================================
                 INSTRUCTOR CARD
             ==================================================== */}
+            {course.instructor && (
             <div className="mt-10 rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-sm sm:p-8">
               <div className="flex items-center gap-3">
                 <span className="h-px w-8 bg-slate-950" />
@@ -277,10 +282,12 @@ export default async function CourseDetailPage({ params }: Props) {
                 </div>
               </div>
             </div>
+            )}
 
             {/* ===================================================
                 FAQ
             ==================================================== */}
+            {course.faq.length > 0 && (
             <div className="mt-10">
               <div className="mb-4">
                 <div className="flex items-center gap-3">
@@ -296,6 +303,7 @@ export default async function CourseDetailPage({ params }: Props) {
 
               <CourseFaqAccordion faqList={course.faq} />
             </div>
+            )}
           </div>
 
           {/* ===================================================

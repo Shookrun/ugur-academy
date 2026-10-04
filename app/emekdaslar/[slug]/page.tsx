@@ -5,9 +5,7 @@ import { notFound } from "next/navigation"
 
 import { partnersData, getPartnerBySlug, getAllPartnerSlugs, type Partner } from "@/data/partners"
 import PartnerContactForm from "@/components/partners/PartnerContactForm"
-import fs from "fs/promises"
-import path from "path"
-import os from "os"
+import { readSeededSafe } from "@/lib/collection"
 
 interface Props {
   params: Promise<{ slug: string }>
@@ -45,28 +43,8 @@ export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 async function getAllLivePartners(): Promise<Partner[]> {
-  // 1. local dynamic_partners.json (primary source of truth)
-  try {
-    const local = await fs.readFile(path.join(process.cwd(), "data", "dynamic_partners.json"), "utf-8")
-    const list = JSON.parse(local)
-    if (Array.isArray(list) && list.length > 0) return list.map(formatPartnerData)
-  } catch {}
-
-  // 2. /tmp (writable in serverless environments)
-  try {
-    const tmp = await fs.readFile(path.join(os.tmpdir(), "dynamic_partners.json"), "utf-8")
-    const list = JSON.parse(tmp)
-    if (Array.isArray(list) && list.length > 0) return list.map(formatPartnerData)
-  } catch {}
-
-  // 3. in-memory
-  const mem = (globalThis as any).__partnersMemoryStore
-  if (Array.isArray(mem) && mem.length > 0) {
-    return mem.map(formatPartnerData)
-  }
-
-  // 4. static fallback
-  return partnersData
+  const list = await readSeededSafe<any>("partners", "dynamic_partners.json", partnersData)
+  return list.length > 0 ? list.map(formatPartnerData) : partnersData
 }
 
 async function findLivePartner(slug: string): Promise<Partner | undefined> {

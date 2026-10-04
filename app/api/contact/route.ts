@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
-import fs from "fs/promises"
-import path from "path"
-import os from "os"
+import { readSeeded } from "@/lib/collection"
+import { setCollection } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-const localDataFilePath = path.join(process.cwd(), "data", "dynamic_branches.json")
-const tmpDataFilePath = path.join(os.tmpdir(), "dynamic_branches.json")
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __branchesMemoryStore: any[] | undefined
-}
+const COLLECTION_KEY = "branches"
 
 const defaultBranches = [
   {
@@ -41,51 +34,11 @@ const defaultBranches = [
 ]
 
 async function readBranches(): Promise<any[]> {
-  // 1. Local file
-  try {
-    const file = await fs.readFile(localDataFilePath, "utf-8")
-    const parsed = JSON.parse(file)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__branchesMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
-
-  // 2. /tmp file
-  try {
-    const tmp = await fs.readFile(tmpDataFilePath, "utf-8")
-    const parsed = JSON.parse(tmp)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__branchesMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
-
-  // 3. Memory store
-  if (Array.isArray(globalThis.__branchesMemoryStore) && globalThis.__branchesMemoryStore.length > 0) {
-    return globalThis.__branchesMemoryStore
-  }
-
-  // 4. Initial fallback
-  globalThis.__branchesMemoryStore = [...defaultBranches]
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(defaultBranches, null, 2), "utf-8")
-  } catch {}
-  return defaultBranches
+  return readSeeded(COLLECTION_KEY, "dynamic_branches.json", defaultBranches)
 }
 
 async function writeBranches(data: any[]): Promise<void> {
-  globalThis.__branchesMemoryStore = [...data]
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write branches to local path:", err)
-  }
-  try {
-    await fs.writeFile(tmpDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write branches to tmp path:", err)
-  }
+  await setCollection(COLLECTION_KEY, data)
 }
 
 export async function GET() {

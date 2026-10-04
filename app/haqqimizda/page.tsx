@@ -2,9 +2,8 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 
-import fs from "fs/promises"
-import path from "path"
-import os from "os"
+import { partnersData } from "@/data/partners"
+import { readSeededSafe } from "@/lib/collection"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -56,32 +55,15 @@ const fallbackTeam = [
 ]
 
 async function getLiveTeam() {
-  try {
-    const dataFilePath = path.join(process.cwd(), "data", "dynamic_partners.json")
-    const file = await fs.readFile(dataFilePath, "utf-8")
-    const list = JSON.parse(file)
-    if (Array.isArray(list) && list.length > 0) {
-      return list.map((p: any) => ({
-        name: p.name,
-        role: p.position || "Əməkdaş",
-        image: p.logo || "/Mehman Bayramov.jpg",
-        slug: p.slug,
-      }))
-    }
-  } catch {}
-
-  try {
-    const tmp = await fs.readFile(path.join(os.tmpdir(), "dynamic_partners.json"), "utf-8")
-    const list = JSON.parse(tmp)
-    if (Array.isArray(list) && list.length > 0) {
-      return list.map((p: any) => ({
-        name: p.name,
-        role: p.position || "Əməkdaş",
-        image: p.logo || "/Mehman Bayramov.jpg",
-        slug: p.slug,
-      }))
-    }
-  } catch {}
+  const list = await readSeededSafe<any>("partners", "dynamic_partners.json", partnersData as any[])
+  if (list.length > 0) {
+    return list.map((p: any) => ({
+      name: p.name,
+      role: p.position || "Əməkdaş",
+      image: p.logo || "/Mehman Bayramov.jpg",
+      slug: p.slug,
+    }))
+  }
 
   return fallbackTeam
 }

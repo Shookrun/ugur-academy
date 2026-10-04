@@ -1,9 +1,8 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
-import fs from "fs/promises"
-import path from "path"
 import { partnersData } from "@/data/partners"
+import { readSeededSafe } from "@/lib/collection"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -13,31 +12,9 @@ export const metadata: Metadata = {
   description: "Uğur Şəxsi İnkişaf Mərkəzinin peşəkar əməkdaşları və təlimçiləri ilə tanış olun.",
 }
 
-import os from "os"
-
-async function getLivePartners() {
-  // 1. Project data file (primary source of truth)
-  try {
-    const dataFilePath = path.join(process.cwd(), "data", "dynamic_partners.json")
-    const file = await fs.readFile(dataFilePath, "utf-8")
-    const list = JSON.parse(file)
-    if (Array.isArray(list) && list.length > 0) return list
-  } catch {}
-
-  // 2. /tmp directory (writable in serverless environments)
-  try {
-    const tmp = await fs.readFile(path.join(os.tmpdir(), "dynamic_partners.json"), "utf-8")
-    const list = JSON.parse(tmp)
-    if (Array.isArray(list) && list.length > 0) return list
-  } catch {}
-
-  // 3. In-memory store
-  const mem = (globalThis as any).__partnersMemoryStore
-  if (Array.isArray(mem) && mem.length > 0) {
-    return mem
-  }
-
-  return partnersData
+async function getLivePartners(): Promise<any[]> {
+  const list = await readSeededSafe<any>("partners", "dynamic_partners.json", partnersData)
+  return list.length > 0 ? list : partnersData
 }
 
 export default async function PartnersCatalogPage() {

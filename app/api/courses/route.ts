@@ -2,19 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import fs from "fs/promises"
 import path from "path"
-import os from "os"
 import { coursesData } from "@/data/courses"
+import { getCollection, setCollection } from "@/lib/db"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-const localDataFilePath = path.join(process.cwd(), "data", "dynamic_courses.json")
-const tmpDataFilePath = path.join(os.tmpdir(), "dynamic_courses.json")
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __coursesMemoryStore: any[] | undefined
-}
+const COLLECTION_KEY = "courses"
+const seedFilePath = path.join(process.cwd(), "data", "dynamic_courses.json")
 
 // Seed array with the exact 7 academy courses
 const initialCourses = coursesData.map((c) => ({
@@ -74,51 +69,21 @@ const initialCourses = coursesData.map((c) => ({
 }))
 
 async function readCourses(): Promise<any[]> {
-  // 1. Local file
-  try {
-    const file = await fs.readFile(localDataFilePath, "utf-8")
-    const parsed = JSON.parse(file)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__coursesMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
+  const stored = await getCollection(COLLECTION_KEY)
+  if (stored) return stored
 
-  // 2. /tmp file
+  // First run: seed Neon from the committed JSON file, else from the built-in defaults.
+  let seed: any[] = initialCourses
   try {
-    const tmp = await fs.readFile(tmpDataFilePath, "utf-8")
-    const parsed = JSON.parse(tmp)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__coursesMemoryStore = parsed
-      return parsed
-    }
+    const parsed = JSON.parse(await fs.readFile(seedFilePath, "utf-8"))
+    if (Array.isArray(parsed) && parsed.length > 0) seed = parsed
   } catch {}
-
-  // 3. Memory store
-  if (Array.isArray(globalThis.__coursesMemoryStore) && globalThis.__coursesMemoryStore.length > 0) {
-    return globalThis.__coursesMemoryStore
-  }
-
-  // 4. Initial fallback
-  globalThis.__coursesMemoryStore = [...initialCourses]
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(initialCourses, null, 2), "utf-8")
-  } catch {}
-  return initialCourses
+  await setCollection(COLLECTION_KEY, seed)
+  return seed
 }
 
 async function writeCourses(data: any[]): Promise<void> {
-  globalThis.__coursesMemoryStore = [...data]
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write courses to local path:", err)
-  }
-  try {
-    await fs.writeFile(tmpDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write courses to tmp path:", err)
-  }
+  await setCollection(COLLECTION_KEY, data)
 }
 
 export async function GET() {

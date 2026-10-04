@@ -1,23 +1,14 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
-import fs from "fs/promises"
-import path from "path"
-import { coursesData } from "@/data/courses"
+import { getLiveCourses } from "@/lib/liveCourses"
+
+export const dynamic = "force-dynamic"
+export const revalidate = 0
 
 export const metadata: Metadata = {
   title: "Bütün Kurslarımız | Uğur Şəxsi İnkişaf Mərkəzi",
   description: "Uğur Şəxsi İnkişaf Mərkəzinin peşəkar İT, tibb, psixologiya, loqopediya, pedaqogika və MİQ hazırlıq kursları.",
-}
-
-async function getLiveCourses() {
-  try {
-    const dataFilePath = path.join(process.cwd(), "data", "dynamic_courses.json")
-    const file = await fs.readFile(dataFilePath, "utf-8")
-    return JSON.parse(file)
-  } catch {
-    return coursesData
-  }
 }
 
 export default async function CoursesCatalogPage() {

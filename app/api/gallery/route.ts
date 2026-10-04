@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
-import fs from "fs/promises"
-import path from "path"
-import os from "os"
+import { readSeeded } from "@/lib/collection"
+import { setCollection } from "@/lib/db"
 import { galleryItems } from "@/data/gallery"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-const localDataFilePath = path.join(process.cwd(), "data", "dynamic_gallery.json")
-const tmpDataFilePath = path.join(os.tmpdir(), "dynamic_gallery.json")
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __galleryMemoryStore: any[] | undefined
-}
+const COLLECTION_KEY = "gallery"
 
 const initialGallery = galleryItems.map((g) => ({
   id: String(g.id),
@@ -27,51 +20,11 @@ const initialGallery = galleryItems.map((g) => ({
 }))
 
 async function readGallery(): Promise<any[]> {
-  // 1. Local file
-  try {
-    const file = await fs.readFile(localDataFilePath, "utf-8")
-    const parsed = JSON.parse(file)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__galleryMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
-
-  // 2. /tmp file
-  try {
-    const tmp = await fs.readFile(tmpDataFilePath, "utf-8")
-    const parsed = JSON.parse(tmp)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__galleryMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
-
-  // 3. Memory store
-  if (Array.isArray(globalThis.__galleryMemoryStore) && globalThis.__galleryMemoryStore.length > 0) {
-    return globalThis.__galleryMemoryStore
-  }
-
-  // 4. Initial fallback
-  globalThis.__galleryMemoryStore = [...initialGallery]
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(initialGallery, null, 2), "utf-8")
-  } catch {}
-  return initialGallery
+  return readSeeded(COLLECTION_KEY, "dynamic_gallery.json", initialGallery)
 }
 
 async function writeGallery(data: any[]): Promise<void> {
-  globalThis.__galleryMemoryStore = [...data]
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write gallery to local path:", err)
-  }
-  try {
-    await fs.writeFile(tmpDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write gallery to tmp path:", err)
-  }
+  await setCollection(COLLECTION_KEY, data)
 }
 
 export async function GET() {

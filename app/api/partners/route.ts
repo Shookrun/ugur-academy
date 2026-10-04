@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
-import fs from "fs/promises"
-import path from "path"
-import os from "os"
+import { readSeeded } from "@/lib/collection"
+import { setCollection } from "@/lib/db"
 import { partnersData } from "@/data/partners"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-const localDataFilePath = path.join(process.cwd(), "data", "dynamic_partners.json")
-const tmpDataFilePath = path.join(os.tmpdir(), "dynamic_partners.json")
-
-declare global {
-  // eslint-disable-next-line no-var
-  var __partnersMemoryStore: any[] | undefined
-}
+const COLLECTION_KEY = "partners"
 
 const initialPartners = partnersData.map((p) => ({
   id: String(p.id),
@@ -55,60 +48,11 @@ function slugify(text: string): string {
 }
 
 async function readPartners(): Promise<any[]> {
-  // 1. Try reading from local project data directory (primary source of truth)
-  try {
-    const localContent = await fs.readFile(localDataFilePath, "utf-8")
-    const parsed = JSON.parse(localContent)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__partnersMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
-
-  // 2. Try reading from /tmp (writable in serverless environments)
-  try {
-    const tmpContent = await fs.readFile(tmpDataFilePath, "utf-8")
-    const parsed = JSON.parse(tmpContent)
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      globalThis.__partnersMemoryStore = parsed
-      return parsed
-    }
-  } catch {}
-
-  // 3. In-memory store
-  if (Array.isArray(globalThis.__partnersMemoryStore) && globalThis.__partnersMemoryStore.length > 0) {
-    return globalThis.__partnersMemoryStore
-  }
-
-  // 4. Fallback to initial static seed data
-  globalThis.__partnersMemoryStore = [...initialPartners]
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(initialPartners, null, 2), "utf-8")
-  } catch {}
-  try {
-    await fs.writeFile(tmpDataFilePath, JSON.stringify(initialPartners, null, 2), "utf-8")
-  } catch {}
-
-  return initialPartners
+  return readSeeded(COLLECTION_KEY, "dynamic_partners.json", initialPartners)
 }
 
 async function writePartners(data: any[]): Promise<void> {
-  // 1. Always keep current state in-memory
-  globalThis.__partnersMemoryStore = [...data]
-
-  // 2. Write to local project directory (local development & persistent systems)
-  try {
-    await fs.writeFile(localDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write to local data directory:", err)
-  }
-
-  // 3. Write to /tmp (guaranteed writable on Vercel / Linux / Windows)
-  try {
-    await fs.writeFile(tmpDataFilePath, JSON.stringify(data, null, 2), "utf-8")
-  } catch (err) {
-    console.warn("Could not write to tmp directory:", err)
-  }
+  await setCollection(COLLECTION_KEY, data)
 }
 
 export async function GET() {
