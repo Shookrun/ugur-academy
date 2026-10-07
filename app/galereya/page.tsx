@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { galleryItems, galleryCategories, type GalleryCategory } from "@/data/gallery"
 
 export default function GalereyaPage() {
@@ -124,7 +125,7 @@ export default function GalereyaPage() {
       <section className="py-4">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-center gap-2">
-            {(["Hamısı", ...galleryCategories] as const).map((cat) => (
+            {galleryCategories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat as GalleryCategory | "Hamısı")}
@@ -226,7 +227,7 @@ export default function GalereyaPage() {
       </section>
 
       {/* ── LIGHTBOX ── */}
-      {lightbox !== null && lightboxItem && (
+      {lightbox !== null && lightboxItem && createPortal(
         <div
           id="gallery-lightbox"
           role="dialog"
@@ -282,14 +283,14 @@ export default function GalereyaPage() {
             style={{ marginBottom: "1.5rem" }}
           >
             <div
-              className="relative w-full overflow-hidden rounded-xl"
-              style={{ aspectRatio: "16/9", boxShadow: "0 40px 100px rgba(0,0,0,0.8)" }}
+              className="relative w-full"
+              style={{ height: "min(62vh, 720px)" }}
             >
               <Image
                 src={lightboxItem.src}
                 alt={lightboxItem.alt}
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="(max-width: 1280px) 100vw, 1280px"
                 priority
               />
@@ -333,7 +334,8 @@ export default function GalereyaPage() {
               {lightboxIndex + 1} / {filtered.length}
             </p>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </main>
   )
