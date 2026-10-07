@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     const newItem = {
       ...body,
       id: body.id ? String(body.id).trim() : String(Date.now()),
-      src: body.src || "/gallery_classroom.jpg",
+      src: body.src || "/galereya/ugur-01.jpeg",
       date: body.date || "2026",
     }
     gallery.push(newItem)

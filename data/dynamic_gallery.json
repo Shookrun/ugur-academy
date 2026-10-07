@@ -1,56 +1,263 @@
 [
   {
-    "id": "1",
-    "src": "/gallery_outdoor.jpg",
-    "alt": "Akademiya tələbə qrupu",
-    "title": "Açılış Günü 2024",
+    "id": "1791387093234",
+    "alt": "Uğur Academy şəkil 01",
+    "src": "/galereya/ugur-01.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 01",
     "category": "Hadisələr",
-    "date": "Sentyabr 2024",
-    "featured": true
-  },
-  {
-    "id": "2",
-    "src": "/gallery_classroom.jpg",
-    "alt": "Sinif dərsi mühiti",
-    "title": "İnkişaf Proqramı Dərsləri",
-    "category": "Dərslər",
-    "date": "Oktyabr 2024",
-    "featured": true
-  },
-  {
-    "id": "3",
-    "src": "/gallery_ceremony.jpg",
-    "alt": "Məzuniyyət mərasimi",
-    "title": "Sertifikat Mərasimi 2024",
-    "category": "Mərasimlər",
-    "date": "İyun 2024",
-    "featured": true
-  },
-  {
-    "id": "4",
-    "src": "/gallery_seminar.jpg",
-    "alt": "Biznes seminarı",
-    "title": "Liderlik və İnnovasiya Seminarı",
-    "category": "Seminarlar",
-    "date": "Avqust 2024",
     "featured": false
   },
   {
-    "id": "5",
-    "src": "/gallery_teamwork.jpg",
-    "alt": "Komanda işi",
-    "title": "Layihə Üzərində Komanda İşi",
-    "category": "Komanda",
-    "date": "Noyabr 2024",
+    "id": "1791387093235",
+    "alt": "Uğur Academy şəkil 02",
+    "src": "/galereya/ugur-02.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 02",
+    "category": "Hadisələr",
     "featured": false
   },
   {
-    "id": "6",
-    "src": "/gallery_mentoring.jpg",
-    "alt": "Fərdi mentorluq",
-    "title": "Fərdi İnkişaf Sessiyası",
-    "category": "Mentorluq",
-    "date": "Dekabr 2024",
+    "id": "1791387093236",
+    "alt": "Uğur Academy şəkil 03",
+    "src": "/galereya/ugur-03.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 03",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093237",
+    "alt": "Uğur Academy şəkil 04",
+    "src": "/galereya/ugur-04.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 04",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093238",
+    "alt": "Uğur Academy şəkil 05",
+    "src": "/galereya/ugur-05.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 05",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093239",
+    "alt": "Uğur Academy şəkil 06",
+    "src": "/galereya/ugur-06.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 06",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093240",
+    "alt": "Uğur Academy şəkil 07",
+    "src": "/galereya/ugur-07.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 07",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093241",
+    "alt": "Uğur Academy şəkil 08",
+    "src": "/galereya/ugur-08.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 08",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093242",
+    "alt": "Uğur Academy şəkil 09",
+    "src": "/galereya/ugur-09.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 09",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093243",
+    "alt": "Uğur Academy şəkil 10",
+    "src": "/galereya/ugur-10.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 10",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093244",
+    "alt": "Uğur Academy şəkil 11",
+    "src": "/galereya/ugur-11.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 11",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093245",
+    "alt": "Uğur Academy şəkil 12",
+    "src": "/galereya/ugur-12.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 12",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093246",
+    "alt": "Uğur Academy şəkil 13",
+    "src": "/galereya/ugur-13.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 13",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093247",
+    "alt": "Uğur Academy şəkil 14",
+    "src": "/galereya/ugur-14.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 14",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093248",
+    "alt": "Uğur Academy şəkil 15",
+    "src": "/galereya/ugur-15.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 15",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093249",
+    "alt": "Uğur Academy şəkil 16",
+    "src": "/galereya/ugur-16.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 16",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093250",
+    "alt": "Uğur Academy şəkil 17",
+    "src": "/galereya/ugur-17.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 17",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093251",
+    "alt": "Uğur Academy şəkil 18",
+    "src": "/galereya/ugur-18.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 18",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093252",
+    "alt": "Uğur Academy şəkil 19",
+    "src": "/galereya/ugur-19.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 19",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093253",
+    "alt": "Uğur Academy şəkil 20",
+    "src": "/galereya/ugur-20.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 20",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093254",
+    "alt": "Uğur Academy şəkil 21",
+    "src": "/galereya/ugur-21.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 21",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093255",
+    "alt": "Uğur Academy şəkil 22",
+    "src": "/galereya/ugur-22.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 22",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093256",
+    "alt": "Uğur Academy şəkil 23",
+    "src": "/galereya/ugur-23.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 23",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093257",
+    "alt": "Uğur Academy şəkil 24",
+    "src": "/galereya/ugur-24.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 24",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093258",
+    "alt": "Uğur Academy şəkil 25",
+    "src": "/galereya/ugur-25.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 25",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093259",
+    "alt": "Uğur Academy şəkil 26",
+    "src": "/galereya/ugur-26.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 26",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093260",
+    "alt": "Uğur Academy şəkil 27",
+    "src": "/galereya/ugur-27.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 27",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093261",
+    "alt": "Uğur Academy şəkil 28",
+    "src": "/galereya/ugur-28.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 28",
+    "category": "Hadisələr",
+    "featured": false
+  },
+  {
+    "id": "1791387093262",
+    "alt": "Uğur Academy şəkil 29",
+    "src": "/galereya/ugur-29.jpeg",
+    "date": "2026",
+    "title": "Uğur Academy 29",
+    "category": "Hadisələr",
     "featured": false
   }
 ]

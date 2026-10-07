@@ -79,7 +79,7 @@ export default function AdminQalereyaPage() {
   const openAdd = () => {
     setForm({
       id: Date.now().toString(),
-      src: "/gallery_classroom.jpg",
+      src: "/galereya/ugur-01.jpeg",
       category: "Dərslər",
       date: "2026",
     })
@@ -335,7 +335,7 @@ export default function AdminQalereyaPage() {
                     required
                     value={form.src || ""}
                     onChange={(e) => setForm({ ...form, src: e.target.value })}
-                    placeholder="/gallery_classroom.jpg və ya URL"
+                    placeholder="/galereya/ugur-01.jpeg və ya URL"
                     className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                   />
                 </div>

@@ -67,7 +67,7 @@ export default function GalereyaPage() {
   const heights = [280, 240, 320, 260, 300, 240]
 
   return (
-    <main className="min-h-screen bg-[#06080f]">
+    <main className="min-h-screen">
       {/* ── Hero ── */}
       <section className="relative overflow-hidden pt-36 pb-16 sm:pt-44 sm:pb-20">
         {/* ambient glows */}
@@ -76,35 +76,35 @@ export default function GalereyaPage() {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.18) 0%, transparent 65%)",
+              "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.10) 0%, transparent 65%)",
           }}
         />
         <div
           aria-hidden
           className="pointer-events-none absolute right-[10%] top-20 h-72 w-72 rounded-full blur-[120px]"
-          style={{ background: "rgba(139,92,246,0.15)" }}
+          style={{ background: "rgba(139,92,246,0.08)" }}
         />
         <div
           aria-hidden
           className="pointer-events-none absolute left-[5%] top-36 h-56 w-56 rounded-full blur-[100px]"
-          style={{ background: "rgba(59,130,246,0.1)" }}
+          style={{ background: "rgba(59,130,246,0.06)" }}
         />
 
         <div className="relative z-10 mx-auto max-w-5xl px-4 text-center sm:px-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-semibold tracking-widest text-indigo-300 uppercase mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-300 bg-indigo-50 px-4 py-1.5 text-xs font-semibold tracking-widest text-indigo-700 uppercase mb-6">
             <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse" />
             Fotoqalereya
           </div>
-          <h1 className="text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <h1 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
             Akademiya{" "}
             <span
               className="bg-clip-text text-transparent"
-              style={{ backgroundImage: "linear-gradient(to right, #818cf8, #a78bfa, #f472b6)" }}
+              style={{ backgroundImage: "linear-gradient(to right, #4f46e5, #7c3aed, #db2777)" }}
             >
               Qalereya
             </span>
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-400">
+          <p className="mx-auto mt-5 max-w-2xl text-lg text-slate-600">
             Tədris prosesi, məzuniyyət mərasimləri, seminarlar və akademiya həyatından ən gözəl anlar.
           </p>
           <div className="mt-10 flex items-center justify-center gap-8 sm:gap-12">
@@ -113,7 +113,7 @@ export default function GalereyaPage() {
               { value: "2024–2026", label: "İllər" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-2xl font-black text-white sm:text-3xl">{stat.value}</div>
+                <div className="text-2xl font-black text-slate-950 sm:text-3xl">{stat.value}</div>
                 <div className="text-sm text-slate-500 mt-0.5">{stat.label}</div>
               </div>
             ))}
@@ -133,14 +133,14 @@ export default function GalereyaPage() {
                 style={
                   activeCategory === cat
                     ? {
-                        background: "rgba(99,102,241,0.25)",
-                        border: "1px solid rgba(99,102,241,0.6)",
-                        color: "#c7d2fe",
+                        background: "rgba(79,70,229,0.12)",
+                        border: "1px solid rgba(79,70,229,0.5)",
+                        color: "#4338ca",
                       }
                     : {
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        color: "rgba(255,255,255,0.5)",
+                        background: "#ffffff",
+                        border: "1px solid rgba(15,23,42,0.12)",
+                        color: "rgba(15,23,42,0.65)",
                       }
                 }
               >
@@ -165,7 +165,7 @@ export default function GalereyaPage() {
                     key={item.id}
                     id={`gallery-item-${item.id}`}
                     onClick={() => openLightbox(item.id)}
-                    className="group relative mb-4 block w-full overflow-hidden rounded-2xl focus:outline-none"
+                    className="group relative mb-4 block w-full overflow-hidden rounded-2xl shadow-sm ring-1 ring-slate-200 focus:outline-none"
                     style={{ height: h, breakInside: "avoid" }}
                     aria-label={`${item.title} şəkilini böyüt`}
                   >
