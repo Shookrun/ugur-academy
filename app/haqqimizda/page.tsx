@@ -83,12 +83,12 @@ export default async function AboutPage() {
                 Haqqımızda
               </span>
             </div>
-            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+            <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-[#000000] sm:text-5xl lg:text-6xl">
               Uğura gedən yol
               <br />
-              <span className="text-slate-400">buradan başlayır.</span>
+              <span className="text-[#000000]">buradan başlayır.</span>
             </h1>
-            <p className="mt-6 text-base leading-8 text-slate-500 sm:text-lg">
+            <p className="mt-6 text-base leading-8 text-[#000000] sm:text-lg">
               Uğur Şəxsi İnkişaf Mərkəzi 2019-cu ildən bəri Hacıqabul və Şirvan şəhərlərindəki
               tələbələrə müasir, keyfiyyətli və əlçatan təhsil imkanı təqdim edir.
               Məqsədimiz — hər bir tələbənin potensialını üzə çıxarmaq və onları

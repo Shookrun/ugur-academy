@@ -10,7 +10,6 @@ const footerLinks = [
   { name: "Xəbərlər", href: "/xeberler" },
   { name: "Haqqımızda", href: "/haqqimizda" },
   { name: "Əlaqə", href: "/elaqe" },
-  { name: "Media", href: "/media" },
   { name: "Arxiv", href: "/arxiv" },
 ]
 

@@ -12,24 +12,24 @@ const defaultBranches = [
   {
     id: "sirvan",
     city: "Şirvan",
-    address: "Şirvan şəhəri, İstiqlaliyyət küçəsi 7",
+    address: "Şirvan şəhəri, Xəqani küçəsi 1",
     phone: "070 670 30 20",
     phoneRaw: "+994706703020",
     whatsapp: "https://wa.me/994706703020",
     instagram: "https://www.instagram.com/ugur.academy.sirvan",
     facebook: "https://www.facebook.com/ugur.academy.sirvan",
-    mapSrc: "https://maps.google.com/maps?q=%C5%9Eirvan+Az%C9%99rbaycan&t=&z=13&ie=UTF8&iwloc=&output=embed",
+    mapSrc: "https://maps.google.com/maps?q=X%C9%99qani+k%C3%BC%C3%A7%C9%99si+1%2C+%C5%9Eirvan%2C+Az%C9%99rbaycan&t=&z=16&ie=UTF8&iwloc=&output=embed",
   },
   {
     id: "haciqabul",
     city: "Hacıqabul",
-    address: "Hacıqabul şəhəri, Mərkəzi küçə 12",
+    address: "Hacıqabul rayonu, İsmət Qayıbov küçəsi, 3",
     phone: "070 671 30 20",
     phoneRaw: "+994706713020",
     whatsapp: "https://wa.me/994706713020",
     instagram: "https://www.instagram.com/ugur.academy",
     facebook: "https://www.facebook.com/ugur.academy",
-    mapSrc: "https://maps.google.com/maps?q=Hac%C4%B1qabul&t=&z=13&ie=UTF8&iwloc=&output=embed",
+    mapSrc: "https://maps.google.com/maps?q=%C4%B0sm%C9%99t+Qay%C4%B1bov+k%C3%BC%C3%A7%C9%99si+3%2C+Hac%C4%B1qabul+rayonu%2C+Az%C9%99rbaycan&t=&z=16&ie=UTF8&iwloc=&output=embed",
   },
 ]
 

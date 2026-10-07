@@ -12,7 +12,6 @@ const navItems = [
   { name: "Haqqımızda", href: "/haqqimizda" },
   { name: "Galereya", href: "/galereya" },
   { name: "Əlaqə", href: "/elaqe" },
-  { name: "Media", href: "/#media" },
   { name: "Arxiv", href: "/#arxiv" },
 ]
 
