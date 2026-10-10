@@ -162,9 +162,9 @@ const Hero = () => {
                 animationDelay: "350ms",
               }}
             >
-              Uğur Şəxsi İnkişaf Mərkəzi olaraq təhsil və inkişaf sahəsində yüzlərlə insanın həyatına pozitiv təsir etmişik. Hər yaş və peşə qrupuna uyğun kurslarla uğura aparan dəstəyi təqdim edirik.Müasir bilik və bacarıqları öyrənərək öz gələcəyini
-              qur. Sənin inkişafın üçün lazım olan təhsil burada
-              başlayır.
+Uğur Şəxsi İnkişaf Mərkəzi 2009–2010-cu illərdən təhsil sahəsində fəaliyyət göstərir, 2015-ci ildən isə rəsmi MMC statusunda xidmətlərini davam etdirir.
+Peşəkar müəllim heyətimiz və müasir tədris metodlarımızla tələbələrin intellektual potensialını inkişaf etdirir, nəzəri bilikləri praktik bacarıqlara çeviririk.
+Məqsədimiz gəncləri müasir əmək bazarının tələblərinə uyğun ixtisaslı kadrlar kimi yetişdirmək, onların məşğulluq imkanlarını genişləndirmək və işsizliyin azaldılmasına töhfə verməkdir.
             </p>
 
             {/* Buttons */}
