@@ -89,10 +89,9 @@ export default async function AboutPage() {
               <span className="text-[#000000]">buradan başlayır.</span>
             </h1>
             <p className="mt-6 text-base leading-8 text-[#000000] sm:text-lg">
-              Uğur Şəxsi İnkişaf Mərkəzi 2019-cu ildən bəri Hacıqabul və Şirvan şəhərlərindəki
-              tələbələrə müasir, keyfiyyətli və əlçatan təhsil imkanı təqdim edir.
-              Məqsədimiz — hər bir tələbənin potensialını üzə çıxarmaq və onları
-              gələcəyə hazırlamaqdır.
+Uğur Şəxsi İnkişaf Mərkəzi 2009–2010-cu illərdən təhsil sahəsində fəaliyyət göstərir, 2015-ci ildən isə rəsmi MMC statusunda xidmətlərini davam etdirir.
+Peşəkar müəllim heyətimiz və müasir tədris metodlarımızla tələbələrin intellektual potensialını inkişaf etdirir, nəzəri bilikləri praktik bacarıqlara çeviririk.
+Məqsədimiz gəncləri müasir əmək bazarının tələblərinə uyğun ixtisaslı kadrlar kimi yetişdirmək, onların məşğulluq imkanlarını genişləndirmək və işsizliyin azaldılmasına töhfə verməkdir.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
