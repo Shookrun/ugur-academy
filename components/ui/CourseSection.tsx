@@ -119,7 +119,7 @@ const academyCourses: CourseData[] = [
     price: "130 AZN / ay",
     discountPrice: "105 AZN / ay",
     hasChildren: true,
-    children: ["Qanunvericilik", "Azərbaycan tarixi", "İqtisadiyyat", "Ümumi bilik"],
+    children: ["Qanunvericilik", "Məntiq", "İnformatika", "Azərbaycan Dili"],
   },
   {
     id: 9,
