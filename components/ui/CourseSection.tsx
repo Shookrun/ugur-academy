@@ -42,7 +42,7 @@ const academyCourses: CourseData[] = [
     slug: "tibb",
     category: "Səhiyyə və Tibb",
     image: "/hero.jpeg",
-    duration: "4 - 8 ay",
+    duration: "12 - 18 ay",
     price: "150 AZN / ay",
     discountPrice: "125 AZN / ay",
   },
@@ -54,7 +54,7 @@ const academyCourses: CourseData[] = [
     slug: "psixoloq-xidmeti",
     category: "Psixologiya və İnkişaf",
     image: "/hero.jpeg",
-    duration: "2 - 4 ay",
+    duration: "-",
     price: "140 AZN / ay",
     discountPrice: "115 AZN / ay",
   },
@@ -66,7 +66,7 @@ const academyCourses: CourseData[] = [
     slug: "loqoped-xidmeti",
     category: "Loqopediya və Defektologiya",
     image: "/hero.jpeg",
-    duration: "3 - 6 ay",
+    duration: "-",
     price: "160 AZN / ay",
     discountPrice: "135 AZN / ay",
   },
@@ -78,7 +78,7 @@ const academyCourses: CourseData[] = [
     slug: "baytarliq",
     category: "Heyvandarlıq və Baytarlıq",
     image: "/hero.jpeg",
-    duration: "4 - 6 ay",
+    duration: "12 ay",
     price: "150 AZN / ay",
     discountPrice: "120 AZN / ay",
   },
@@ -102,7 +102,7 @@ const academyCourses: CourseData[] = [
     slug: "miq",
     category: "İmtahana Hazırlıq",
     image: "/hero.jpeg",
-    duration: "4 - 8 ay",
+    duration: "-",
     price: "140 AZN / ay",
     discountPrice: "110 AZN / ay",
   },
@@ -114,7 +114,7 @@ const academyCourses: CourseData[] = [
     slug: "dovlet-qullugu",
     category: "İmtahana Hazırlıq",
     image: "/hero.jpeg",
-    duration: "3 - 6 ay",
+    duration: "-",
     price: "130 AZN / ay",
     discountPrice: "105 AZN / ay",
     hasChildren: true,
@@ -128,7 +128,7 @@ const academyCourses: CourseData[] = [
     slug: "magistr-hazirligi",
     category: "İmtahana Hazırlıq",
     image: "/hero.jpeg",
-    duration: "4 - 8 ay",
+    duration: "-",
     price: "145 AZN / ay",
     discountPrice: "120 AZN / ay",
     hasChildren: true,
@@ -142,7 +142,7 @@ const academyCourses: CourseData[] = [
     slug: "it-proqramlasdirma",
     category: "İT və Texnologiya",
     image: "/hero.jpeg",
-    duration: "6 - 12 ay",
+    duration: "8 - 12 ay",
     price: "160 AZN / ay",
     discountPrice: "135 AZN / ay",
     hasChildren: true,
@@ -255,9 +255,7 @@ export default function CourseSection() {
                       Müddət:{" "}
                       <strong className="text-slate-700">{course.duration || "—"}</strong>
                     </span>
-                    <span className="font-extrabold text-slate-900">
-                      {course.discountPrice || course.price || ""}
-                    </span>
+                    
                   </div>
 
                   <Link
