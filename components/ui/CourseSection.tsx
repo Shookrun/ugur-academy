@@ -4,6 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 
+
 interface CourseData {
   id: string | number
   title: string
