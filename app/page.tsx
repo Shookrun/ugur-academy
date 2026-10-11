@@ -5,13 +5,12 @@ import PartnersSection from "@/components/ui/PartnersSections";
 
 export default function Home() {
   return (
-   <div>
-<Hero/>
+    <div>
+      <Hero />
 
-<CourseSection/>
-<GallerySection/>
-<PartnersSection/>
-   </div>
+      {/* <CourseSection/> */}
+      <GallerySection />
+      <PartnersSection />
+    </div>
   );
 }
-
