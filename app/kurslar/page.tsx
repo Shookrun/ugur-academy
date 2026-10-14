@@ -81,9 +81,6 @@ export default async function CoursesCatalogPage() {
                     <span className="font-semibold text-slate-400">
                       Müddət: <strong className="text-slate-700">{course.duration}</strong>
                     </span>
-                    <span className="font-extrabold text-slate-900">
-                      {course.discountPrice || course.price}
-                    </span>
                   </div>
 
                   <Link
