@@ -7,7 +7,7 @@ export const revalidate = 0
 export const metadata: Metadata = {
   title: "Əlaqə | Uğur Şəxsi İnkişaf Mərkəzi",
   description:
-    "Hacıqabul və Şirvan filiallarımızla əlaqə saxlayın. Ünvanlar, telefon nömrələri, Google Xəritə.",
+    "Şirvan və Hacıqabul filiallarımızla əlaqə saxlayın. Ünvanlar, telefon nömrələri, Google Xəritə.",
 }
 
 const defaultBranches = [
