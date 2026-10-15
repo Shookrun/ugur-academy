@@ -22,7 +22,7 @@ const defaultBranches = [
     instagram: "https://www.instagram.com/ugur.academy.sirvan",
     facebook: "https://www.facebook.com/ugur.academy.sirvan",
     mapSrc:
-      "https://maps.google.com/maps?q=X%C9%99qani+k%C3%BC%C3%A7%C9%99si+1%2C+%C5%9Eirvan%2C+Az%C9%99rbaycan&t=&z=16&ie=UTF8&iwloc=&output=embed",
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3058.2!2d48.91!3d39.95!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1sChIJR4cBQd0HO0AR5dEkQuH1bHc!2zxZDFcnZhbiBVxJ91ciDFnGV4xZ9pIMSuxLFua2FmIE3Jmm5lemnJmQ!5e0!3m2!1sen!2s!4v1710000000000!5m2!1sen!2s",
     colorFrom: "#faf5ff",
     colorTo: "#ede9fe",
     accent: "#7c3aed",
@@ -39,7 +39,7 @@ const defaultBranches = [
     instagram: "https://www.instagram.com/ugur.academy",
     facebook: "https://www.facebook.com/ugur.academy",
     mapSrc:
-      "https://maps.google.com/maps?q=%C4%B0sm%C9%99t+Qay%C4%B1bov+k%C3%BC%C3%A7%C9%99si+3%2C+Hac%C4%B1qabul+rayonu%2C+Az%C9%99rbaycan&t=&z=16&ie=UTF8&iwloc=&output=embed",
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3058.0!2d48.93!3d40.03!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1sChIJ1y4kp4GrO0ARxjDiV2CUKVc!2sAptek!5e0!3m2!1sen!2s!4v1710000000000!5m2!1sen!2s",
     colorFrom: "#f0fdf4",
     colorTo: "#ecfdf5",
     accent: "#16a34a",
