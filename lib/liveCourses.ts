@@ -62,6 +62,12 @@ function mergeCourse(base: Course | undefined, live: any): Course {
     }
   }
 
+  // Admin-managed sub-categories (HTML & CSS, JavaScript...) override the hard-coded children list.
+  if (Array.isArray(live.technologies)) {
+    merged.children = live.technologies
+    merged.hasChildren = live.technologies.length > 0
+  }
+
   if (!merged.price) merged.price = ""
   if (live.discountPrice === "") merged.discountPrice = undefined
   return merged as Course

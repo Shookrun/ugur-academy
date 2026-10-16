@@ -3,6 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useState, useEffect } from "react"
+import { getCourseTags } from "@/lib/courseTags"
 
 
 interface CourseData {
@@ -18,6 +19,7 @@ interface CourseData {
   discountPrice?: string
   hasChildren?: boolean
   children?: string[]
+  technologies?: string[]
 }
 
 const academyCourses: CourseData[] = [
@@ -236,9 +238,9 @@ export default function CourseSection() {
                 </p>
 
                 {/* Sub-course tags */}
-                {course.hasChildren && course.children && (
+                {getCourseTags(course).length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
-                    {course.children.map((ch: string) => (
+                    {getCourseTags(course).map((ch: string) => (
                       <span
                         key={ch}
                         className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"

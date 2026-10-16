@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { getLiveCourses } from "@/lib/liveCourses"
+import { getCourseTags } from "@/lib/courseTags"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
@@ -63,9 +64,9 @@ export default async function CoursesCatalogPage() {
                   {course.description}
                 </p>
 
-                {course.hasChildren && course.children && (
+                {getCourseTags(course).length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
-                    {course.children.map((ch: string) => (
+                    {getCourseTags(course).map((ch: string) => (
                       <span
                         key={ch}
                         className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"

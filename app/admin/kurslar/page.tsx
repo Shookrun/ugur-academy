@@ -632,4 +632,312 @@ export default function AdminKurslarPage() {
                               Sil
                             </button>
                           </div>
-               
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Add or Edit Course */}
+        {modal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/40 p-4 backdrop-blur-xs">
+            <div className="my-auto w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-6 shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <h3 className="text-lg font-bold text-[#1e3a47]">
+                  {modal === "add" ? "Yeni Kurs Əlavə Et" : "Kursu Redaktə Et"}
+                </h3>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  aria-label="Bağla"
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <form onSubmit={handleSave} className="mt-4 space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-700">Kursun Adı *</label>
+                  <input
+                    type="text"
+                    required
+                    value={form.title}
+                    onChange={(event) => handleTitleChange(event.target.value)}
+                    placeholder="Məs: Kompüter, Tibb, Psixologiya..."
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-slate-700">Kateqoriya *</label>
+                    <select
+                      value={form.category}
+                      onChange={(event) => updateForm("category", event.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                    >
+                      {CATEGORIES.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                      {!CATEGORIES.includes(form.category) && form.category && (
+                        <option value={form.category}>{form.category}</option>
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-slate-700">Link / Slug *</label>
+                    <input
+                      type="text"
+                      value={form.slug}
+                      onChange={(event) => updateForm("slug", event.target.value)}
+                      placeholder="Məs: komputer"
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-700">Qısa Təsvir / Alt Başlıq</label>
+                  <textarea
+                    rows={2}
+                    value={form.subtitle || form.description || ""}
+                    onChange={(event) => {
+                      updateForm("subtitle", event.target.value)
+                      updateForm("description", event.target.value)
+                    }}
+                    placeholder="Kurs haqqında qısa izahat..."
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                  />
+                </div>
+
+                {/* Technologies / sub-categories */}
+                <div>
+                  <div className="mb-1 flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700">
+                      Kursun daxili kateqoriyaları (HTML & CSS, JavaScript, Python...)
+                    </label>
+                    <span className="text-[10px] font-semibold text-slate-400">
+                      {form.technologies.filter((item) => item.trim()).length} ədəd
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+                    {form.technologies.length === 0 && (
+                      <p className="text-[11px] text-slate-400">Hələ heç nə əlavə edilməyib.</p>
+                    )}
+
+                    {form.technologies.map((technology, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={technology}
+                          onChange={(event) =>
+                            updateForm(
+                              "technologies",
+                              form.technologies.map((item, itemIndex) =>
+                                itemIndex === index ? event.target.value : item,
+                              ),
+                            )
+                          }
+                          placeholder="Məs: JavaScript"
+                          className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                        />
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() => {
+                            const next = [...form.technologies]
+                            ;[next[index - 1], next[index]] = [next[index], next[index - 1]]
+                            updateForm("technologies", next)
+                          }}
+                          aria-label="Yuxarı daşı"
+                          className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === form.technologies.length - 1}
+                          onClick={() => {
+                            const next = [...form.technologies]
+                            ;[next[index + 1], next[index]] = [next[index], next[index + 1]]
+                            updateForm("technologies", next)
+                          }}
+                          aria-label="Aşağı daşı"
+                          className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 disabled:opacity-30"
+                        >
+                          ↓
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateForm(
+                              "technologies",
+                              form.technologies.filter((_, itemIndex) => itemIndex !== index),
+                            )
+                          }
+                          aria-label="Sil"
+                          className="rounded-lg border border-rose-100 bg-rose-50 px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-100"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => updateForm("technologies", [...form.technologies, ""])}
+                      className="w-full rounded-lg border border-dashed border-slate-300 bg-white py-1.5 text-xs font-bold text-slate-600 transition hover:border-[#1e3a47] hover:text-[#1e3a47]"
+                    >
+                      + Yeni kateqoriya əlavə et
+                    </button>
+                  </div>
+                </div>
+
+                {/* Course Image Upload */}
+                <div>
+                  <label className="mb-1 block text-xs font-bold text-slate-700">Kurs Şəkli</label>
+                  <div className="flex items-start gap-3">
+                    <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                      {form.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={form.image}
+                          alt="Kurs şəkli"
+                          className="h-full w-full object-cover"
+                          onError={(event) => {
+                            ;(event.target as HTMLImageElement).src = "/hero.jpeg"
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-300">
+                          Şəkil yoxdur
+                        </div>
+                      )}
+                      {uploading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#1e3a47] border-t-transparent" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex-1 space-y-2">
+                      <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-[#1e3a47] hover:bg-slate-100">
+                        {uploading ? "Yüklənir..." : "Şəkil yüklə"}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={uploading}
+                          onChange={handleImageUpload}
+                        />
+                      </label>
+                      <input
+                        type="text"
+                        value={form.image}
+                        onChange={(event) => updateForm("image", event.target.value)}
+                        placeholder="və ya şəkil yolunu yazın: /courses/img.jpg"
+                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-slate-700">Müddət</label>
+                    <input
+                      type="text"
+                      value={form.duration}
+                      onChange={(event) => updateForm("duration", event.target.value)}
+                      placeholder="3 - 6 ay"
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-slate-700">Qiymət</label>
+                    <input
+                      type="text"
+                      value={form.price}
+                      onChange={(event) => updateForm("price", event.target.value)}
+                      placeholder="120 AZN / ay"
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-bold text-slate-700">Endirimli qiymət</label>
+                    <input
+                      type="text"
+                      value={form.discountPrice ?? ""}
+                      onChange={(event) => updateForm("discountPrice", event.target.value)}
+                      placeholder="99 AZN / ay"
+                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 border-t border-slate-100 pt-3">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                  >
+                    Ləğv et
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving || uploading}
+                    className="rounded-xl bg-[#1e3a47] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#162c37] disabled:opacity-50"
+                  >
+                    {saving ? "Saxlanılır..." : "Yadda Saxla"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs">
+            <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 shadow-xl">
+              <h3 className="text-base font-bold text-slate-900">Kursu silmək istədiyinizdən əminsiniz?</h3>
+              <p className="mt-2 text-xs text-slate-500">Bu əməliyyat kursu saytdan dərhal siləcəkdir.</p>
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteId(null)}
+                  disabled={deleting}
+                  className="rounded-xl border border-slate-200 px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Ləğv et
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="rounded-xl bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700 disabled:opacity-50"
+                >
+                  {deleting ? "Silinir..." : "Bəli, Sil"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
