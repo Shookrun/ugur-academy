@@ -2,7 +2,18 @@ import { coursesData, type Course } from "@/data/courses"
 import { getCollection } from "@/lib/db"
 
 // Fields editable from the admin panel; everything else on the detail page comes from data/courses.ts.
-const ADMIN_FIELDS = ["title", "subtitle", "category", "description", "duration", "price", "discountPrice", "image"] as const
+const ADMIN_FIELDS = [
+  "title", 
+  "subtitle", 
+  "category", 
+  "description", 
+  "duration", 
+  "price", 
+  "discountPrice", 
+  "image",
+  "hasChildren",
+  "children"
+] as const
 
 export async function getLiveCourses(): Promise<any[]> {
   try {
