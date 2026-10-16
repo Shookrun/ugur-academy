@@ -789,6 +789,106 @@ export const coursesData: Course[] = [
       },
     ],
   },
+  {
+    id: 8,
+    slug: "dovlet-qullugu",
+    title: "Dövlət qulluğu",
+    subtitle: "Dövlət qulluğuna qəbul imtahanlarına hərtərəfli və zəmanətli hazırlıq proqramı",
+    category: "İmtahana Hazırlıq",
+    description: "Dövlət qulluğu imtahanlarına qanunvericilik, məntiq, azərbaycan dili və informatika üzrə peşəkar hazırlıq.",
+    fullDescription:
+      "Dövlət qulluğu hazırlıq proqramımız Dövlət İmtahan Mərkəzinin (DİM) ən son qəbul proqramına tam uyğun olaraq hazırlanıb. Dərslər təcrübəli mütəxəssislər tərəfindən qanunvericilik, məntiq, azərbaycan dili və informatika fənləri üzrə nəzəri və praktiki test tapşırıqları ilə aparılır.",
+    image: "/hero.jpeg",
+    duration: "3 - 6 ay",
+    lessonsCount: 48,
+    level: "Bütün səviyyələr",
+    format: "Əyani və Onlayn",
+    language: "Azərbaycan dili",
+    certificate: "Dövlət Qulluğu Hazırlıq Sertifikatı",
+    price: "150 AZN / ay",
+    discountPrice: "120 AZN / ay",
+    hasChildren: true,
+    children: [
+      "Qanunvericilik",
+      "Azərbaycan tarixi",
+      "İqtisadiyyat"
+    ],
+    tags: ["Dövlət Qulluğu", "Qanunvericilik", "Məntiq", "İnformatika", "Azərbaycan Dili"],
+    whatYouWillLearn: [
+      "Azərbaycan Respublikasının Konstitusiyası və əsas qanunvericilik aktları",
+      "Məntiqi təfəkkür, verbal və riyazi məntiq testlərinin sürətli həlli yolları",
+      "İnformatika üzrə nəzəri biliklər, əməliyyat sistemləri və ofis proqramları",
+      "Azərbaycan dili, orfoqrafiya, durğu işarələri və rəsmi-işgüzar üslub qaydaları",
+      "DİM imtahan standartlarına uyğun sınaq imtahanları və situativ testlərin təhlili",
+    ],
+    requirements: [
+      "Ali və ya orta ixtisas təhsili (və ya sonuncu kurs tələbəsi olmaq)",
+      "Müntəzəm dərslərdə iştirak və test həllinə məsuliyyətli yanaşma",
+    ],
+    targetAudience: [
+      "Dövlət organlarında rəsmi vəzifə tutmaq istəyən namizədlər",
+      "A və B növü vəzifələr üzrə test imtahanına hazırlaşanlar",
+    ],
+    careerOpportunities: [
+      "Mərkəzi və yerli icra hakimiyyəti organlarında dövlət qulluqçusu",
+      "Müxtəlif dövlət agentlikləri, komitələr və nazirliklərdə fəaliyyət",
+    ],
+    syllabus: [
+      {
+        number: 1,
+        title: "Qanunvericilik və Hüquqi Baza",
+        duration: "6 həftə",
+        topics: [
+          "Azərbaycan Respublikasının Konstitusiyası",
+          "Dövlət qulluğu haqqında Qanun və etik davranış qaydaları",
+          "Əsas dövlət strukturları və inzibati qanunvericilik",
+        ],
+      },
+      {
+        number: 2,
+        title: "Məntiqi Təfəkkürün İnkişafı",
+        duration: "5 həftə",
+        topics: [
+          "Verbal və fiqurlu məntiq testləri",
+          "Riyazi və məntiqi mühakimə məsələləri",
+          "Sürətli tapma texnikaları",
+        ],
+      },
+      {
+        number: 3,
+        title: "İnformatika və Rəqəmsal Savadlılıq",
+        duration: "4 həftə",
+        topics: [
+          "Aparat və proqram təminatı",
+          "Əməliyyat sistemləri, fayl strukturları və şəbəkə əsasları",
+          "MS Office proqramları üzrə imtahan sualları",
+        ],
+      },
+      {
+        number: 4,
+        title: "Azərbaycan Dili və Rəsmi Stil",
+        duration: "3 həftə",
+        topics: [
+          "Gramatika, orfoqrafiya və durğu işarələri qaydaları",
+          "Mətn üzərində iş və rəsmi-işgüzar sənədlərin tərtibi",
+        ],
+      },
+    ],
+    instructor: {
+      name: "Tural Məmmədov",
+      role: "Dövlət Qulluğu Üzrə Baş Müəllim",
+      image: "/hero.jpeg",
+      bio: "Dövlət qulluğu imtahanlarına hazırlıq sahəsində çoxillik təcrübəyə malik peşəkar təlimçi.",
+      slug: "tural-memmedov",
+    },
+    faq: [
+      {
+        question: "Sınaq imtahanları keçirilirmi?",
+        answer: "Bəli, hər ayın sonunda real DİM formatında mövzu və ümumi sınaq imtahanları təşkil olunur.",
+      },
+    ],
+  },
+
 ]
 
 export function getCourseBySlug(slug: string): Course | undefined {
