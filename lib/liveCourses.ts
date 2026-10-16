@@ -37,6 +37,7 @@ function mergeCourse(base: Course | undefined, live: any): Course {
         language: "Azərbaycan dili",
         certificate: "Sertifikat verilir",
         hasChildren: false,
+        children: [],
         tags: [],
         whatYouWillLearn: [],
         requirements: [],
@@ -48,8 +49,19 @@ function mergeCourse(base: Course | undefined, live: any): Course {
       }
 
   for (const field of ADMIN_FIELDS) {
-    if (live[field] !== undefined) merged[field] = live[field]
+    if (live[field] !== undefined) {
+      merged[field] = live[field]
+    }
   }
+
+  // Əgər bazadan / admin paneldən gələn obyektdə children boşdursa və ya yoxdursa, base (courses.ts) faylındakı dəyəri qoruyub saxla
+  if (base) {
+    if (live.hasChildren === undefined) merged.hasChildren = base.hasChildren
+    if (!live.children || (Array.isArray(live.children) && live.children.length === 0)) {
+      merged.children = base.children
+    }
+  }
+
   if (!merged.price) merged.price = ""
   if (live.discountPrice === "") merged.discountPrice = undefined
   return merged as Course
