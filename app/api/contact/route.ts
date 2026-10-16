@@ -18,7 +18,8 @@ const defaultBranches = [
     whatsapp: "https://wa.me/994706703020",
     instagram: "https://www.instagram.com/ugur.academy.sirvan",
     facebook: "https://www.facebook.com/ugur.academy.sirvan",
-    mapSrc: "https://maps.google.com/maps?q=X%C9%99qani+k%C3%BC%C3%A7%C9%99si+1%2C+%C5%9Eirvan%2C+Az%C9%99rbaycan&t=&z=16&ie=UTF8&iwloc=&output=embed",
+    mapSrc: "https://maps.google.com/maps?q=39.9596716,48.9464455(%C5%9Eirvan+U%C4%9Fur+%C5%9E%C9%99xsi+%C4%B0nki%C5%9Faf+M%C9%99rk%C9%99zi)&z=17&ie=UTF8&iwloc=&output=embed",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=39.9596716,48.9464455",
   },
   {
     id: "haciqabul",
@@ -29,7 +30,8 @@ const defaultBranches = [
     whatsapp: "https://wa.me/994706713020",
     instagram: "https://www.instagram.com/ugur.academy",
     facebook: "https://www.facebook.com/ugur.academy",
-    mapSrc: "https://maps.google.com/maps?q=%C4%B0sm%C9%99t+Qay%C4%B1bov+k%C3%BC%C3%A7%C9%99si+3%2C+Hac%C4%B1qabul+rayonu%2C+Az%C9%99rbaycan&t=&z=16&ie=UTF8&iwloc=&output=embed",
+    mapSrc: "https://maps.google.com/maps?q=40.031697,48.935216(U%C4%9Fur+%C5%9E%C9%99xsi+%C4%B0nki%C5%9Faf+M%C9%99rk%C9%99zi%2C+Hac%C4%B1qabul)&z=17&ie=UTF8&iwloc=&output=embed",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=40.031697,48.935216",
   },
 ]
 

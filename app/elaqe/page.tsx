@@ -22,7 +22,8 @@ const defaultBranches = [
     instagram: "https://www.instagram.com/ugur.academy.sirvan",
     facebook: "https://www.facebook.com/ugur.academy.sirvan",
     mapSrc:
-      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3058.2!2d48.91!3d39.95!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1sChIJR4cBQd0HO0AR5dEkQuH1bHc!2zxZDFcnZhbiBVxJ91ciDFnGV4xZ9pIMSuxLFua2FmIE3Jmm5lemnJmQ!5e0!3m2!1sen!2s!4v1710000000000!5m2!1sen!2s",
+      "https://maps.google.com/maps?q=39.9596716,48.9464455(%C5%9Eirvan+U%C4%9Fur+%C5%9E%C9%99xsi+%C4%B0nki%C5%9Faf+M%C9%99rk%C9%99zi)&z=17&ie=UTF8&iwloc=&output=embed",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=39.9596716,48.9464455",
     colorFrom: "#faf5ff",
     colorTo: "#ede9fe",
     accent: "#7c3aed",
@@ -39,7 +40,8 @@ const defaultBranches = [
     instagram: "https://www.instagram.com/ugur.academy",
     facebook: "https://www.facebook.com/ugur.academy",
     mapSrc:
-      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3058.0!2d48.93!3d40.03!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1sChIJ1y4kp4GrO0ARxjDiV2CUKVc!2sAptek!5e0!3m2!1sen!2s!4v1710000000000!5m2!1sen!2s",
+      "https://maps.google.com/maps?q=40.031697,48.935216(U%C4%9Fur+%C5%9E%C9%99xsi+%C4%B0nki%C5%9Faf+M%C9%99rk%C9%99zi%2C+Hac%C4%B1qabul)&z=17&ie=UTF8&iwloc=&output=embed",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=40.031697,48.935216",
     colorFrom: "#f0fdf4",
     colorTo: "#ecfdf5",
     accent: "#16a34a",
@@ -237,7 +239,7 @@ export default async function ContactPage() {
 
                   {/* Google Maps */}
                   <a
-                    href={`https://www.google.com/maps/search/${encodeURIComponent(branch.address)}`}
+                    href={branch.mapUrl || `https://www.google.com/maps/search/${encodeURIComponent(branch.address)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={`${branch.city} Google Xəritə`}
