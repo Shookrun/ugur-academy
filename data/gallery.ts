@@ -274,12 +274,13 @@ export const galleryItems: GalleryItem[] = [
 
 export const galleryCategories = [
   "Hamısı",
-  "Dərslər",
-  "Mərasimlər",
-  "Seminarlar",
-  "Komanda",
-  "Hadisələr",
-  "Mentorluq",
+  "Tədris Prosesi",
+  "Praktiki Dərslər",
+  "Məzunlarımız",
+  "Sertifikatlar",
+  "Tədbirlər",
+  "Müəllimlərimiz",
+"Tədris Mühitimiz"
 ] as const
 
 export type GalleryCategory = (typeof galleryCategories)[number]
