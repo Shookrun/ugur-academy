@@ -258,13 +258,14 @@ const Hero = () => {
                   px-5
                   py-2.5
                   text-gray-950
-                  shadow-[0_8px_30px_rgba(255,196,0,0.18)]
+                  shadow-[0_8px_25px_rgba(255,196,0,0.22)]
                   transition-all
                   duration-500
-                  hover:-translate-y-1
+                  hover:-translate-y-1.5
+                  hover:scale-[1.025]
                   hover:border-[#d9a900]
-                  hover:bg-[#ffd02e]
-                  hover:shadow-[0_14px_40px_rgba(255,196,0,0.32)]
+                  hover:bg-[#FFD21F]
+                  hover:shadow-[0_15px_45px_rgba(255,196,0,0.4)]
                 "
               >
                 <span
@@ -272,14 +273,34 @@ const Hero = () => {
                   className="
                     absolute
                     inset-0
-                    -translate-x-full
+                    -translate-x-[120%]
+                    skew-x-[-20deg]
                     bg-gradient-to-r
                     from-transparent
-                    via-white/45
+                    via-white/60
                     to-transparent
                     transition-transform
                     duration-700
-                    group-hover:translate-x-full
+                    ease-out
+                    group-hover:translate-x-[120%]
+                  "
+                />
+
+                <span
+                  aria-hidden="true"
+                  className="
+                    absolute
+                    -inset-1
+                    rounded-full
+                    border
+                    border-[#FFC400]
+                    opacity-0
+                    scale-90
+                    transition-all
+                    duration-500
+                    group-hover:scale-110
+                    group-hover:opacity-100
+                    group-hover:animate-pulse
                   "
                 />
 
@@ -287,24 +308,30 @@ const Hero = () => {
                   className="
                     relative
                     flex
-                    h-9
-                    w-9
+                    h-10
+                    w-10
                     shrink-0
                     items-center
                     justify-center
                     rounded-full
                     bg-white
                     text-[#25D366]
-                    shadow-sm
+                    shadow-[0_3px_12px_rgba(0,0,0,0.12)]
                     transition-all
                     duration-500
-                    group-hover:rotate-6
+                    group-hover:rotate-[12deg]
                     group-hover:scale-110
+                    group-hover:shadow-[0_5px_18px_rgba(37,211,102,0.3)]
                   "
                 >
                   <svg
                     viewBox="0 0 24 24"
-                    className="h-5 w-5"
+                    className="
+                      h-5 w-5
+                      transition-transform
+                      duration-500
+                      group-hover:scale-110
+                    "
                     fill="currentColor"
                     aria-hidden="true"
                   >
@@ -314,11 +341,31 @@ const Hero = () => {
                 </span>
 
                 <span className="relative flex flex-col items-start leading-none">
-                  <span className="text-[9px] font-medium uppercase tracking-[0.14em] text-gray-700/70">
+                  <span
+                    className="
+                      text-[9px]
+                      font-semibold
+                      uppercase
+                      tracking-[0.16em]
+                      text-gray-700/70
+                      transition-colors
+                      duration-300
+                      group-hover:text-gray-950
+                    "
+                  >
                     Pulsuz
                   </span>
 
-                  <span className="mt-1 text-sm font-semibold">
+                  <span
+                    className="
+                      mt-1
+                      text-sm
+                      font-bold
+                      transition-transform
+                      duration-300
+                      group-hover:translate-x-0.5
+                    "
+                  >
                     Məsləhət al
                   </span>
                 </span>
@@ -328,16 +375,18 @@ const Hero = () => {
                     relative
                     ml-1
                     flex
-                    h-7
-                    w-7
+                    h-8
+                    w-8
                     items-center
                     justify-center
                     rounded-full
                     bg-black/10
                     text-sm
+                    font-semibold
                     transition-all
-                    duration-300
-                    group-hover:translate-x-1
+                    duration-500
+                    group-hover:translate-x-1.5
+                    group-hover:scale-105
                     group-hover:bg-black/15
                   "
                 >
