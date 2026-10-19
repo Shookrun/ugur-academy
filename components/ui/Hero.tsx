@@ -7,74 +7,57 @@ const Hero = () => {
   return (
     <>
       <style jsx global>{`
-        @keyframes whatsappOrb {
+        @keyframes heroWhatsAppFloat {
           0%,
           100% {
-            transform: scale(0.85);
-            opacity: 0;
-          }
-
-          45% {
-            opacity: 0.28;
-          }
-
-          70% {
-            transform: scale(1.25);
-            opacity: 0;
-          }
-        }
-
-        @keyframes whatsappFloat {
-          0%,
-          100% {
-            transform: translateY(0) rotateX(0deg);
+            transform: translateY(0) rotateX(0deg) rotateY(0deg);
           }
 
           50% {
-            transform: translateY(-3px) rotateX(1deg);
+            transform: translateY(-4px) rotateX(1deg) rotateY(-1deg);
           }
         }
 
-        @keyframes whatsappShine {
+        @keyframes heroWhatsAppGlow {
+          0%,
+          100% {
+            opacity: 0.25;
+            transform: scale(0.9);
+          }
+
+          50% {
+            opacity: 0.5;
+            transform: scale(1.05);
+          }
+        }
+
+        @keyframes heroWhatsAppShine {
           0% {
-            transform: translateX(-160%) skewX(-20deg);
+            transform: translateX(-150%) rotate(18deg);
           }
 
           35%,
           100% {
-            transform: translateX(260%) skewX(-20deg);
+            transform: translateX(300%) rotate(18deg);
           }
         }
 
-        @keyframes whatsappDot {
-          0%,
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-
-          50% {
-            transform: scale(0.65);
-            opacity: 0.5;
-          }
-        }
-
-        @keyframes whatsappIcon {
+        @keyframes heroWhatsAppIcon {
           0%,
           100% {
             transform: rotate(0deg) scale(1);
           }
 
           8% {
-            transform: rotate(-10deg) scale(1.08);
+            transform: rotate(-8deg) scale(1.08);
           }
 
           16% {
-            transform: rotate(8deg) scale(1.08);
+            transform: rotate(7deg) scale(1.08);
           }
 
           24% {
-            transform: rotate(-5deg) scale(1.05);
+            transform: rotate(-4deg) scale(1.03);
           }
 
           32% {
@@ -82,48 +65,45 @@ const Hero = () => {
           }
         }
 
-        @keyframes whatsappArrow {
+        @keyframes heroWhatsAppOnline {
           0%,
           100% {
-            transform: translateX(0);
+            transform: scale(1);
+            opacity: 1;
           }
 
           50% {
-            transform: translateX(4px);
+            transform: scale(0.7);
+            opacity: 0.55;
           }
         }
 
-        .whatsapp-orb {
-          animation: whatsappOrb 3s ease-out infinite;
+        .hero-whatsapp-float {
+          animation: heroWhatsAppFloat 3.4s ease-in-out infinite;
         }
 
-        .whatsapp-float {
-          animation: whatsappFloat 3.2s ease-in-out infinite;
+        .hero-whatsapp-glow {
+          animation: heroWhatsAppGlow 2.8s ease-in-out infinite;
         }
 
-        .whatsapp-shine {
-          animation: whatsappShine 4s ease-in-out infinite;
+        .hero-whatsapp-shine {
+          animation: heroWhatsAppShine 4.2s ease-in-out infinite;
         }
 
-        .whatsapp-dot {
-          animation: whatsappDot 1.8s ease-in-out infinite;
+        .hero-whatsapp-icon {
+          animation: heroWhatsAppIcon 4s ease-in-out infinite;
         }
 
-        .whatsapp-icon {
-          animation: whatsappIcon 3.5s ease-in-out infinite;
-        }
-
-        .whatsapp-arrow {
-          animation: whatsappArrow 1.4s ease-in-out infinite;
+        .hero-whatsapp-online {
+          animation: heroWhatsAppOnline 1.8s ease-in-out infinite;
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .whatsapp-orb,
-          .whatsapp-float,
-          .whatsapp-shine,
-          .whatsapp-dot,
-          .whatsapp-icon,
-          .whatsapp-arrow {
+          .hero-whatsapp-float,
+          .hero-whatsapp-glow,
+          .hero-whatsapp-shine,
+          .hero-whatsapp-icon,
+          .hero-whatsapp-online {
             animation: none;
           }
         }
@@ -311,13 +291,7 @@ const Hero = () => {
                 >
                   Kurslara bax
 
-                  <span
-                    className="
-                      transition-transform
-                      duration-300
-                      group-hover:translate-x-1
-                    "
-                  >
+                  <span className="transition-transform duration-300 group-hover:translate-x-1">
                     →
                   </span>
                 </Link>
@@ -350,14 +324,7 @@ const Hero = () => {
                 >
                   Haqqımızda
 
-                  <span
-                    className="
-                      text-gray-400
-                      transition-transform
-                      duration-300
-                      group-hover:translate-x-1
-                    "
-                  >
+                  <span className="text-gray-400 transition-transform duration-300 group-hover:translate-x-1">
                     ↗
                   </span>
                 </Link>
@@ -368,47 +335,48 @@ const Hero = () => {
                   rel="noopener noreferrer"
                   aria-label="WhatsApp ilə məlumat al"
                   className="
-                    whatsapp-float
+                    hero-whatsapp-float
                     group
                     relative
                     inline-flex
-                    h-[66px]
-                    min-w-[285px]
+                    h-[76px]
+                    w-full
+                    max-w-[335px]
                     items-center
-                    gap-3
                     overflow-visible
-                    rounded-[22px]
+                    rounded-[25px]
                     border
                     border-[#d9a900]
                     bg-[#FFC400]
                     px-3
                     text-gray-950
-                    shadow-[0_14px_0_#c99700,0_22px_40px_rgba(255,196,0,0.28)]
-                    perspective-[1000px]
+                    [transform-style:preserve-3d]
+                    [perspective:1200px]
+                    shadow-[0_8px_0_#c49300,0_16px_0_#aa8000,0_25px_45px_rgba(201,147,0,0.25)]
                     transition-all
                     duration-500
-                    hover:-translate-y-2
-                    hover:rotate-[-1deg]
+                    hover:-translate-y-3
+                    hover:rotate-x-2
+                    hover:rotate-y-[-2deg]
                     hover:scale-[1.025]
-                    hover:border-[#bd9000]
                     hover:bg-[#FFD21F]
-                    hover:shadow-[0_17px_0_#b98c00,0_28px_55px_rgba(255,196,0,0.42)]
-                    active:translate-y-1
-                    active:shadow-[0_6px_0_#c99700,0_12px_25px_rgba(255,196,0,0.22)]
-                    sm:min-w-[310px]
+                    hover:shadow-[0_11px_0_#c49300,0_22px_0_#aa8000,0_35px_60px_rgba(201,147,0,0.35)]
+                    active:translate-y-2
+                    active:scale-[0.99]
+                    active:shadow-[0_3px_0_#aa8000,0_7px_0_#906d00,0_12px_25px_rgba(201,147,0,0.2)]
                   "
                 >
                   <span
                     aria-hidden="true"
                     className="
-                      whatsapp-orb
+                      hero-whatsapp-glow
                       pointer-events-none
                       absolute
-                      -inset-4
-                      -z-10
-                      rounded-[28px]
-                      bg-[#FFC400]/30
-                      blur-xl
+                      -inset-5
+                      -z-20
+                      rounded-[32px]
+                      bg-[#FFC400]/35
+                      blur-2xl
                     "
                   />
 
@@ -417,15 +385,25 @@ const Hero = () => {
                     className="
                       pointer-events-none
                       absolute
-                      -inset-[2px]
-                      rounded-[22px]
+                      inset-[3px]
+                      rounded-[21px]
                       border
                       border-white/50
-                      opacity-0
-                      transition-all
-                      duration-500
-                      group-hover:scale-[1.04]
-                      group-hover:opacity-100
+                    "
+                  />
+
+                  <span
+                    aria-hidden="true"
+                    className="
+                      pointer-events-none
+                      absolute
+                      left-[7%]
+                      right-[7%]
+                      top-1
+                      h-5
+                      rounded-full
+                      bg-white/25
+                      blur-md
                     "
                   />
 
@@ -436,21 +414,21 @@ const Hero = () => {
                       absolute
                       inset-0
                       overflow-hidden
-                      rounded-[22px]
+                      rounded-[25px]
                     "
                   >
                     <span
                       className="
-                        whatsapp-shine
+                        hero-whatsapp-shine
                         absolute
-                        left-[-70%]
-                        top-[-30%]
-                        h-[160%]
-                        w-[32%]
-                        rotate-[20deg]
+                        left-[-55%]
+                        top-[-40%]
+                        h-[180%]
+                        w-[25%]
+                        rotate-[18deg]
                         bg-gradient-to-r
                         from-transparent
-                        via-white/70
+                        via-white/75
                         to-transparent
                         blur-[3px]
                       "
@@ -462,15 +440,16 @@ const Hero = () => {
                     className="
                       pointer-events-none
                       absolute
-                      bottom-[-9px]
-                      left-6
-                      right-6
-                      h-2
+                      bottom-[-16px]
+                      left-[10%]
+                      right-[10%]
+                      h-4
                       rounded-full
-                      bg-black/15
-                      blur-md
+                      bg-black/20
+                      blur-lg
                       transition-all
                       duration-500
+                      group-hover:bottom-[-20px]
                       group-hover:scale-90
                       group-hover:opacity-60
                     "
@@ -479,48 +458,50 @@ const Hero = () => {
                   <span
                     className="
                       relative
+                      z-10
                       flex
-                      h-12
-                      w-12
+                      h-[56px]
+                      w-[56px]
                       shrink-0
                       items-center
                       justify-center
-                      rounded-[16px]
-                      bg-white
+                      rounded-[18px]
+                      border
+                      border-white/80
+                      bg-gradient-to-br
+                      from-white
+                      via-white
+                      to-gray-100
                       text-[#25D366]
-                      shadow-[0_7px_14px_rgba(0,0,0,0.14),inset_0_-2px_0_rgba(0,0,0,0.05)]
+                      shadow-[0_7px_0_#d1d1d1,0_11px_18px_rgba(0,0,0,0.16),inset_0_2px_3px_rgba(255,255,255,1)]
+                      [transform:translateZ(22px)]
                       transition-all
                       duration-500
-                      group-hover:-translate-y-1
+                      group-hover:-translate-y-2
                       group-hover:rotate-[-8deg]
                       group-hover:scale-110
-                      group-hover:rounded-[14px]
-                      group-hover:shadow-[0_10px_20px_rgba(37,211,102,0.32)]
+                      group-hover:shadow-[0_9px_0_#c7c7c7,0_15px_25px_rgba(37,211,102,0.28)]
                     "
                   >
                     <span
-                      aria-hidden="true"
                       className="
-                        whatsapp-dot
+                        hero-whatsapp-online
                         absolute
                         -right-1
                         -top-1
-                        h-3.5
-                        w-3.5
+                        h-4
+                        w-4
                         rounded-full
+                        border-2
+                        border-white
                         bg-[#25D366]
-                        ring-2
-                        ring-white
+                        shadow-[0_2px_8px_rgba(37,211,102,0.45)]
                       "
                     />
 
                     <svg
                       viewBox="0 0 24 24"
-                      className="
-                        whatsapp-icon
-                        h-6
-                        w-6
-                      "
+                      className="hero-whatsapp-icon h-7 w-7"
                       fill="currentColor"
                       aria-hidden="true"
                     >
@@ -529,7 +510,21 @@ const Hero = () => {
                     </svg>
                   </span>
 
-                  <span className="relative flex min-w-0 flex-1 flex-col items-start justify-center leading-none">
+                  <span
+                    className="
+                      relative
+                      z-10
+                      ml-3
+                      flex
+                      min-w-0
+                      flex-1
+                      flex-col
+                      items-start
+                      justify-center
+                      leading-none
+                      [transform:translateZ(15px)]
+                    "
+                  >
                     <span
                       className="
                         flex
@@ -540,21 +535,9 @@ const Hero = () => {
                         uppercase
                         tracking-[0.18em]
                         text-gray-800/70
-                        transition-colors
-                        duration-300
-                        group-hover:text-gray-950
                       "
                     >
-                      <span
-                        className="
-                          whatsapp-dot
-                          h-1.5
-                          w-1.5
-                          rounded-full
-                          bg-[#25D366]
-                          shadow-[0_0_0_3px_rgba(37,211,102,0.12)]
-                        "
-                      />
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#25D366] shadow-[0_0_0_4px_rgba(37,211,102,0.13)]" />
 
                       Bizə yaz
                     </span>
@@ -562,26 +545,19 @@ const Hero = () => {
                     <span
                       className="
                         mt-1.5
-                        text-[15px]
+                        text-[16px]
                         font-extrabold
-                        tracking-[-0.02em]
+                        tracking-[-0.025em]
                         text-gray-950
                         transition-transform
                         duration-500
-                        group-hover:translate-x-0.5
+                        group-hover:translate-x-1
                       "
                     >
                       Pulsuz məlumat al
                     </span>
 
-                    <span
-                      className="
-                        mt-1
-                        text-[10px]
-                        font-medium
-                        text-gray-700/65
-                      "
-                    >
+                    <span className="mt-1 text-[10px] font-medium text-gray-700/65">
                       Kurs seçimi üçün bizə yaz
                     </span>
                   </span>
@@ -589,31 +565,33 @@ const Hero = () => {
                   <span
                     className="
                       relative
+                      z-10
                       flex
-                      h-10
-                      w-10
+                      h-11
+                      w-11
                       shrink-0
                       items-center
                       justify-center
-                      rounded-[14px]
-                      bg-gray-950
+                      rounded-[15px]
+                      border
+                      border-black/10
+                      bg-gradient-to-br
+                      from-gray-950
+                      to-gray-700
                       text-white
-                      shadow-[0_5px_10px_rgba(0,0,0,0.18),inset_0_-2px_0_rgba(255,255,255,0.08)]
+                      shadow-[0_5px_0_#111,0_9px_15px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.15)]
+                      [transform:translateZ(20px)]
                       transition-all
                       duration-500
                       group-hover:-translate-y-1
                       group-hover:rotate-[8deg]
-                      group-hover:bg-[#25D366]
-                      group-hover:shadow-[0_8px_16px_rgba(37,211,102,0.32)]
+                      group-hover:bg-gradient-to-br
+                      group-hover:from-[#25D366]
+                      group-hover:to-[#128C7E]
+                      group-hover:shadow-[0_5px_0_#087c67,0_10px_18px_rgba(37,211,102,0.3)]
                     "
                   >
-                    <span
-                      className="
-                        whatsapp-arrow
-                        text-lg
-                        font-medium
-                      "
-                    >
+                    <span className="text-lg font-bold transition-transform duration-300 group-hover:translate-x-0.5">
                       →
                     </span>
                   </span>
