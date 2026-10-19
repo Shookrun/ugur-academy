@@ -7,61 +7,19 @@ const Hero = () => {
   return (
     <>
       <style>{`
-        @keyframes heroWhatsAppFloat {
-          0%,
-          100% {
-            transform: translateY(0) rotateX(0deg) rotateY(0deg);
-          }
-
-          50% {
-            transform: translateY(-4px) rotateX(1deg) rotateY(-1deg);
-          }
-        }
-
-        @keyframes heroWhatsAppGlow {
-          0%,
-          100% {
-            opacity: 0.25;
-            transform: scale(0.9);
-          }
-
-          50% {
-            opacity: 0.5;
-            transform: scale(1.05);
-          }
-        }
-
-        @keyframes heroWhatsAppShine {
-          0% {
-            transform: translateX(-150%) rotate(18deg);
-          }
-
-          35%,
-          100% {
-            transform: translateX(300%) rotate(18deg);
-          }
-        }
-
         @keyframes heroWhatsAppIcon {
           0%,
+          88%,
           100% {
-            transform: rotate(0deg) scale(1);
+            transform: rotate(0deg);
           }
 
-          8% {
-            transform: rotate(-8deg) scale(1.08);
+          92% {
+            transform: rotate(-3deg);
           }
 
-          16% {
-            transform: rotate(7deg) scale(1.08);
-          }
-
-          24% {
-            transform: rotate(-4deg) scale(1.03);
-          }
-
-          32% {
-            transform: rotate(0deg) scale(1);
+          96% {
+            transform: rotate(3deg);
           }
         }
 
@@ -73,35 +31,20 @@ const Hero = () => {
           }
 
           50% {
-            transform: scale(0.7);
-            opacity: 0.55;
+            transform: scale(0.85);
+            opacity: 0.7;
           }
         }
 
-        .hero-whatsapp-float {
-          animation: heroWhatsAppFloat 3.4s ease-in-out infinite;
-        }
-
-        .hero-whatsapp-glow {
-          animation: heroWhatsAppGlow 2.8s ease-in-out infinite;
-        }
-
-        .hero-whatsapp-shine {
-          animation: heroWhatsAppShine 4.2s ease-in-out infinite;
-        }
-
         .hero-whatsapp-icon {
-          animation: heroWhatsAppIcon 4s ease-in-out infinite;
+          animation: heroWhatsAppIcon 7s ease-in-out infinite;
         }
 
         .hero-whatsapp-online {
-          animation: heroWhatsAppOnline 1.8s ease-in-out infinite;
+          animation: heroWhatsAppOnline 2.4s ease-in-out infinite;
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .hero-whatsapp-float,
-          .hero-whatsapp-glow,
-          .hero-whatsapp-shine,
           .hero-whatsapp-icon,
           .hero-whatsapp-online {
             animation: none;
@@ -335,176 +278,59 @@ const Hero = () => {
                   rel="noopener noreferrer"
                   aria-label="WhatsApp ilə məlumat al"
                   className="
-                    hero-whatsapp-float
                     group
                     relative
                     inline-flex
-                    h-[76px]
+                    h-14
                     w-full
-                    max-w-[335px]
+                    max-w-[250px]
                     items-center
-                    overflow-visible
-                    rounded-[25px]
-                    border
-                    border-[#e0a800]
-                    bg-gradient-to-b
-                    from-[#FFDC4A]
-                    via-[#FFC400]
-                    to-[#FFB300]
+                    gap-3
+                    rounded-2xl
+                    bg-[#FFC400]
                     px-3
                     text-gray-950
-                    [transform-style:preserve-3d]
-                    [perspective:1200px]
-                    shadow-[0_10px_0_#b07d00,0_13px_0_#6f4d00,0_24px_28px_rgba(110,75,0,0.45),inset_0_2px_0_rgba(255,255,255,0.75),inset_0_-4px_8px_rgba(170,115,0,0.35)]
-                    transition-[translate,box-shadow,filter]
+                    shadow-[0_5px_0_#b88700,0_9px_14px_rgba(110,75,0,0.22)]
+                    transition-[translate,box-shadow]
                     duration-150
                     ease-out
-                    hover:-translate-y-1
-                    hover:brightness-105
-                    hover:[animation-play-state:paused]
-                    hover:shadow-[0_14px_0_#b07d00,0_17px_0_#6f4d00,0_32px_36px_rgba(110,75,0,0.5),inset_0_2px_0_rgba(255,255,255,0.85),inset_0_-4px_8px_rgba(170,115,0,0.35)]
-                    active:translate-y-[11px]
-                    active:brightness-100
-                    active:[animation-play-state:paused]
-                    active:shadow-[0_0_0_#b07d00,0_2px_0_#6f4d00,0_5px_9px_rgba(110,75,0,0.45),inset_0_3px_8px_rgba(150,100,0,0.45),inset_0_-1px_0_rgba(255,255,255,0.4)]
+                    hover:-translate-y-0.5
+                    hover:shadow-[0_7px_0_#b88700,0_12px_18px_rgba(110,75,0,0.26)]
+                    active:translate-y-1
+                    active:shadow-[0_1px_0_#b88700,0_3px_5px_rgba(110,75,0,0.25)]
                   "
                 >
                   <span
-                    aria-hidden="true"
-                    className="
-                      hero-whatsapp-glow
-                      pointer-events-none
-                      absolute
-                      -inset-5
-                      -z-20
-                      rounded-[32px]
-                      bg-[#FFC400]/35
-                      blur-2xl
-                    "
-                  />
-
-                  <span
-                    aria-hidden="true"
-                    className="
-                      pointer-events-none
-                      absolute
-                      inset-[3px]
-                      rounded-[21px]
-                      border
-                      border-white/50
-                    "
-                  />
-
-                  <span
-                    aria-hidden="true"
-                    className="
-                      pointer-events-none
-                      absolute
-                      left-[7%]
-                      right-[7%]
-                      top-1
-                      h-5
-                      rounded-full
-                      bg-white/25
-                      blur-md
-                    "
-                  />
-
-                  <span
-                    aria-hidden="true"
-                    className="
-                      pointer-events-none
-                      absolute
-                      inset-0
-                      overflow-hidden
-                      rounded-[25px]
-                    "
-                  >
-                    <span
-                      className="
-                        hero-whatsapp-shine
-                        absolute
-                        left-[-55%]
-                        top-[-40%]
-                        h-[180%]
-                        w-[25%]
-                        rotate-[18deg]
-                        bg-gradient-to-r
-                        from-transparent
-                        via-white/75
-                        to-transparent
-                        blur-[3px]
-                      "
-                    />
-                  </span>
-
-                  <span
-                    aria-hidden="true"
-                    className="
-                      pointer-events-none
-                      absolute
-                      bottom-[-16px]
-                      left-[10%]
-                      right-[10%]
-                      h-4
-                      rounded-full
-                      bg-black/20
-                      blur-lg
-                      transition-all
-                      duration-500
-                      group-hover:bottom-[-20px]
-                      group-hover:scale-90
-                      group-hover:opacity-60
-                    "
-                  />
-
-                  <span
                     className="
                       relative
-                      z-10
                       flex
-                      h-[56px]
-                      w-[56px]
+                      h-9
+                      w-9
                       shrink-0
                       items-center
                       justify-center
-                      rounded-[18px]
-                      border
-                      border-white/80
-                      bg-gradient-to-br
-                      from-white
-                      via-white
-                      to-gray-100
+                      rounded-xl
+                      bg-white
                       text-[#25D366]
-                      shadow-[0_7px_0_#d1d1d1,0_11px_18px_rgba(0,0,0,0.16),inset_0_2px_3px_rgba(255,255,255,1)]
-                      [transform:translateZ(22px)]
-                      transition-all
-                      duration-500
-                      group-hover:-translate-y-2
-                      group-hover:rotate-[-8deg]
-                      group-hover:scale-110
-                      group-hover:shadow-[0_9px_0_#c7c7c7,0_15px_25px_rgba(37,211,102,0.28)]
                     "
                   >
                     <span
                       className="
                         hero-whatsapp-online
                         absolute
-                        -right-1
-                        -top-1
-                        h-4
-                        w-4
+                        -right-0.5
+                        -top-0.5
+                        h-2.5
+                        w-2.5
                         rounded-full
                         border-2
                         border-white
                         bg-[#25D366]
-                        shadow-[0_2px_8px_rgba(37,211,102,0.45)]
                       "
                     />
-
                     <svg
                       viewBox="0 0 24 24"
-                      className="hero-whatsapp-icon h-7 w-7"
+                      className="hero-whatsapp-icon h-[18px] w-[18px]"
                       fill="currentColor"
                       aria-hidden="true"
                     >
@@ -513,90 +339,31 @@ const Hero = () => {
                     </svg>
                   </span>
 
-                  <span
-                    className="
-                      relative
-                      z-10
-                      ml-3
-                      flex
-                      min-w-0
-                      flex-1
-                      flex-col
-                      items-start
-                      justify-center
-                      leading-none
-                      [transform:translateZ(15px)]
-                    "
-                  >
-                    <span
-                      className="
-                        flex
-                        items-center
-                        gap-2
-                        text-[9px]
-                        font-bold
-                        uppercase
-                        tracking-[0.18em]
-                        text-gray-800/70
-                      "
-                    >
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#25D366] shadow-[0_0_0_4px_rgba(37,211,102,0.13)]" />
-
-                      Bizə yaz
-                    </span>
-
-                    <span
-                      className="
-                        mt-1.5
-                        text-[16px]
-                        font-extrabold
-                        tracking-[-0.025em]
-                        text-gray-950
-                        transition-transform
-                        duration-500
-                        group-hover:translate-x-1
-                      "
-                    >
+                  <span className="flex min-w-0 flex-1 flex-col leading-none">
+                    <span className="text-[15px] font-extrabold tracking-[-0.02em]">
                       Pulsuz məlumat al
                     </span>
-
-                    <span className="mt-1 text-[10px] font-medium text-gray-700/65">
+                    <span className="mt-1 text-[10px] font-medium text-gray-800/65">
                       Kurs seçimi üçün bizə yaz
                     </span>
                   </span>
 
                   <span
                     className="
-                      relative
-                      z-10
                       flex
-                      h-11
-                      w-11
+                      h-8
+                      w-8
                       shrink-0
                       items-center
                       justify-center
-                      rounded-[15px]
-                      border
-                      border-black/10
-                      bg-gradient-to-br
-                      from-gray-950
-                      to-gray-700
+                      rounded-lg
+                      bg-gray-950
+                      text-sm
+                      font-bold
                       text-white
-                      shadow-[0_5px_0_#111,0_9px_15px_rgba(0,0,0,0.2),inset_0_1px_1px_rgba(255,255,255,0.15)]
-                      [transform:translateZ(20px)]
-                      transition-all
-                      duration-500
-                      group-hover:-translate-y-1
-                      group-hover:rotate-[8deg]
-                      group-hover:bg-gradient-to-br
-                      group-hover:from-[#25D366]
-                      group-hover:to-[#128C7E]
-                      group-hover:shadow-[0_5px_0_#087c67,0_10px_18px_rgba(37,211,102,0.3)]
                     "
                   >
-                    <span className="text-lg font-bold transition-transform duration-300 group-hover:translate-x-0.5">
-                      →
-                    </span>
+                    →
                   </span>
                 </Link>
               </div>
