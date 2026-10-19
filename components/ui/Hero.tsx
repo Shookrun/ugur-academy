@@ -6,7 +6,7 @@ import Link from "next/link"
 const Hero = () => {
   return (
     <>
-      <style jsx global>{`
+      <style>{`
         @keyframes heroWhatsAppFloat {
           0%,
           100% {
@@ -346,24 +346,27 @@ const Hero = () => {
                     overflow-visible
                     rounded-[25px]
                     border
-                    border-[#d9a900]
-                    bg-[#FFC400]
+                    border-[#e0a800]
+                    bg-gradient-to-b
+                    from-[#FFDC4A]
+                    via-[#FFC400]
+                    to-[#FFB300]
                     px-3
                     text-gray-950
                     [transform-style:preserve-3d]
                     [perspective:1200px]
-                    shadow-[0_8px_0_#c49300,0_16px_0_#aa8000,0_25px_45px_rgba(201,147,0,0.25)]
-                    transition-all
-                    duration-500
-                    hover:-translate-y-3
-                    hover:rotate-x-2
-                    hover:rotate-y-[-2deg]
-                    hover:scale-[1.025]
-                    hover:bg-[#FFD21F]
-                    hover:shadow-[0_11px_0_#c49300,0_22px_0_#aa8000,0_35px_60px_rgba(201,147,0,0.35)]
-                    active:translate-y-2
-                    active:scale-[0.99]
-                    active:shadow-[0_3px_0_#aa8000,0_7px_0_#906d00,0_12px_25px_rgba(201,147,0,0.2)]
+                    shadow-[0_10px_0_#b07d00,0_13px_0_#6f4d00,0_24px_28px_rgba(110,75,0,0.45),inset_0_2px_0_rgba(255,255,255,0.75),inset_0_-4px_8px_rgba(170,115,0,0.35)]
+                    transition-[translate,box-shadow,filter]
+                    duration-150
+                    ease-out
+                    hover:-translate-y-1
+                    hover:brightness-105
+                    hover:[animation-play-state:paused]
+                    hover:shadow-[0_14px_0_#b07d00,0_17px_0_#6f4d00,0_32px_36px_rgba(110,75,0,0.5),inset_0_2px_0_rgba(255,255,255,0.85),inset_0_-4px_8px_rgba(170,115,0,0.35)]
+                    active:translate-y-[11px]
+                    active:brightness-100
+                    active:[animation-play-state:paused]
+                    active:shadow-[0_0_0_#b07d00,0_2px_0_#6f4d00,0_5px_9px_rgba(110,75,0,0.45),inset_0_3px_8px_rgba(150,100,0,0.45),inset_0_-1px_0_rgba(255,255,255,0.4)]
                   "
                 >
                   <span
