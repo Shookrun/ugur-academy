@@ -5,6 +5,13 @@ import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import type { PointerEvent } from "react"
 
+type Partner = {
+  name: string
+  position: string
+  logo: string
+  slug?: string
+}
+
 const partnerSlugMap: Record<string, string> = {
   "Mehman Bayramov": "mehman-bayramov",
   "Aynur Ələkbərova": "aynur-elekberova",
@@ -15,7 +22,7 @@ const partnerSlugMap: Record<string, string> = {
   "Günay Məmmədova": "gunay-memmedova",
 }
 
-const partners = [
+const partners: Partner[] = [
   {
     name: "Mehman Bayramov",
     position: "Əməkdaş",
@@ -54,26 +61,12 @@ const partners = [
 ]
 
 export default function Partners() {
-  const [partnerList, setPartnerList] = useState(partners)
+  const [partnerList, setPartnerList] = useState<Partner[]>(partners)
+  const [dragging, setDragging] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
+
   const sectionRef = useRef<HTMLElement>(null)
   const sliderRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    fetch(`/api/partners?t=${Date.now()}&_nonce=${Math.random().toString(36).slice(2)}`, { 
-      cache: "no-store",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-      }
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && Array.isArray(data) && data.length > 0) {
-          setPartnerList(data)
-        }
-      })
-      .catch(() => {})
-  }, [])
 
   const isDragging = useRef(false)
   const hasMoved = useRef(false)
@@ -81,17 +74,50 @@ export default function Partners() {
   const startScrollLeft = useRef(0)
   const activePointerId = useRef<number | null>(null)
 
-  const [dragging, setDragging] = useState(false)
-  const [isVisible, setIsVisible] = useState(false)
+  useEffect(() => {
+    fetch(
+      `/api/partners?t=${Date.now()}&_nonce=${Math.random()
+        .toString(36)
+        .slice(2)}`,
+      {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      }
+    )
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: unknown) => {
+        if (!Array.isArray(data) || data.length === 0) {
+          return
+        }
 
-  /* =========================================================
-     SECTION SCROLL ANIMATION
-  ========================================================= */
+        const validPartners = data.filter(
+          (item): item is Partner =>
+            typeof item === "object" &&
+            item !== null &&
+            "name" in item &&
+            "position" in item &&
+            "logo" in item &&
+            typeof item.name === "string" &&
+            typeof item.position === "string" &&
+            typeof item.logo === "string"
+        )
+
+        if (validPartners.length > 0) {
+          setPartnerList(validPartners)
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     const section = sectionRef.current
 
-    if (!section) return
+    if (!section) {
+      return
+    }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -107,10 +133,6 @@ export default function Partners() {
 
     return () => observer.disconnect()
   }, [])
-
-  /* =========================================================
-     KART + GAP ÖLÇÜSÜ
-  ========================================================= */
 
   const getScrollAmount = () => {
     const slider = sliderRef.current
@@ -135,14 +157,12 @@ export default function Partners() {
     return card.offsetWidth + gap
   }
 
-  /* =========================================================
-     NEXT
-  ========================================================= */
-
   const nextSlide = () => {
     const slider = sliderRef.current
 
-    if (!slider) return
+    if (!slider) {
+      return
+    }
 
     const amount = getScrollAmount()
 
@@ -160,36 +180,29 @@ export default function Partners() {
     })
   }
 
-  /* =========================================================
-     PREVIOUS
-  ========================================================= */
-
   const previousSlide = () => {
     const slider = sliderRef.current
 
-    if (!slider) return
+    if (!slider) {
+      return
+    }
 
     const amount = getScrollAmount()
 
     slider.scrollTo({
-      left: Math.max(
-        0,
-        slider.scrollLeft - amount
-      ),
+      left: Math.max(0, slider.scrollLeft - amount),
       behavior: "smooth",
     })
   }
-
-  /* =========================================================
-     POINTER DOWN
-  ========================================================= */
 
   const handlePointerDown = (
     event: PointerEvent<HTMLDivElement>
   ) => {
     const slider = sliderRef.current
 
-    if (!slider) return
+    if (!slider) {
+      return
+    }
 
     const target = event.target as HTMLElement
 
@@ -209,7 +222,6 @@ export default function Partners() {
 
     isDragging.current = true
     hasMoved.current = false
-
     activePointerId.current = event.pointerId
 
     startX.current = event.clientX
@@ -219,12 +231,8 @@ export default function Partners() {
 
     try {
       slider.setPointerCapture(event.pointerId)
-    } catch { }
+    } catch {}
   }
-
-  /* =========================================================
-     POINTER MOVE
-  ========================================================= */
 
   const handlePointerMove = (
     event: PointerEvent<HTMLDivElement>
@@ -258,10 +266,6 @@ export default function Partners() {
     }
   }
 
-  /* =========================================================
-     STOP DRAGGING
-  ========================================================= */
-
   const stopDragging = (
     event?: PointerEvent<HTMLDivElement>
   ) => {
@@ -284,7 +288,7 @@ export default function Partners() {
             event.pointerId
           )
         }
-      } catch { }
+      } catch {}
     }
 
     isDragging.current = false
@@ -296,10 +300,6 @@ export default function Partners() {
       hasMoved.current = false
     }, 0)
   }
-
-  /* =========================================================
-     POINTER CANCEL
-  ========================================================= */
 
   const handlePointerCancel = (
     event: PointerEvent<HTMLDivElement>
@@ -318,19 +318,15 @@ export default function Partners() {
             event.pointerId
           )
         }
-      } catch { }
+      } catch {}
     }
 
     isDragging.current = false
     activePointerId.current = null
+    hasMoved.current = false
 
     setDragging(false)
-    hasMoved.current = false
   }
-
-  /* =========================================================
-     LOST POINTER CAPTURE
-  ========================================================= */
 
   const handleLostPointerCapture = () => {
     if (!isDragging.current) {
@@ -339,18 +335,15 @@ export default function Partners() {
 
     isDragging.current = false
     activePointerId.current = null
+    hasMoved.current = false
 
     setDragging(false)
-
-    window.setTimeout(() => {
-      hasMoved.current = false
-    }, 0)
   }
 
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden "
+      className="relative overflow-hidden"
     >
       <div
         className="
@@ -362,13 +355,7 @@ export default function Partners() {
           lg:px-10
         "
       >
-        {/* =====================================================
-            HEADER
-        ====================================================== */}
-
         <div className="grid gap-10 lg:grid-cols-2 lg:items-end">
-          {/* LEFT */}
-
           <div
             className={`
               max-w-2xl
@@ -376,9 +363,10 @@ export default function Partners() {
               transition-all
               duration-1000
               ease-[cubic-bezier(0.22,1,0.36,1)]
-              ${isVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-12 opacity-0"
+              ${
+                isVisible
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-12 opacity-0"
               }
             `}
           >
@@ -389,21 +377,15 @@ export default function Partners() {
                   bg-black
                   transition-all
                   duration-700
-                  ${isVisible
-                    ? "w-8 opacity-100"
-                    : "w-0 opacity-0"
+                  ${
+                    isVisible
+                      ? "w-8 opacity-100"
+                      : "w-0 opacity-0"
                   }
                 `}
               />
 
-              <span
-                className="
-                  text-sm
-                  font-medium
-                  tracking-wide
-                  text-gray-500
-                "
-              >
+              <span className="text-sm font-medium tracking-wide text-gray-500">
                 Əməkdaşlarımız
               </span>
             </div>
@@ -425,8 +407,6 @@ export default function Partners() {
             </h2>
           </div>
 
-          {/* RIGHT */}
-
           <div
             className={`
               max-w-xl
@@ -436,9 +416,10 @@ export default function Partners() {
               delay-150
               duration-1000
               ease-[cubic-bezier(0.22,1,0.36,1)]
-              ${isVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-12 opacity-0"
+              ${
+                isVisible
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-12 opacity-0"
               }
             `}
           >
@@ -457,10 +438,6 @@ export default function Partners() {
           </div>
         </div>
 
-        {/* =====================================================
-            SLIDER
-        ====================================================== */}
-
         <div
           className={`
             relative
@@ -469,16 +446,13 @@ export default function Partners() {
             transition-all
             duration-1000
             ease-[cubic-bezier(0.22,1,0.36,1)]
-            ${isVisible
-              ? "translate-y-0 opacity-100"
-              : "translate-y-16 opacity-0"
+            ${
+              isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-16 opacity-0"
             }
           `}
         >
-
-
-
-
           <div
             ref={sliderRef}
             className={`
@@ -490,9 +464,10 @@ export default function Partners() {
               select-none
               [scrollbar-width:none]
               [&::-webkit-scrollbar]:hidden
-              ${dragging
-                ? "cursor-grabbing"
-                : "cursor-grab"
+              ${
+                dragging
+                  ? "cursor-grabbing"
+                  : "cursor-grab"
               }
             `}
             style={{
@@ -509,248 +484,225 @@ export default function Partners() {
               handleLostPointerCapture
             }
           >
-            {partnerList.map((partner, index) => (
-              <article
-                key={partner.name}
-                data-partner-card
-                className={`
-                  group
-                  relative
-                  w-[300px]
-                  shrink-0
-                  overflow-hidden
-                  rounded-[2rem]
-                  border
-                  border-gray-100
-                  
-                  shadow-sm
+            {partnerList.map((partner, index) => {
+              const slug =
+                partner.slug ||
+                partnerSlugMap[partner.name]
 
-                  transform
-
-                  transition-all
-                  duration-700
-                  ease-[cubic-bezier(0.22,1,0.36,1)]
-
-                  hover:-translate-y-2
-                  hover:shadow-xl
-
-                  ${isVisible
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-20 opacity-0"
-                  }
-                `}
-                style={{
-                  transitionDelay: isVisible
-                    ? `${250 + index * 100}ms`
-                    : "0ms",
-                }}
-              >
-                {/* =================================================
-                    IMAGE
-                ================================================== */}
-
-                <div
-                  className="
+              return (
+                <article
+                  key={partner.name}
+                  data-partner-card
+                  className={`
+                    group
                     relative
-                    h-[390px]
+                    w-[300px]
+                    shrink-0
                     overflow-hidden
-                    bg-gray-100
-                    sm:h-[430px]
-                    lg:h-[450px]
-                  "
-                >
-                  <Image
-                    src={partner.logo}
-                    alt={partner.name}
-                    fill
-                    draggable={false}
-                    sizes="
-                      (max-width: 639px) 300px,
-                      (max-width: 1023px) 350px,
-                      380px
-                    "
-                    className="
-                      pointer-events-none
-                      object-cover
-                      transition-transform
-                      duration-700
-                      group-hover:scale-105
-                    "
-                  />
-
-                  <div
-                    className="
-                      pointer-events-none
-                      absolute
-                      inset-0
-                      bg-gradient-to-t
-                      from-black/40
-                      via-black/0
-                      to-transparent
-                      opacity-0
-                      transition-opacity
-                      duration-500
-                      group-hover:opacity-100
-                    "
-                  />
-
-                  {/* NUMBER */}
-
-                  <div
-                    className="
-                      absolute
-                      left-6
-                      top-6
-                      flex
-                      h-11
-                      w-11
-                      items-center
-                      justify-center
-                      rounded-full
-                      border
-                      border-white/50
-                      bg-black/20
-                      text-xs
-                      font-medium
-                      text-white
-                      backdrop-blur-md
-                    "
-                  >
-                    {String(index + 1).padStart(2, "0")}
-                  </div>
-
-                  {/* DOT */}
-
-                  <div
-                    className="
-                      absolute
-                      right-7
-                      top-7
-                      h-2
-                      w-2
-                      rounded-full
-                      
-                      shadow
-                    "
-                  />
-                </div>
-
-                {/* =================================================
-                    INFO
-                ================================================== */}
-
-                <div
-                  className="
-                    px-7
-                    pb-7
-                    pt-6
-                  "
+                    rounded-[2rem]
+                    border
+                    border-gray-100
+                    bg-white
+                    shadow-sm
+                    transform
+                    transition-all
+                    duration-700
+                    ease-[cubic-bezier(0.22,1,0.36,1)]
+                    hover:-translate-y-2
+                    hover:shadow-xl
+                    ${
+                      isVisible
+                        ? "translate-y-0 opacity-100"
+                        : "translate-y-20 opacity-0"
+                    }
+                  `}
+                  style={{
+                    transitionDelay: isVisible
+                      ? `${250 + index * 100}ms`
+                      : "0ms",
+                  }}
                 >
                   <div
                     className="
-                      mb-5
-                      flex
-                      items-center
-                      gap-3
+                      relative
+                      h-[390px]
+                      overflow-hidden
+                      bg-gray-100
+                      sm:h-[430px]
+                      lg:h-[450px]
                     "
                   >
-                    <span
+                    <Image
+                      src={partner.logo}
+                      alt={partner.name}
+                      fill
+                      draggable={false}
+                      sizes="
+                        (max-width: 639px) 300px,
+                        (max-width: 1023px) 350px,
+                        380px
+                      "
                       className="
-                        h-px
-                        w-8
-                        bg-black
+                        pointer-events-none
+                        object-cover
+                        transition-transform
+                        duration-700
+                        group-hover:scale-105
                       "
                     />
 
-                    <span
+                    <div
                       className="
-                        text-[10px]
-                        font-semibold
-                        uppercase
-                        tracking-[0.2em]
-                        text-gray-400
+                        pointer-events-none
+                        absolute
+                        inset-0
+                        bg-gradient-to-t
+                        from-black/40
+                        via-black/0
+                        to-transparent
+                        opacity-0
+                        transition-opacity
+                        duration-500
+                        group-hover:opacity-100
                       "
-                    >
-                      Əməkdaş
-                    </span>
-                  </div>
+                    />
 
-                  <h3
-                    className="
-                      text-xl
-                      font-semibold
-                      tracking-[-0.025em]
-                      text-gray-950
-                      sm:text-2xl
-                    "
-                  >
-                    {partner.name}
-                  </h3>
-
-                  <p
-                    className="
-                      mt-2
-                      text-sm
-                      leading-6
-                      text-gray-500
-                    "
-                  >
-                    {partner.position}
-                  </p>
-
-                  <div
-                    className="
-                      mt-6
-                      flex
-                      items-center
-                      justify-between
-                      border-t
-                      border-gray-100
-                      pt-5
-                    "
-                  >
-                    <span
+                    <div
                       className="
-                        text-xs
-                        font-medium
-                        tracking-wide
-                        text-gray-400
-                      "
-                    >
-                      Uğur Şəxsi İnkişaf Mərkəzi
-                    </span>
-
-                    <Link
-                      href={`/emekdaslar/${(partner as any).slug || partnerSlugMap[partner.name] || ""}`}
-                      className="
+                        absolute
+                        left-6
+                        top-6
                         flex
-                        h-9
-                        w-9
+                        h-11
+                        w-11
                         items-center
                         justify-center
                         rounded-full
                         border
-                        border-gray-200
-                        text-sm
-                        text-gray-500
-                        transition-all
-                        duration-300
-                        group-hover:border-black
-                        group-hover:bg-black
-                        group-hover:text-white
+                        border-white/50
+                        bg-black/20
+                        text-xs
+                        font-medium
+                        text-white
+                        backdrop-blur-md
                       "
                     >
-                      ↗
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                      {String(index + 1).padStart(2, "0")}
+                    </div>
 
-          {/* =====================================================
-              CONTROLS
-          ====================================================== */}
+                    <div
+                      className="
+                        absolute
+                        right-7
+                        top-7
+                        h-2
+                        w-2
+                        rounded-full
+                        bg-white
+                        shadow
+                      "
+                    />
+                  </div>
+
+                  <div className="px-7 pb-7 pt-6">
+                    <div className="mb-5 flex items-center gap-3">
+                      <span className="h-px w-8 bg-black" />
+
+                      <span
+                        className="
+                          text-[10px]
+                          font-semibold
+                          uppercase
+                          tracking-[0.2em]
+                          text-gray-400
+                        "
+                      >
+                        Əməkdaş
+                      </span>
+                    </div>
+
+                    <h3
+                      className="
+                        text-xl
+                        font-semibold
+                        tracking-[-0.025em]
+                        text-gray-950
+                        sm:text-2xl
+                      "
+                    >
+                      {partner.name}
+                    </h3>
+
+                    <p
+                      className="
+                        mt-2
+                        text-sm
+                        leading-6
+                        text-gray-500
+                      "
+                    >
+                      {partner.position}
+                    </p>
+
+                    <div
+                      className="
+                        mt-6
+                        flex
+                        items-center
+                        justify-between
+                        border-t
+                        border-gray-100
+                        pt-5
+                      "
+                    >
+                      <span
+                        className="
+                          text-xs
+                          font-medium
+                          tracking-wide
+                          text-gray-400
+                        "
+                      >
+                        Uğur Şəxsi İnkişaf Mərkəzi
+                      </span>
+
+                      <Link
+                        href={
+                          slug
+                            ? `/emekdaslar/${slug}`
+                            : "/emekdaslar"
+                        }
+                        onClick={(event) => {
+                          if (hasMoved.current) {
+                            event.preventDefault()
+                          }
+                        }}
+                        className="
+                          flex
+                          h-9
+                          w-9
+                          items-center
+                          justify-center
+                          rounded-full
+                          border
+                          border-gray-200
+                          text-sm
+                          text-gray-500
+                          transition-all
+                          duration-300
+                          group-hover:border-black
+                          group-hover:bg-black
+                          group-hover:text-white
+                        "
+                      >
+                        ↗
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
 
           <div
             className={`
@@ -762,12 +714,16 @@ export default function Partners() {
               transition-all
               delay-700
               duration-700
-              ${isVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-8 opacity-0"
+              ${
+                isVisible
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-8 opacity-0"
               }
             `}
           >
+            <p className="hidden text-xs font-medium tracking-wide text-gray-400 sm:block">
+              Kartları sürüşdürərək bax
+            </p>
 
             <div className="ml-auto flex items-center gap-2">
               <button
@@ -783,7 +739,7 @@ export default function Partners() {
                   rounded-full
                   border
                   border-gray-200
-                  
+                  bg-white
                   text-lg
                   text-gray-950
                   shadow-sm
@@ -826,15 +782,7 @@ export default function Partners() {
             </div>
           </div>
         </div>
-
-        {/* =====================================================
-            BOTTOM
-        ====================================================== */}
-
-
       </div>
-
-      {/* SECTION LINE */}
 
       <div
         className="
