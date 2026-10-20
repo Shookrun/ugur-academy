@@ -573,7 +573,6 @@ const Navbar = () => {
           mx-auto
           mt-2
           max-w-7xl
-          overflow-hidden
           rounded-[1.5rem]
           border
           border-gray-200/80
@@ -584,8 +583,8 @@ const Navbar = () => {
           duration-500
           lg:hidden
           ${isOpen
-            ? "max-h-[800px] translate-y-0 scale-100 opacity-100"
-            : "pointer-events-none max-h-0 -translate-y-4 scale-[0.98] opacity-0"
+            ? "max-h-[calc(100dvh_-_10.5rem)] translate-y-0 scale-100 overflow-y-auto overscroll-contain opacity-100"
+            : "pointer-events-none max-h-0 -translate-y-4 scale-[0.98] overflow-hidden opacity-0"
           }
         `}
       >
