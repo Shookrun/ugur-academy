@@ -442,6 +442,8 @@ export default function Partners() {
           className={`
             relative
             mt-14
+            flex
+            flex-col
             transform
             transition-all
             duration-1000
@@ -496,7 +498,8 @@ export default function Partners() {
                   className={`
                     group
                     relative
-                    w-[300px]
+                    w-[78vw]
+                    max-w-[300px]
                     shrink-0
                     overflow-hidden
                     rounded-[2rem]
@@ -525,9 +528,10 @@ export default function Partners() {
                   <div
                     className="
                       relative
-                      h-[390px]
+                      h-[300px]
                       overflow-hidden
                       bg-gray-100
+                      min-[420px]:h-[340px]
                       sm:h-[430px]
                       lg:h-[450px]
                     "
@@ -604,8 +608,8 @@ export default function Partners() {
                     />
                   </div>
 
-                  <div className="px-7 pb-7 pt-6">
-                    <div className="mb-5 flex items-center gap-3">
+                  <div className="px-5 pb-5 pt-5 sm:px-7 sm:pb-7 sm:pt-6">
+                    <div className="mb-3 flex items-center gap-3 sm:mb-5">
                       <span className="h-px w-8 bg-black" />
 
                       <span
@@ -646,13 +650,15 @@ export default function Partners() {
 
                     <div
                       className="
-                        mt-6
+                        mt-4
                         flex
                         items-center
                         justify-between
                         border-t
                         border-gray-100
-                        pt-5
+                        pt-4
+                        sm:mt-6
+                        sm:pt-5
                       "
                     >
                       <span
@@ -707,6 +713,9 @@ export default function Partners() {
           <div
             className={`
               mt-6
+              max-sm:order-first
+              max-sm:mb-1
+              max-sm:mt-0
               flex
               items-center
               justify-between
