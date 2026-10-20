@@ -187,15 +187,15 @@ const Navbar = () => {
             priority
             className={`
               relative
-              h-[102px]
-              w-[102px]
               object-contain
               transition-all
               duration-500
               group-hover:scale-105
               group-hover:rotate-2
-              sm:h-[114px]
-              sm:w-[114px]
+              ${isOpen
+                ? "h-[64px] w-[64px] sm:h-[72px] sm:w-[72px]"
+                : "h-[102px] w-[102px] sm:h-[114px] sm:w-[114px]"
+              }
               ${isScrolled
                 ? "lg:h-[102px] lg:w-[102px]"
                 : "lg:h-[118px] lg:w-[118px]"
@@ -583,7 +583,7 @@ const Navbar = () => {
           duration-500
           lg:hidden
           ${isOpen
-            ? "max-h-[calc(100dvh_-_10.5rem)] translate-y-0 scale-100 overflow-y-auto overscroll-contain opacity-100"
+            ? "max-h-[calc(100dvh_-_6.5rem)] translate-y-0 scale-100 overflow-y-auto overscroll-contain opacity-100"
             : "pointer-events-none max-h-0 -translate-y-4 scale-[0.98] overflow-hidden opacity-0"
           }
         `}
@@ -616,7 +616,7 @@ const Navbar = () => {
                   justify-between
                   rounded-xl
                   px-4
-                  py-3.5
+                  py-2.5
                   text-base
                   font-medium
                   text-gray-700
