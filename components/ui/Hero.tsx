@@ -20,7 +20,8 @@ const Hero = () => {
         }
 
         @keyframes heroFloat {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateY(0);
           }
           50% {
@@ -29,7 +30,9 @@ const Hero = () => {
         }
 
         @keyframes heroWhatsAppIcon {
-          0%, 88%, 100% {
+          0%,
+          88%,
+          100% {
             transform: rotate(0deg);
           }
           92% {
@@ -41,20 +44,26 @@ const Hero = () => {
         }
 
         @keyframes heroWhatsAppPulse {
-          0%, 100% {
-            box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.25);
+          0%,
+          100% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.18);
           }
           50% {
-            box-shadow: 0 0 0 6px rgba(37, 211, 102, 0);
+            box-shadow: 0 0 0 6px rgba(255, 255, 255, 0);
           }
         }
 
         @keyframes heroGoldGlow {
-          0%, 100% {
-            box-shadow: 0 4px 0 #bd8508, 0 8px 18px rgba(214, 160, 29, 0.18);
+          0%,
+          100% {
+            box-shadow:
+              0 4px 0 #8d6818,
+              0 8px 20px rgba(16, 30, 61, 0.16);
           }
           50% {
-            box-shadow: 0 4px 0 #bd8508, 0 10px 24px rgba(214, 160, 29, 0.3);
+            box-shadow:
+              0 4px 0 #8d6818,
+              0 10px 28px rgba(16, 30, 61, 0.26);
           }
         }
 
@@ -113,17 +122,9 @@ const Hero = () => {
         <div className="mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-8 lg:px-10 lg:py-10 xl:px-12">
           <div className="grid min-w-0 grid-cols-1 items-center gap-10 py-5 sm:gap-12 sm:py-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-8 lg:py-10 xl:gap-12">
             <div className="min-w-0">
-              <div
-                className="hero-reveal mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-[#d8bd7c] bg-white/80 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[#a77a1b] sm:mb-7 sm:px-5 sm:text-sm sm:tracking-[0.12em]"
-                style={{ animationDelay: "100ms" }}
-              >
-                <span className="h-2 w-2 shrink-0 rounded-full bg-[#c99b31]" />
-                <span>Uğur — Şəxsi İnkişaf Mərkəzi</span>
-              </div>
-
               <h1
                 className="hero-reveal max-w-full break-words font-serif text-[clamp(2.8rem,9.2vw,6.8rem)] font-bold leading-[1.02] tracking-[-0.055em] text-[#101e3d] sm:text-[clamp(3.5rem,7vw,6rem)] lg:text-[clamp(3.3rem,5.2vw,5.6rem)] xl:text-[clamp(4rem,5.7vw,6.8rem)]"
-                style={{ animationDelay: "200ms" }}
+                style={{ animationDelay: "100ms" }}
               >
                 Gələcəyini{" "}
                 <span className="text-[#c99520]">qur!</span>
@@ -131,7 +132,7 @@ const Hero = () => {
 
               <p
                 className="hero-reveal mt-5 max-w-[680px] text-sm leading-7 text-[#65738c] sm:mt-7 sm:text-base sm:leading-8 lg:text-[17px] xl:text-xl xl:leading-9"
-                style={{ animationDelay: "300ms" }}
+                style={{ animationDelay: "200ms" }}
               >
                 Uğur Şəxsi İnkişaf Mərkəzi olaraq təhsil və inkişaf sahəsində
                 yüzlərlə insanın həyatına pozitiv təsir etmişik. Hər yaş və
@@ -142,7 +143,7 @@ const Hero = () => {
 
               <div
                 className="hero-reveal mt-4 flex items-start gap-3"
-                style={{ animationDelay: "380ms" }}
+                style={{ animationDelay: "280ms" }}
               >
                 <span className="mt-1 h-7 w-1 shrink-0 rounded-full bg-[#d5a32d] sm:h-8" />
                 <p className="text-sm font-bold leading-6 text-[#243451] sm:text-base sm:leading-7 lg:text-lg">
@@ -151,8 +152,8 @@ const Hero = () => {
               </div>
 
               <div
-                className="hero-reveal mt-7 grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:mt-8 sm:gap-4"
-                style={{ animationDelay: "450ms" }}
+                className="hero-reveal mt-7 grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:mt-8 sm:gap-4"
+                style={{ animationDelay: "350ms" }}
               >
                 <Link
                   href="/haqqimizda"
@@ -196,9 +197,9 @@ const Hero = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp ilə pulsuz məlumat al"
-                  className="hero-whatsapp-button group flex min-h-[72px] min-w-0 items-center gap-3 rounded-[20px] border border-[#f6dc83] bg-gradient-to-b from-[#ffe98b] via-[#ffd94f] to-[#ffc72c] px-3 py-3 text-[#132344] transition-[filter,transform] duration-300 hover:-translate-y-1 hover:brightness-[1.035] active:translate-y-1 sm:min-h-[76px] sm:gap-3 sm:rounded-[23px] sm:px-4"
+                  className="hero-whatsapp-button group flex min-h-[68px] min-w-0 items-center gap-3 rounded-[20px] border border-[#c99520] bg-gradient-to-b from-[#243b63] via-[#172b4d] to-[#101e3d] px-3 py-3 text-white transition-[filter,transform] duration-300 hover:-translate-y-1 hover:brightness-110 active:translate-y-1 sm:min-h-[70px] sm:gap-3 sm:rounded-[23px] sm:px-4"
                 >
-                  <span className="hero-whatsapp-status flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white sm:h-[50px] sm:w-[50px]">
+                  <span className="hero-whatsapp-status flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white sm:h-[46px] sm:w-[46px]">
                     <svg
                       viewBox="0 0 24 24"
                       className="hero-whatsapp-icon h-6 w-6 sm:h-7 sm:w-7"
@@ -209,16 +210,16 @@ const Hero = () => {
                     </svg>
                   </span>
 
-                  <span className="flex min-w-0 flex-1 flex-col text-left">
-                    <span className="text-sm font-extrabold leading-5 tracking-tight sm:text-base lg:text-[15px] xl:text-base">
+                  <span className="flex min-w-0 flex-1 flex-col text-left text-white">
+                    <span className="break-words text-[13px] font-extrabold leading-5 tracking-tight text-white min-[380px]:text-sm sm:text-base lg:text-[15px] xl:text-base">
                       Pulsuz məlumat al
                     </span>
-                    <span className="mt-1 text-[10px] leading-4 text-[#72591e] min-[380px]:text-xs sm:text-xs">
+                    <span className="mt-1 break-words text-[10px] leading-4 text-white/80 min-[380px]:text-[11px] sm:text-xs">
                       Kurs seçimi üçün bizə yaz
                     </span>
                   </span>
 
-                  <span className="shrink-0 text-xl transition-transform duration-300 group-hover:translate-x-1 sm:text-2xl">
+                  <span className="shrink-0 text-lg text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-2xl">
                     →
                   </span>
                 </Link>
@@ -226,7 +227,7 @@ const Hero = () => {
 
               <div
                 className="hero-reveal mt-9 grid grid-cols-3 border-t border-[#e5eaf1] pt-6 sm:mt-12 sm:pt-7 lg:mt-10 xl:mt-12"
-                style={{ animationDelay: "550ms" }}
+                style={{ animationDelay: "450ms" }}
               >
                 <div className="min-w-0 border-r border-[#e1e6ed] pr-2 sm:pr-4">
                   <div className="flex min-w-0 items-center gap-2 sm:gap-3">
@@ -382,7 +383,7 @@ const Hero = () => {
                   />
                 </div>
 
-                <div className="absolute right-0 top-[42%] z-20 max-w-[68%] rounded-xl border border-white/90 bg-white/95 px-3 py-2.5 shadow-[0_12px_35px_rgba(20,39,72,0.12)] backdrop-blur-md sm:right-0 sm:max-w-none sm:rounded-2xl sm:px-4 sm:py-3 lg:right-[-1%] xl:right-[-2%] xl:px-5 xl:py-4">
+                <div className="absolute right-0 top-[42%] z-20 max-w-[72%] rounded-xl border border-white/90 bg-white/95 px-3 py-2.5 shadow-[0_12px_35px_rgba(20,39,72,0.12)] backdrop-blur-md sm:right-0 sm:max-w-none sm:rounded-2xl sm:px-4 sm:py-3 lg:right-[-1%] xl:right-[-2%] xl:px-5 xl:py-4">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#fff4d7] text-[#bd8c1f] sm:h-10 sm:w-10 sm:rounded-xl">
                       <svg
