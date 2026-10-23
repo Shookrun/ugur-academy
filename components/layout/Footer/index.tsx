@@ -328,6 +328,7 @@ export default function Footer() {
               Şərtlər
             </Link>
 
+            
             <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:block" />
 
             <span className="text-xs font-medium text-gray-300">
