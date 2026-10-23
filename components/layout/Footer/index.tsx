@@ -1,9 +1,9 @@
-
+```tsx
 "use client"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useState, type FormEvent } from "react"
 
 const footerLinks = [
   { name: "Əsas", href: "/" },
@@ -24,6 +24,23 @@ const services = [
 const socialLinkClass =
   "group flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 text-gray-500 transition-all duration-300 hover:-translate-y-1 hover:border-gray-950 hover:bg-gray-950 hover:text-white"
 
+function InstagramIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-5 w-5 fill-none stroke-current"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+
 export default function Footer() {
   const pathname = usePathname()
   const [email, setEmail] = useState("")
@@ -33,7 +50,7 @@ export default function Footer() {
     return null
   }
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!email.trim()) return
@@ -63,10 +80,7 @@ export default function Footer() {
       <div className="relative z-10 mx-auto max-w-[1840px] px-6 sm:px-8 lg:px-10">
         <div className="grid gap-14 py-20 lg:grid-cols-[1.4fr_0.7fr_0.7fr_1.2fr] lg:gap-16 lg:py-24">
           <div className="max-w-md">
-            <Link
-              href="/"
-              className="group inline-flex items-center gap-4"
-            >
+            <Link href="/" className="group inline-flex items-center gap-4">
               <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 transition-all duration-500 group-hover:-translate-y-1 group-hover:rotate-2 group-hover:shadow-lg">
                 <img
                   src="/logo.png"
@@ -87,7 +101,7 @@ export default function Footer() {
               üçün müasir təhsil imkanlarını bir araya gətiririk.
             </p>
 
-            <div className="mt-8 flex items-center gap-2">
+            <div className="mt-8 flex flex-wrap items-center gap-2">
               <a
                 href="https://www.facebook.com/"
                 target="_blank"
@@ -102,6 +116,28 @@ export default function Footer() {
                 >
                   <path d="M13.5 21v-8.2h2.8l.4-3.2h-3.2V7.5c0-.9.3-1.6 1.6-1.6h1.7V3.1c-.3 0-1.4-.1-2.7-.1-2.7 0-4.5 1.6-4.5 4.6v2H6.8v3.2h2.8V21h3.9Z" />
                 </svg>
+              </a>
+
+              <a
+                href="https://www.instagram.com/haciqabul_shexsi_inkishaf?psln=MXZoNWd3OTFwejI2bA=="
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram Hacı Qabul"
+                title="Hacı Qabul Şəxsi İnkişaf"
+                className={socialLinkClass}
+              >
+                <InstagramIcon />
+              </a>
+
+              <a
+                href="https://www.instagram.com/shirvan_shexsi_inkishaf?psln=MXZoNWd3OTFwejI2bA%3D%3D"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram Şirvan"
+                title="Şirvan Şəxsi İnkişaf"
+                className={socialLinkClass}
+              >
+                <InstagramIcon />
               </a>
 
               <a
@@ -299,3 +335,4 @@ export default function Footer() {
     </footer>
   )
 }
+```
