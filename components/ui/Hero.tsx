@@ -111,7 +111,7 @@ const Hero = () => {
         </div>
 
         <div className="mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-8 lg:px-10 lg:py-10 xl:px-12">
-          <div className="grid min-w-0 grid-cols-1 items-center gap-10 rounded-[24px] border border-white/80 bg-white/55 px-4 py-7 shadow-[0_20px_80px_rgba(35,57,92,0.045)] backdrop-blur-sm sm:gap-12 sm:rounded-[28px] sm:px-7 sm:py-10 md:px-9 lg:grid-cols-[1.08fr_0.92fr] lg:gap-7 lg:px-8 lg:py-10 xl:gap-12 xl:px-12 xl:py-14">
+          <div className="grid min-w-0 grid-cols-1 items-center gap-10 py-5 sm:gap-12 sm:py-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-8 lg:py-10 xl:gap-12">
             <div className="min-w-0">
               <div
                 className="hero-reveal mb-5 inline-flex max-w-full items-center gap-2 rounded-full border border-[#d8bd7c] bg-white/80 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[#a77a1b] sm:mb-7 sm:px-5 sm:text-sm sm:tracking-[0.12em]"
@@ -362,7 +362,7 @@ const Hero = () => {
               />
 
               <div className="relative mx-auto aspect-[1/1.02] w-full max-w-[510px]">
-                <div className="absolute right-[3%] top-[2%] h-[76%] w-[63%] overflow-hidden rounded-[42%_42%_22px_22px] border-4 border-white bg-[#e6eff8] shadow-[0_20px_55px_rgba(20,39,72,0.12)] sm:border-[6px] sm:rounded-[44%_44%_28px_28px]">
+                <div className="absolute right-[3%] top-[2%] h-[76%] w-[63%] overflow-hidden rounded-[42%_42%_22px_22px] border-4 border-white bg-[#e6eff8] shadow-[0_20px_55px_rgba(20,39,72,0.12)] sm:rounded-[44%_44%_28px_28px] sm:border-[6px]">
                   <Image
                     src="/student_girl.jpg"
                     alt="Təhsil alan qız şagird"
