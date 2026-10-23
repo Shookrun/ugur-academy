@@ -1,3 +1,4 @@
+
 "use client"
 
 import Image from "next/image"
@@ -8,28 +9,22 @@ const Hero = () => {
     <>
       <style>{`
         @keyframes heroWhatsAppIcon {
-          0%,
-          88%,
-          100% {
+          0%, 88%, 100% {
             transform: rotate(0deg);
           }
-
           92% {
             transform: rotate(-3deg);
           }
-
           96% {
             transform: rotate(3deg);
           }
         }
 
         @keyframes heroWhatsAppOnline {
-          0%,
-          100% {
+          0%, 100% {
             transform: scale(1);
             opacity: 1;
           }
-
           50% {
             transform: scale(0.85);
             opacity: 0.7;
@@ -41,31 +36,21 @@ const Hero = () => {
             opacity: 0;
             transform: translate(22px, 22px) rotate(-8deg) scale(0.9);
           }
-
           10% {
             opacity: 1;
           }
-
           32% {
             opacity: 1;
             transform: translate(0, 0) rotate(-8deg) scale(0.9);
           }
-
           40% {
             opacity: 1;
             transform: translate(0, 0) rotate(-8deg) scale(0.72);
           }
-
-          48% {
+          48%, 68% {
             opacity: 1;
             transform: translate(0, 0) rotate(-8deg) scale(0.9);
           }
-
-          68% {
-            opacity: 1;
-            transform: translate(0, 0) rotate(-8deg) scale(0.9);
-          }
-
           100% {
             opacity: 0;
             transform: translate(22px, 22px) rotate(-8deg) scale(0.9);
@@ -73,55 +58,39 @@ const Hero = () => {
         }
 
         @keyframes heroWhatsAppClick {
-          0%,
-          38% {
+          0%, 38%, 100% {
             opacity: 0;
             transform: scale(0.3);
           }
-
           42% {
             opacity: 0.9;
             transform: scale(0.8);
           }
-
           54% {
-            opacity: 0;
-            transform: scale(1.8);
-          }
-
-          100% {
             opacity: 0;
             transform: scale(1.8);
           }
         }
 
         @keyframes heroWhatsAppPress {
-          0%,
-          38%,
-          100% {
+          0%, 38%, 100% {
             transform: translateY(0);
           }
-
           42% {
             transform: translateY(2px);
           }
-
           50% {
             transform: translateY(0);
           }
         }
 
         @keyframes heroWhatsAppArrow {
-          0%,
-          38%,
-          100% {
+          0%, 38%, 100% {
             transform: translateX(0);
           }
-
           42% {
             transform: translateX(1px);
           }
-
           50% {
             transform: translateX(0);
           }
@@ -166,139 +135,53 @@ const Hero = () => {
       <section className="relative overflow-hidden">
         <div
           aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            left-1/2
-            top-[-300px]
-            h-[600px]
-            w-[600px]
-            -translate-x-1/2
-            rounded-full
-            bg-gray-100/70
-            blur-[120px]
-            animate-hero-glow
-          "
+          className="pointer-events-none absolute left-1/2 top-[-300px] h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-gray-100/70 blur-[120px] animate-hero-glow"
         />
 
         <div
           aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            right-[5%]
-            top-[20%]
-            hidden
-            h-32
-            w-32
-            rounded-full
-            border
-            border-gray-200
-            lg:block
-            animate-hero-float
-          "
+          className="pointer-events-none absolute right-[5%] top-[20%] hidden h-32 w-32 rounded-full border border-gray-200 lg:block animate-hero-float"
         />
 
         <div
           aria-hidden="true"
-          className="
-            pointer-events-none
-            absolute
-            bottom-[15%]
-            left-[5%]
-            hidden
-            h-20
-            w-20
-            rounded-full
-            border
-            border-gray-200
-            lg:block
-            animate-hero-float-reverse
-          "
+          className="pointer-events-none absolute bottom-[15%] left-[5%] hidden h-20 w-20 rounded-full border border-gray-200 lg:block animate-hero-float-reverse"
         />
 
         <div className="mx-auto flex min-h-[calc(100vh-80px)] max-w-[1840px] items-center px-6 py-24 sm:px-8 lg:px-10 lg:py-28">
           <div className="grid w-full items-center gap-16 lg:grid-cols-[1fr_0.9fr] lg:gap-24">
             <div className="max-w-2xl">
               <div
-                className="
-                  mb-7
-                  flex
-                  items-center
-                  gap-3
-                  animate-hero-fade-up
-                "
-                style={{
-                  animationDelay: "100ms",
-                }}
+                className="mb-7 flex items-center gap-3 animate-hero-fade-up"
+                style={{ animationDelay: "100ms" }}
               >
                 <span className="h-px w-10 bg-gray-950" />
-
                 <span className="text-sm font-semibold tracking-wide text-gray-800">
                   Təhsil və inkişaf platforması
                 </span>
               </div>
 
               <h1
-                className="
-                  text-5xl
-                  font-semibold
-                  leading-[0.98]
-                  tracking-[-0.055em]
-                  text-gray-950
-                  sm:text-6xl
-                  lg:text-[clamp(4rem,6vw,6.8rem)]
-                  animate-hero-fade-up
-                "
-                style={{
-                  animationDelay: "200ms",
-                }}
+                className="text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-gray-950 sm:text-6xl lg:text-[clamp(4rem,6vw,6.8rem)] animate-hero-fade-up"
+                style={{ animationDelay: "200ms" }}
               >
                 Öyrən,
                 <br />
-
                 <span className="relative inline-block">
                   İnkişaf et,
-
                   <span
                     aria-hidden="true"
-                    className="
-                      absolute
-                      -bottom-2
-                      left-0
-                      h-[3px]
-                      w-0
-                      rounded-full
-                      bg-gray-950
-                      animate-hero-line
-                    "
-                    style={{
-                      animationDelay: "900ms",
-                    }}
+                    className="absolute -bottom-2 left-0 h-[3px] w-0 rounded-full bg-gray-950 animate-hero-line"
+                    style={{ animationDelay: "900ms" }}
                   />
                 </span>
-
                 <br />
-
-                <span className="text-gray-950">
-                  Gələcəyini qur !
-                </span>
+                <span className="text-gray-950">Gələcəyini qur !</span>
               </h1>
 
               <p
-                className="
-                  mt-8
-                  max-w-xl
-                  text-base
-                  leading-7
-                  text-gray-800
-                  sm:text-lg
-                  sm:leading-8
-                  animate-hero-fade-up
-                "
-                style={{
-                  animationDelay: "350ms",
-                }}
+                className="mt-8 max-w-xl text-base leading-7 text-gray-800 sm:text-lg sm:leading-8 animate-hero-fade-up"
+                style={{ animationDelay: "350ms" }}
               >
                 Uğur Şəxsi İnkişaf Mərkəzi olaraq təhsil və inkişaf sahəsində
                 yüzlərlə insanın həyatına pozitiv təsir etmişik. Hər yaş və
@@ -308,43 +191,14 @@ const Hero = () => {
               </p>
 
               <div
-                className="
-                  mt-9
-                  flex
-                  flex-col
-                  gap-4
-                  sm:flex-row
-                  sm:flex-wrap
-                  animate-hero-fade-up
-                "
-                style={{
-                  animationDelay: "500ms",
-                }}
+                className="mt-9 flex flex-col gap-4 sm:flex-row sm:flex-wrap animate-hero-fade-up"
+                style={{ animationDelay: "500ms" }}
               >
                 <Link
                   href="/kurslar"
-                  className="
-                    group
-                    inline-flex
-                    items-center
-                    justify-center
-                    gap-3
-                    rounded-full
-                    bg-gray-950
-                    px-7
-                    py-3.5
-                    text-sm
-                    font-medium
-                    text-white
-                    transition-all
-                    duration-300
-                    hover:-translate-y-1
-                    hover:bg-gray-800
-                    hover:shadow-xl
-                  "
+                  className="group inline-flex items-center justify-center gap-3 rounded-full bg-gray-950 px-7 py-3.5 text-sm font-medium text-white transition-all duration-300 hover:-translate-y-1 hover:bg-gray-800 hover:shadow-xl"
                 >
                   Kurslara bax
-
                   <span className="transition-transform duration-300 group-hover:translate-x-1">
                     →
                   </span>
@@ -352,32 +206,9 @@ const Hero = () => {
 
                 <Link
                   href="/haqqimizda"
-                  className="
-                    group
-                    inline-flex
-                    items-center
-                    justify-center
-                    gap-3
-                    rounded-full
-                    border
-                    border-gray-200
-                    bg-white/60
-                    px-7
-                    py-3.5
-                    text-sm
-                    font-medium
-                    text-gray-900
-                    backdrop-blur-sm
-                    transition-all
-                    duration-300
-                    hover:-translate-y-1
-                    hover:border-gray-400
-                    hover:bg-white
-                    hover:shadow-lg
-                  "
+                  className="group inline-flex items-center justify-center gap-3 rounded-full border border-gray-200 bg-white/60 px-7 py-3.5 text-sm font-medium text-gray-900 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-gray-400 hover:bg-white hover:shadow-lg"
                 >
                   Haqqımızda
-
                   <span className="text-gray-400 transition-transform duration-300 group-hover:translate-x-1">
                     ↗
                   </span>
@@ -388,42 +219,11 @@ const Hero = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp ilə məlumat al"
-                  className="
-                    hero-whatsapp
-                    group
-                    relative
-                    inline-flex
-                    h-14
-                    w-full
-                    max-w-[250px]
-                    cursor-pointer
-                    select-none
-                    items-center
-                    gap-3
-                    rounded-2xl
-                    bg-[#FFC400]
-                    px-3
-                    text-gray-950
-                    shadow-[0_5px_0_#b88700,0_9px_14px_rgba(110,75,0,0.22)]
-                    transition-[transform,box-shadow]
-                    duration-150
-                    ease-out
-                    hover:-translate-y-0.5
-                    hover:shadow-[0_7px_0_#b88700,0_12px_18px_rgba(110,75,0,0.26)]
-                    active:translate-y-1
-                    active:shadow-[0_1px_0_#b88700,0_3px_5px_rgba(110,75,0,0.25)]
-                  "
+                  className="hero-whatsapp group relative inline-flex h-14 w-full max-w-[250px] cursor-pointer select-none items-center gap-3 rounded-2xl bg-gray-950 px-3 text-white shadow-[0_5px_0_#030712,0_9px_14px_rgba(0,0,0,0.22)] transition-[transform,box-shadow,background-color] duration-150 ease-out hover:-translate-y-0.5 hover:bg-gray-800 hover:shadow-[0_7px_0_#030712,0_12px_18px_rgba(0,0,0,0.26)] active:translate-y-1 active:shadow-[0_1px_0_#030712,0_3px_5px_rgba(0,0,0,0.25)]"
                 >
                   <span
                     aria-hidden="true"
-                    className="
-                      hero-whatsapp-cursor
-                      pointer-events-none
-                      absolute
-                      -right-5
-                      -bottom-7
-                      z-50
-                    "
+                    className="hero-whatsapp-cursor pointer-events-none absolute -right-5 -bottom-7 z-50"
                   >
                     <svg
                       width="32"
@@ -445,56 +245,11 @@ const Hero = () => {
 
                   <span
                     aria-hidden="true"
-                    className="
-                      hero-whatsapp-click
-                      pointer-events-none
-                      absolute
-                      -right-1
-                      -top-1
-                      z-40
-                      h-5
-                      w-5
-                      rounded-full
-                      border-2
-                      border-white
-                      bg-gray-950
-                      opacity-0
-                    "
+                    className="hero-whatsapp-click pointer-events-none absolute -right-1 -top-1 z-40 h-5 w-5 rounded-full border-2 border-white bg-white opacity-0"
                   />
 
-                  <span
-                    className="
-                      relative
-                      flex
-                      h-9
-                      w-9
-                      shrink-0
-                      items-center
-                      justify-center
-                      rounded-xl
-                      bg-white
-                      text-[#25D366]
-                      shadow-sm
-                      transition-transform
-                      duration-150
-                      group-hover:scale-105
-                      group-active:scale-95
-                    "
-                  >
-                    <span
-                      className="
-                        hero-whatsapp-online
-                        absolute
-                        -right-0.5
-                        -top-0.5
-                        h-2.5
-                        w-2.5
-                        rounded-full
-                        border-2
-                        border-white
-                        bg-[#25D366]
-                      "
-                    />
+                  <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#25D366] shadow-sm transition-transform duration-150 group-hover:scale-105 group-active:scale-95">
+                    <span className="hero-whatsapp-online absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-[#25D366]" />
 
                     <svg
                       viewBox="0 0 24 24"
@@ -511,57 +266,26 @@ const Hero = () => {
                     <span className="text-[15px] font-extrabold tracking-[-0.02em]">
                       Pulsuz məlumat al
                     </span>
-
-                    <span className="mt-1 text-[10px] font-medium text-gray-800/65">
+                    <span className="mt-1 text-[10px] font-medium text-white/65">
                       Kurs seçimi üçün bizə yaz
                     </span>
                   </span>
 
-                  <span
-                    className="
-                      hero-whatsapp-arrow
-                      flex
-                      h-8
-                      w-8
-                      shrink-0
-                      items-center
-                      justify-center
-                      rounded-lg
-                      bg-gray-950
-                      text-sm
-                      font-bold
-                      text-white
-                    "
-                  >
+                  <span className="hero-whatsapp-arrow flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-sm font-bold text-gray-950">
                     →
                   </span>
                 </Link>
               </div>
 
               <div
-                className="
-                  mt-12
-                  flex
-                  flex-wrap
-                  gap-x-10
-                  gap-y-6
-                  border-t
-                  border-gray-100
-                  pt-7
-                  animate-hero-fade-up
-                "
-                style={{
-                  animationDelay: "650ms",
-                }}
+                className="mt-12 flex flex-wrap gap-x-10 gap-y-6 border-t border-gray-100 pt-7 animate-hero-fade-up"
+                style={{ animationDelay: "650ms" }}
               >
                 <div className="group">
                   <p className="text-2xl font-semibold tracking-tight text-gray-950 transition-transform duration-300 group-hover:-translate-y-1">
                     10+
                   </p>
-
-                  <p className="mt-1 text-xs text-gray-400">
-                    Kurs
-                  </p>
+                  <p className="mt-1 text-xs text-gray-400">Kurs</p>
                 </div>
 
                 <div className="h-10 w-px bg-gray-100" />
@@ -570,10 +294,7 @@ const Hero = () => {
                   <p className="text-2xl font-semibold tracking-tight text-gray-950 transition-transform duration-300 group-hover:-translate-y-1">
                     1000+
                   </p>
-
-                  <p className="mt-1 text-xs text-gray-400">
-                    Tələbə
-                  </p>
+                  <p className="mt-1 text-xs text-gray-400">Tələbə</p>
                 </div>
 
                 <div className="h-10 w-px bg-gray-100" />
@@ -582,66 +303,23 @@ const Hero = () => {
                   <p className="text-2xl font-semibold tracking-tight text-gray-950 transition-transform duration-300 group-hover:-translate-y-1">
                     5+
                   </p>
-
-                  <p className="mt-1 text-xs text-gray-400">
-                    İl təcrübə
-                  </p>
+                  <p className="mt-1 text-xs text-gray-400">İl təcrübə</p>
                 </div>
               </div>
             </div>
 
             <div
-              className="
-                relative
-                flex
-                w-full
-                items-center
-                justify-center
-                animate-hero-image
-              "
-              style={{
-                animationDelay: "250ms",
-              }}
+              className="relative flex w-full items-center justify-center animate-hero-image"
+              style={{ animationDelay: "250ms" }}
             >
               <div
                 aria-hidden="true"
-                className="
-                  absolute
-                  -right-8
-                  -top-8
-                  h-24
-                  w-24
-                  rounded-full
-                  border
-                  border-gray-200
-                  sm:-right-12
-                  sm:-top-12
-                  sm:h-32
-                  sm:w-32
-                "
+                className="absolute -right-8 -top-8 h-24 w-24 rounded-full border border-gray-200 sm:-right-12 sm:-top-12 sm:h-32 sm:w-32"
               />
 
               <div className="relative h-[480px] w-full max-w-[620px] sm:h-[540px]">
                 <div
-                  className="
-                    group
-                    absolute
-                    bottom-0
-                    left-0
-                    z-10
-                    w-[52%]
-                    overflow-hidden
-                    rounded-[2rem]
-                    border-2
-                    border-white
-                    bg-gray-100
-                    shadow-2xl
-                    shadow-gray-300/60
-                    transition-transform
-                    duration-700
-                    hover:-translate-y-2
-                    hover:shadow-3xl
-                  "
+                  className="group absolute bottom-0 left-0 z-10 w-[52%] overflow-hidden rounded-[2rem] border-2 border-white bg-gray-100 shadow-2xl shadow-gray-300/60 transition-transform duration-700 hover:-translate-y-2 hover:shadow-3xl"
                   style={{ aspectRatio: "3/4" }}
                 >
                   <Image
@@ -649,38 +327,13 @@ const Hero = () => {
                     fill
                     alt="Gülərüz oğlan şagird"
                     sizes="(max-width: 1023px) 50vw, 310px"
-                    className="
-                      object-cover
-                      object-top
-                      transition-transform
-                      duration-[1200ms]
-                      group-hover:scale-[1.04]
-                    "
+                    className="object-cover object-top transition-transform duration-[1200ms] group-hover:scale-[1.04]"
                   />
-
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-white/5" />
                 </div>
 
                 <div
-                  className="
-                    group
-                    absolute
-                    right-0
-                    top-0
-                    z-20
-                    w-[52%]
-                    overflow-hidden
-                    rounded-[2rem]
-                    border-2
-                    border-white
-                    bg-gray-100
-                    shadow-2xl
-                    shadow-gray-300/60
-                    transition-transform
-                    duration-700
-                    hover:-translate-y-2
-                    hover:shadow-3xl
-                  "
+                  className="group absolute right-0 top-0 z-20 w-[52%] overflow-hidden rounded-[2rem] border-2 border-white bg-gray-100 shadow-2xl shadow-gray-300/60 transition-transform duration-700 hover:-translate-y-2 hover:shadow-3xl"
                   style={{ aspectRatio: "3/4" }}
                 >
                   <Image
@@ -688,59 +341,20 @@ const Hero = () => {
                     fill
                     alt="Gülərüz qız şagird"
                     sizes="(max-width: 1023px) 50vw, 310px"
-                    className="
-                      object-cover
-                      object-top
-                      transition-transform
-                      duration-[1200ms]
-                      group-hover:scale-[1.04]
-                    "
+                    className="object-cover object-top transition-transform duration-[1200ms] group-hover:scale-[1.04]"
                   />
-
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-white/5" />
                 </div>
 
-                <div
-                  className="
-                    absolute
-                    -bottom-5
-                    left-4
-                    z-30
-                    hidden
-                    rounded-2xl
-                    border
-                    border-gray-100
-                    bg-white/95
-                    px-5
-                    py-3
-                    shadow-xl
-                    backdrop-blur-md
-                    sm:block
-                    animate-hero-card
-                  "
-                >
+                <div className="absolute -bottom-5 left-4 z-30 hidden rounded-2xl border border-gray-100 bg-white/95 px-5 py-3 shadow-xl backdrop-blur-md sm:block animate-hero-card">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="
-                        flex
-                        h-9
-                        w-9
-                        items-center
-                        justify-center
-                        rounded-full
-                        bg-gray-950
-                        text-sm
-                        text-white
-                      "
-                    >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-950 text-sm text-white">
                       ✓
                     </div>
-
                     <div>
                       <p className="text-sm font-semibold text-gray-950">
                         1000+ Tələbə
                       </p>
-
                       <p className="mt-0.5 text-xs text-gray-400">
                         Hər il böyüyürük
                       </p>
@@ -748,28 +362,7 @@ const Hero = () => {
                   </div>
                 </div>
 
-                <div
-                  className="
-                    absolute
-                    -right-3
-                    top-1/2
-                    z-30
-                    hidden
-                    -translate-y-1/2
-                    rounded-full
-                    border
-                    border-gray-100
-                    bg-white/95
-                    px-4
-                    py-2
-                    text-xs
-                    font-medium
-                    text-gray-700
-                    shadow-lg
-                    backdrop-blur-md
-                    sm:block
-                  "
-                >
+                <div className="absolute -right-3 top-1/2 z-30 hidden -translate-y-1/2 rounded-full border border-gray-100 bg-white/95 px-4 py-2 text-xs font-medium text-gray-700 shadow-lg backdrop-blur-md sm:block">
                   Gələcəyə doğru →
                 </div>
               </div>
@@ -779,23 +372,7 @@ const Hero = () => {
 
         <div className="absolute bottom-0 left-0 h-px w-full bg-gray-100" />
 
-        <div
-          className="
-            absolute
-            bottom-7
-            left-1/2
-            hidden
-            -translate-x-1/2
-            items-center
-            gap-3
-            text-[10px]
-            font-medium
-            uppercase
-            tracking-[0.2em]
-            text-gray-300
-            lg:flex
-          "
-        >
+        <div className="absolute bottom-7 left-1/2 hidden -translate-x-1/2 items-center gap-3 text-[10px] font-medium uppercase tracking-[0.2em] text-gray-300 lg:flex">
           <span className="h-8 w-px bg-gray-200" />
           Scroll
         </div>
