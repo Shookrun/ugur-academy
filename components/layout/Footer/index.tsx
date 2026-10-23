@@ -36,7 +36,13 @@ function InstagramIcon() {
     >
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <circle cx="12" cy="12" r="4" />
-      <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+      <circle
+        cx="17.5"
+        cy="6.5"
+        r="1"
+        fill="currentColor"
+        stroke="none"
+      />
     </svg>
   )
 }
@@ -102,7 +108,7 @@ export default function Footer() {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-2">
-              <a
+              <Link
                 href="https://www.facebook.com/"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -116,9 +122,9 @@ export default function Footer() {
                 >
                   <path d="M13.5 21v-8.2h2.8l.4-3.2h-3.2V7.5c0-.9.3-1.6 1.6-1.6h1.7V3.1c-.3 0-1.4-.1-2.7-.1-2.7 0-4.5 1.6-4.5 4.6v2H6.8v3.2h2.8V21h3.9Z" />
                 </svg>
-              </a>
+              </Link>
 
-              <a
+              <Link
                 href="https://www.instagram.com/haciqabul_shexsi_inkishaf?psln=MXZoNWd3OTFwejI2bA=="
                 target="_blank"
                 rel="noopener noreferrer"
@@ -127,9 +133,9 @@ export default function Footer() {
                 className={socialLinkClass}
               >
                 <InstagramIcon />
-              </a>
+              </Link>
 
-              <a
+              <Link
                 href="https://www.instagram.com/shirvan_shexsi_inkishaf?psln=MXZoNWd3OTFwejI2bA%3D%3D"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -138,9 +144,9 @@ export default function Footer() {
                 className={socialLinkClass}
               >
                 <InstagramIcon />
-              </a>
+              </Link>
 
-              <a
+              <Link
                 href="https://www.tiktok.com/@ugur.kurs?_r=1&_t=ZS-9Ak4GjnU320"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -154,9 +160,9 @@ export default function Footer() {
                 >
                   <path d="M19.59 6.69a4.83 4.83 0 0 1-4.22-4.22V2h-3.45v13.67a2.9 2.9 0 0 1-2.9 2.9 2.9 2.9 0 0 1 0-5.8c.3 0 .6.05.87.14V9.39a6.3 6.3 0 0 0-.87-.06 6.35 6.35 0 1 0 6.35 6.34V8.7a8.2 8.2 0 0 0 4.8 1.55V6.8a4.8 4.8 0 0 1-.58-.11Z" />
                 </svg>
-              </a>
+              </Link>
 
-              <a
+              <Link
                 href="https://youtube.com/@ugur_shexsi_inkishaf?si=DcrFrpJAVMxn8W49"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -170,7 +176,7 @@ export default function Footer() {
                 >
                   <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z" />
                 </svg>
-              </a>
+              </Link>
             </div>
           </div>
 
