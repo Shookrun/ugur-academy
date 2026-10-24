@@ -1,6 +1,7 @@
-
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 import { readSeeded } from "@/lib/collection"
 import { setCollection } from "@/lib/db"
 import { galleryItems } from "@/data/gallery"
@@ -10,6 +11,7 @@ export const revalidate = 0
 
 const COLLECTION_KEY = "gallery-categories"
 const GALLERY_KEY = "gallery"
+const NO_STORE = { "Cache-Control": "no-store, no-cache, must-revalidate" }
 
 type GalleryItem = {
   id: string
@@ -65,36 +67,31 @@ async function readGallery(): Promise<GalleryItem[]> {
     initialGallery
   )
 
-  return Array.isArray(gallery) ? gallery : initialGallery
+  return Array.isArray(gallery) ? (gallery as GalleryItem[]) : initialGallery
 }
 
 function revalidateGalleryPaths() {
-  revalidatePath("/admin/qalereya")
-  revalidatePath("/galereya")
-  revalidatePath("/")
+  try {
+    revalidatePath("/admin/qalereya")
+    revalidatePath("/galereya")
+    revalidatePath("/")
+  } catch {}
 }
 
 function jsonError(message: string, status: number) {
-  return NextResponse.json(
-    { error: message },
-    {
-      status,
-      headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-      },
-    }
-  )
+  return NextResponse.json({ error: message }, { status, headers: NO_STORE })
+}
+
+async function isAdmin() {
+  const session = await getServerSession(authOptions)
+  return Boolean(session)
 }
 
 export async function GET() {
   try {
     const categories = await readCategories()
 
-    return NextResponse.json(categories, {
-      headers: {
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-      },
-    })
+    return NextResponse.json(categories, { headers: NO_STORE })
   } catch (error) {
     console.error("GET /api/gallery/categories error:", error)
 
@@ -103,6 +100,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  if (!(await isAdmin())) return jsonError("İcazə yoxdur.", 401)
+
   try {
     const body: unknown = await req.json().catch(() => null)
 
@@ -133,7 +132,7 @@ export async function POST(req: NextRequest) {
           error: "Bu kateqoriya artıq mövcuddur.",
           category: existing,
         },
-        { status: 409 }
+        { status: 409, headers: NO_STORE }
       )
     }
 
@@ -149,12 +148,7 @@ export async function POST(req: NextRequest) {
         category: name,
         categories: updatedCategories,
       },
-      {
-        status: 201,
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-        },
-      }
+      { status: 201, headers: NO_STORE }
     )
   } catch (error) {
     console.error("POST /api/gallery/categories error:", error)
@@ -164,6 +158,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!(await isAdmin())) return jsonError("İcazə yoxdur.", 401)
+
   try {
     const body: unknown = await req.json().catch(() => null)
 
@@ -172,9 +168,10 @@ export async function DELETE(req: NextRequest) {
     }
 
     const name = typeof body.name === "string" ? body.name.trim() : ""
-    const moveTo = "moveTo" in body && typeof body.moveTo === "string"
-      ? body.moveTo.trim()
-      : ""
+    const moveTo =
+      "moveTo" in body && typeof body.moveTo === "string"
+        ? body.moveTo.trim()
+        : ""
 
     if (!name) {
       return jsonError("Kateqoriya adı boş ola bilməz.", 400)
@@ -193,9 +190,7 @@ export async function DELETE(req: NextRequest) {
 
     const gallery = await readGallery()
 
-    const affectedItems = gallery.filter(
-      (item) => item.category === existing
-    )
+    const affectedItems = gallery.filter((item) => item.category === existing)
 
     if (affectedItems.length > 0) {
       if (!moveTo) {
@@ -245,11 +240,7 @@ export async function DELETE(req: NextRequest) {
         movedImages: affectedItems.length,
         categories: updatedCategories,
       },
-      {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate",
-        },
-      }
+      { headers: NO_STORE }
     )
   } catch (error) {
     console.error("DELETE /api/gallery/categories error:", error)
