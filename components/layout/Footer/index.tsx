@@ -124,16 +124,7 @@ export default function Footer() {
                 </svg>
               </Link>
 
-              <Link
-                href="https://www.instagram.com/haciqabul_shexsi_inkishaf?psln=MXZoNWd3OTFwejI2bA=="
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram Hacı Qabul"
-                title="Hacı Qabul Şəxsi İnkişaf"
-                className={socialLinkClass}
-              >
-                <InstagramIcon />
-              </Link>
+              
 
               <Link
                 href="https://www.instagram.com/shirvan_shexsi_inkishaf?psln=MXZoNWd3OTFwejI2bA%3D%3D"
