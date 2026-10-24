@@ -46,24 +46,24 @@ const Hero = () => {
         @keyframes heroWhatsAppPulse {
           0%,
           100% {
-            box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.3);
+            box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.25);
           }
           50% {
-            box-shadow: 0 0 0 6px rgba(37, 211, 102, 0);
+            box-shadow: 0 0 0 7px rgba(37, 211, 102, 0);
           }
         }
 
         @keyframes heroGoldGlow {
           0%,
           100% {
-            box-shadow: 0 4px 0 #b28a12, 0 8px 20px rgba(16, 30, 61, 0.14);
+            box-shadow: 0 4px 0 #8d6818, 0 8px 20px rgba(16, 30, 61, 0.16);
           }
           50% {
-            box-shadow: 0 4px 0 #b28a12, 0 10px 28px rgba(16, 30, 61, 0.23);
+            box-shadow: 0 4px 0 #8d6818, 0 10px 28px rgba(16, 30, 61, 0.26);
           }
         }
 
-        @keyframes whatsappCursorClick {
+        @keyframes whatsappCursorBlink {
           0%,
           100% {
             opacity: 0;
@@ -74,27 +74,10 @@ const Hero = () => {
             opacity: 1;
           }
           40% {
-            transform: translate(-5px, -5px) scale(0.92);
+            transform: translate(-4px, -4px) scale(0.88);
           }
           55% {
-            transform: translate(-2px, -2px) scale(1);
-          }
-        }
-
-        @keyframes whatsappButtonPress {
-          0%,
-          35%,
-          100% {
-            transform: translateY(0);
-            filter: brightness(1);
-          }
-          45% {
-            transform: translateY(2px);
-            filter: brightness(0.88);
-          }
-          60% {
-            transform: translateY(0);
-            filter: brightness(1.06);
+            transform: translate(0, 0) scale(1);
           }
         }
 
@@ -142,26 +125,12 @@ const Hero = () => {
 
         .hero-whatsapp-button:hover .hero-whatsapp-cursor,
         .hero-whatsapp-button:focus-visible .hero-whatsapp-cursor {
-          animation: whatsappCursorClick 1.5s ease-in-out infinite;
-        }
-
-        .hero-whatsapp-button:hover {
-          animation:
-            heroGoldGlow 3s ease-in-out infinite,
-            whatsappButtonPress 1.5s ease-in-out infinite;
-        }
-
-        .hero-whatsapp-button:active {
-          transform: translateY(2px) scale(0.99);
+          animation: whatsappCursorBlink 1.3s ease-in-out infinite;
         }
 
         @media (pointer: coarse) {
           .hero-whatsapp-cursor {
             display: none;
-          }
-
-          .hero-whatsapp-button:hover {
-            animation: heroGoldGlow 3s ease-in-out infinite;
           }
         }
 
@@ -170,8 +139,7 @@ const Hero = () => {
           .hero-float,
           .hero-whatsapp-icon,
           .hero-whatsapp-status,
-          .hero-whatsapp-button,
-          .hero-whatsapp-button:hover .hero-whatsapp-cursor {
+          .hero-whatsapp-button {
             animation: none !important;
           }
 
@@ -280,7 +248,7 @@ const Hero = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="WhatsApp ilə pulsuz məlumat al"
-                  className="hero-whatsapp-button group relative flex min-h-[68px] min-w-0 items-center gap-3 overflow-hidden rounded-[20px] border border-[#d8b12e] bg-[#f4d43e] px-3 py-3 text-[#172746] transition-[filter,transform] duration-300 hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c99520] focus-visible:ring-offset-2 sm:min-h-[70px] sm:gap-3 sm:rounded-[23px] sm:px-4"
+                  className="hero-whatsapp-button group relative flex min-h-[68px] min-w-0 items-center gap-3 overflow-hidden rounded-[20px] border border-[#c99520] bg-gradient-to-b from-[#243b63] via-[#172b4d] to-[#101e3d] px-3 py-3 text-white transition-[filter,transform] duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c99520] focus-visible:ring-offset-2 sm:min-h-[70px] sm:gap-3 sm:rounded-[23px] sm:px-4"
                 >
                   <span
                     className="hero-whatsapp-cursor"
@@ -297,7 +265,7 @@ const Hero = () => {
                     </svg>
                   </span>
 
-                  <span className="hero-whatsapp-status relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#25D366]/20 bg-white text-[#25D366] shadow-sm sm:h-[46px] sm:w-[46px]">
+                  <span className="hero-whatsapp-status relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#25D366]/30 bg-[#25D366]/15 text-[#25D366] sm:h-[46px] sm:w-[46px]">
                     <svg
                       viewBox="0 0 24 24"
                       className="hero-whatsapp-icon h-6 w-6 sm:h-7 sm:w-7"
@@ -308,16 +276,16 @@ const Hero = () => {
                     </svg>
                   </span>
 
-                  <span className="relative z-10 flex min-w-0 flex-1 flex-col text-left">
+                  <span className="relative z-10 flex min-w-0 flex-1 flex-col text-left text-white">
                     <span className="break-words text-[13px] font-extrabold leading-5 tracking-tight min-[380px]:text-sm sm:text-base lg:text-[15px] xl:text-base">
                       Pulsuz məlumat al
                     </span>
-                    <span className="mt-1 break-words text-[10px] leading-4 text-[#263654]/75 min-[380px]:text-[11px] sm:text-xs">
+                    <span className="mt-1 break-words text-[10px] leading-4 text-white/80 min-[380px]:text-[11px] sm:text-xs">
                       Kurs seçimi üçün bizə yaz
                     </span>
                   </span>
 
-                  <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#172746] text-xl text-white shadow-md transition-transform duration-300 group-hover:translate-x-0.5 sm:h-[46px] sm:w-[46px] sm:text-2xl">
+                  <span className="relative z-10 shrink-0 text-lg text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-2xl">
                     →
                   </span>
                 </Link>
