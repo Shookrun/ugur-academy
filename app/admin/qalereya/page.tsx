@@ -1,9 +1,18 @@
 "use client"
 
-import { useCallback, useEffect, useState, type FormEvent } from "react"
+import {
+  Component,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react"
+import { createPortal } from "react-dom"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import AdminSidebar from "../AdminSidebar"
 
 type GalleryItem = {
@@ -21,9 +30,7 @@ type Toast = {
   message: string
 }
 
-type ApiError = {
-  error?: string
-}
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
 
 const EMPTY_FORM: Omit<GalleryItem, "id"> = {
   src: "",
@@ -34,19 +41,22 @@ const EMPTY_FORM: Omit<GalleryItem, "id"> = {
   featured: false,
 }
 
+const inputClass =
+  "w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-[#1e3a47]"
+const labelClass = "mb-1.5 block text-xs font-bold text-slate-700"
+
+/* ------------------------------------------------------------------ */
+/* Köməkçi funksiyalar                                                 */
+/* ------------------------------------------------------------------ */
+
 async function getErrorMessage(response: Response, fallback: string): Promise<string> {
   const data: unknown = await response.json().catch(() => null)
+  const message =
+    data && typeof data === "object" && "error" in data
+      ? (data as { error?: unknown }).error
+      : null
 
-  if (
-    data &&
-    typeof data === "object" &&
-    "error" in data &&
-    typeof (data as ApiError).error === "string"
-  ) {
-    return `${(data as ApiError).error} (HTTP ${response.status})`
-  }
-
-  return `${fallback} (HTTP ${response.status})`
+  return `${typeof message === "string" ? message : fallback} (HTTP ${response.status})`
 }
 
 async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
@@ -57,11 +67,6 @@ async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
   })
 
   if (response.status === 401 || response.status === 403) {
-    window.location.href = "/admin"
-    throw new Error("Sessiya bitib. Yenidən daxil ol.")
-  }
-
-  if (response.redirected && response.url.includes("/admin")) {
     window.location.href = "/admin"
     throw new Error("Sessiya bitib. Yenidən daxil ol.")
   }
@@ -83,22 +88,195 @@ function extractCategories(data: unknown, fallback: string[]): string[] {
   return fallback
 }
 
-export default function AdminQalereyaPage() {
+function errorText(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback
+}
+
+// Şəkli brauzerdə kiçildir (max 1920px, JPEG)
+async function compressImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/gif") return file
+  if (typeof createImageBitmap !== "function") return file
+
+  try {
+    const bitmap = await createImageBitmap(file)
+    const scale = Math.min(1, 1920 / Math.max(bitmap.width, bitmap.height))
+    const width = Math.round(bitmap.width * scale)
+    const height = Math.round(bitmap.height * scale)
+
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+
+    const context = canvas.getContext("2d")
+
+    if (!context) {
+      bitmap.close()
+      return file
+    }
+
+    context.fillStyle = "#ffffff"
+    context.fillRect(0, 0, width, height)
+    context.drawImage(bitmap, 0, 0, width, height)
+    bitmap.close()
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.85)
+    )
+
+    if (!blob || (scale === 1 && blob.size >= file.size)) return file
+
+    const baseName = file.name.replace(/\.[^.]+$/, "") || "sekil"
+
+    return new File([blob], `${baseName}.jpg`, { type: "image/jpeg" })
+  } catch {
+    return file
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Xəta tutucu: səhifə çökəndə boş ekran əvəzinə xətanı göstərir       */
+/* ------------------------------------------------------------------ */
+
+class PageErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state: { error: Error | null } = { error: null }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="m-6 max-w-2xl rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-900">
+          <p className="font-black">Səhifədə xəta baş verdi.</p>
+          <p className="mt-2 break-words font-mono text-xs">
+            {this.state.error.message}
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-4 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white"
+          >
+            Yenidən yüklə
+          </button>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Modal: document.body-yə portal, hər şeyin üstündə                    */
+/* ------------------------------------------------------------------ */
+
+function Modal({
+  open,
+  onClose,
+  children,
+  zIndex = 1000,
+  widthClass = "max-w-lg",
+  escape = true,
+}: {
+  open: boolean
+  onClose: () => void
+  children: ReactNode
+  zIndex?: number
+  widthClass?: string
+  escape?: boolean
+}) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!open || !escape) return
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose()
+    }
+
+    window.addEventListener("keydown", onKey)
+
+    return () => window.removeEventListener("keydown", onKey)
+  }, [open, escape, onClose])
+
+  if (!mounted || !open) return null
+
+  return createPortal(
+    <div
+      role="dialog"
+      aria-modal="true"
+      style={{ zIndex }}
+      className="fixed inset-0 flex items-start justify-center overflow-y-auto bg-slate-950/50 p-4"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose()
+      }}
+    >
+      <div className={`my-6 w-full ${widthClass} rounded-2xl bg-white p-6 shadow-2xl`}>
+        {children}
+      </div>
+    </div>,
+    document.body
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Şəkil önizləməsi: yüklənməsə səhifəni çökdürmür                      */
+/* ------------------------------------------------------------------ */
+
+function Thumb({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    setFailed(false)
+  }, [src])
+
+  if (!src || failed) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-slate-100 text-3xl">
+        🖼️
+      </div>
+    )
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className="h-full w-full object-cover"
+    />
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Əsas səhifə                                                         */
+/* ------------------------------------------------------------------ */
+
+function AdminQalereyaContent() {
   const { status } = useSession()
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [items, setItems] = useState<GalleryItem[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [categoriesLoading, setCategoriesLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const [modal, setModal] = useState<"add" | "edit" | null>(null)
   const [categoryModal, setCategoryModal] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState<GalleryItem>({
-    id: "",
-    ...EMPTY_FORM,
-  })
+  const [form, setForm] = useState<GalleryItem>({ id: "", ...EMPTY_FORM })
 
   const [newCategory, setNewCategory] = useState("")
   const [deleteCategory, setDeleteCategory] = useState("")
@@ -106,13 +284,17 @@ export default function AdminQalereyaPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null)
 
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [categorySaving, setCategorySaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [toast, setToast] = useState<Toast | null>(null)
 
-  const showToast = useCallback((message: string, type: Toast["type"] = "success") => {
-    setToast({ message, type })
-  }, [])
+  const showToast = useCallback(
+    (message: string, type: Toast["type"] = "success") => {
+      setToast({ message, type })
+    },
+    []
+  )
 
   useEffect(() => {
     if (!toast) return
@@ -123,9 +305,7 @@ export default function AdminQalereyaPage() {
   }, [toast])
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/admin")
-    }
+    if (status === "unauthenticated") router.replace("/admin")
   }, [status, router])
 
   const fetchGallery = useCallback(async () => {
@@ -145,15 +325,13 @@ export default function AdminQalereyaPage() {
       }
 
       setItems(data as GalleryItem[])
+      return null
     } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : "Qalereya yüklənmədi.",
-        "error"
-      )
+      return errorText(error, "Qalereya yüklənmədi.")
     } finally {
       setLoading(false)
     }
-  }, [showToast])
+  }, [])
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -177,20 +355,32 @@ export default function AdminQalereyaPage() {
       )
 
       setCategories(Array.from(new Set(valid.map((category) => category.trim()))))
+      return null
     } catch (error) {
-      showToast(
-        error instanceof Error ? error.message : "Kateqoriyalar yüklənmədi.",
-        "error"
-      )
+      return errorText(error, "Kateqoriyalar yüklənmədi.")
     } finally {
       setCategoriesLoading(false)
     }
-  }, [showToast])
+  }, [])
+
+  const reloadAll = useCallback(async () => {
+    setLoadError(null)
+
+    const [galleryError, categoryError] = await Promise.all([
+      fetchGallery(),
+      fetchCategories(),
+    ])
+
+    const errors = [galleryError, categoryError].filter(
+      (message): message is string => Boolean(message)
+    )
+
+    setLoadError(errors.length > 0 ? errors.join(" | ") : null)
+  }, [fetchGallery, fetchCategories])
 
   useEffect(() => {
-    void fetchGallery()
-    void fetchCategories()
-  }, [fetchGallery, fetchCategories])
+    void reloadAll()
+  }, [reloadAll])
 
   const openAdd = () => {
     setEditId(null)
@@ -208,10 +398,96 @@ export default function AdminQalereyaPage() {
     setModal("edit")
   }
 
-  const closeModal = () => {
-    if (saving) return
+  const closeModal = useCallback(() => {
+    if (saving || uploading) return
     setModal(null)
     setEditId(null)
+  }, [saving, uploading])
+
+  const openCategoryModal = () => {
+    setNewCategory("")
+    setCategoryModal(true)
+  }
+
+  const closeCategoryModal = useCallback(() => {
+    if (categorySaving) return
+    setCategoryModal(false)
+  }, [categorySaving])
+
+  const closeDeleteCategory = useCallback(() => {
+    if (categorySaving) return
+    setDeleteCategory("")
+    setMoveTo("")
+  }, [categorySaving])
+
+  const closeDeleteImage = useCallback(() => {
+    if (deleting) return
+    setDeleteId(null)
+  }, [deleting])
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.target
+    const selected = input.files?.[0]
+
+    if (!selected || uploading) return
+
+    if (!selected.type.startsWith("image/")) {
+      showToast("Yalnız şəkil faylı seçə bilərsən.", "error")
+      input.value = ""
+      return
+    }
+
+    setUploading(true)
+
+    try {
+      const file = await compressImage(selected)
+
+      if (file.size > MAX_UPLOAD_BYTES) {
+        showToast("Şəkil çox böyükdür (maksimum 4MB). Daha kiçik şəkil seç.", "error")
+        return
+      }
+
+      const body = new FormData()
+      body.append("file", file)
+
+      const response = await apiFetch("/api/gallery/upload", {
+        method: "POST",
+        body,
+      })
+
+      if (!response.ok) {
+        showToast(
+          await getErrorMessage(response, "Şəkli yükləmək mümkün olmadı."),
+          "error"
+        )
+        return
+      }
+
+      const data: unknown = await response.json().catch(() => null)
+      const url =
+        data && typeof data === "object" && "url" in data
+          ? (data as { url?: unknown }).url
+          : null
+
+      if (typeof url !== "string" || !url) {
+        showToast("Server şəkil ünvanını qaytarmadı.", "error")
+        return
+      }
+
+      const fileTitle = selected.name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ")
+
+      setForm((current) => ({
+        ...current,
+        src: url,
+        title: current.title.trim() ? current.title : fileTitle,
+      }))
+      showToast("Şəkil yükləndi. İndi yadda saxla.")
+    } catch (error) {
+      showToast(errorText(error, "Şəkli yükləmək mümkün olmadı."), "error")
+    } finally {
+      setUploading(false)
+      input.value = ""
+    }
   }
 
   const createCategory = async (event: FormEvent<HTMLFormElement>) => {
@@ -239,20 +515,14 @@ export default function AdminQalereyaPage() {
       }
 
       const data: unknown = await response.json().catch(() => null)
-      const returnedCategories = extractCategories(data, [...categories, name])
 
-      setCategories(returnedCategories)
+      setCategories(extractCategories(data, [...categories, name]))
       setForm((current) => ({ ...current, category: name }))
       setNewCategory("")
       setCategoryModal(false)
       showToast(`"${name}" kateqoriyası yaradıldı.`)
     } catch (error) {
-      showToast(
-        error instanceof Error
-          ? error.message
-          : "Serverlə əlaqə qurmaq mümkün olmadı.",
-        "error"
-      )
+      showToast(errorText(error, "Serverlə əlaqə qurmaq mümkün olmadı."), "error")
     } finally {
       setCategorySaving(false)
     }
@@ -316,9 +586,7 @@ export default function AdminQalereyaPage() {
       if (affected.length > 0) {
         setItems((current) =>
           current.map((item) =>
-            item.category === deleteCategory
-              ? { ...item, category: moveTo }
-              : item
+            item.category === deleteCategory ? { ...item, category: moveTo } : item
           )
         )
       }
@@ -330,22 +598,18 @@ export default function AdminQalereyaPage() {
         }))
       }
 
+      const deleted = deleteCategory
       setDeleteCategory("")
       setMoveTo("")
       showToast(
         affected.length > 0
-          ? `Kateqoriya silindi. ${affected.length} şəkil "${moveTo}" kateqoriyasına köçürüldü.`
+          ? `"${deleted}" silindi. ${affected.length} şəkil "${moveTo}" kateqoriyasına köçürüldü.`
           : "Kateqoriya uğurla silindi."
       )
 
-      await Promise.all([fetchGallery(), fetchCategories()])
+      await reloadAll()
     } catch (error) {
-      showToast(
-        error instanceof Error
-          ? error.message
-          : "Serverlə əlaqə qurmaq mümkün olmadı.",
-        "error"
-      )
+      showToast(errorText(error, "Serverlə əlaqə qurmaq mümkün olmadı."), "error")
     } finally {
       setCategorySaving(false)
     }
@@ -354,19 +618,24 @@ export default function AdminQalereyaPage() {
   const saveGalleryItem = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (saving) return
+    if (saving || uploading) return
 
     const title = form.title.trim()
     const src = form.src.trim()
     const category = form.category.trim()
 
-    if (!title || !src || !category) {
-      showToast("Başlıq, şəkil yolu və kateqoriya tələb olunur.", "error")
+    if (!src) {
+      showToast("Əvvəlcə şəkil yüklə və ya şəkil ünvanı daxil et.", "error")
+      return
+    }
+
+    if (!title || !category) {
+      showToast("Başlıq və kateqoriya tələb olunur.", "error")
       return
     }
 
     if (!categories.includes(category)) {
-      showToast("Seçilmiş kateqoriya artıq mövcud deyil.", "error")
+      showToast("Seçilmiş kateqoriya mövcud deyil.", "error")
       return
     }
 
@@ -406,12 +675,7 @@ export default function AdminQalereyaPage() {
 
       await fetchGallery()
     } catch (error) {
-      showToast(
-        error instanceof Error
-          ? error.message
-          : "Serverlə əlaqə qurmaq mümkün olmadı.",
-        "error"
-      )
+      showToast(errorText(error, "Serverlə əlaqə qurmaq mümkün olmadı."), "error")
     } finally {
       setSaving(false)
     }
@@ -441,12 +705,7 @@ export default function AdminQalereyaPage() {
       showToast("Şəkil silindi.")
       await fetchGallery()
     } catch (error) {
-      showToast(
-        error instanceof Error
-          ? error.message
-          : "Serverlə əlaqə qurmaq mümkün olmadı.",
-        "error"
-      )
+      showToast(errorText(error, "Serverlə əlaqə qurmaq mümkün olmadı."), "error")
     } finally {
       setDeleting(false)
     }
@@ -460,7 +719,17 @@ export default function AdminQalereyaPage() {
     )
   }
 
-  if (status !== "authenticated") return null
+  if (status !== "authenticated") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-500">
+        Giriş səhifəsinə yönləndirilir...
+      </div>
+    )
+  }
+
+  const deleteCategoryHasImages = items.some(
+    (item) => item.category === deleteCategory
+  )
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
@@ -471,7 +740,7 @@ export default function AdminQalereyaPage() {
           <div
             role="status"
             aria-live="polite"
-            className={`fixed right-5 top-5 z-[200] max-w-sm rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg ${
+            className={`fixed right-5 top-5 z-[2000] max-w-sm rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg ${
               toast.type === "success"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                 : "border-rose-200 bg-rose-50 text-rose-800"
@@ -490,7 +759,7 @@ export default function AdminQalereyaPage() {
           </div>
         )}
 
-        <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-black text-[#1e3a47] sm:text-3xl">
               Qalereya İdarəetməsi
@@ -503,10 +772,7 @@ export default function AdminQalereyaPage() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => {
-                setNewCategory("")
-                setCategoryModal(true)
-              }}
+              onClick={openCategoryModal}
               className="rounded-xl border border-[#1e3a47] bg-white px-4 py-2.5 text-sm font-bold text-[#1e3a47] hover:bg-slate-50"
             >
               + Kateqoriya yarat
@@ -515,13 +781,31 @@ export default function AdminQalereyaPage() {
             <button
               type="button"
               onClick={openAdd}
-              disabled={categories.length === 0 || categoriesLoading}
-              className="rounded-xl bg-[#1e3a47] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#162c37] disabled:opacity-50"
+              className="rounded-xl bg-[#1e3a47] px-4 py-2.5 text-sm font-bold text-white hover:bg-[#162c37]"
             >
               + Yeni şəkil
             </button>
           </div>
         </header>
+
+        {loadError && (
+          <div
+            role="alert"
+            className="mb-6 flex flex-col gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div>
+              <p className="font-black">Məlumatlar tam yüklənmədi.</p>
+              <p className="mt-1 break-words text-xs">{loadError}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void reloadAll()}
+              className="shrink-0 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-700"
+            >
+              Yenidən yüklə
+            </button>
+          </div>
+        )}
 
         <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-5">
           <h2 className="mb-4 text-sm font-black text-slate-900">
@@ -542,9 +826,7 @@ export default function AdminQalereyaPage() {
                     key={category}
                     className="flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 py-1 pl-3 pr-1"
                   >
-                    <span className="text-xs font-bold text-indigo-800">
-                      {category}
-                    </span>
+                    <span className="text-xs font-bold text-indigo-800">{category}</span>
                     <span className="text-[10px] text-indigo-500">{count}</span>
                     <button
                       type="button"
@@ -578,13 +860,7 @@ export default function AdminQalereyaPage() {
                 className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
               >
                 <div className="relative aspect-[16/10] bg-slate-100">
-                  <Image
-                    src={item.src}
-                    alt={item.alt || item.title}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                    className="object-cover"
-                  />
+                  <Thumb src={item.src} alt={item.alt || item.title} />
                   <span className="absolute left-3 top-3 rounded-full bg-slate-950/80 px-3 py-1 text-xs font-bold text-white">
                     {item.category}
                   </span>
@@ -617,341 +893,380 @@ export default function AdminQalereyaPage() {
         )}
       </main>
 
-      {categoryModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <div className="mb-5 flex items-start justify-between">
-              <div>
-                <h2 className="text-lg font-black text-[#1e3a47]">Yeni kateqoriya</h2>
-                <p className="mt-1 text-xs text-slate-500">
-                  Kateqoriya adı maksimum 60 simvol ola bilər.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setCategoryModal(false)}
-                disabled={categorySaving}
-                className="text-2xl text-slate-400"
-                aria-label="Bağla"
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={createCategory}>
-              <label
-                htmlFor="new-gallery-category"
-                className="mb-2 block text-xs font-bold text-slate-700"
-              >
-                Kateqoriya adı
-              </label>
-              <input
-                id="new-gallery-category"
-                value={newCategory}
-                onChange={(event) => setNewCategory(event.target.value)}
-                maxLength={60}
-                required
-                autoFocus
-                placeholder="Məsələn, Yarışlar"
-                className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#1e3a47]"
-              />
-
-              <div className="mt-5 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCategoryModal(false)}
-                  disabled={categorySaving}
-                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600"
-                >
-                  Ləğv et
-                </button>
-                <button
-                  type="submit"
-                  disabled={categorySaving || !newCategory.trim()}
-                  className="rounded-xl bg-[#1e3a47] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-                >
-                  {categorySaving ? "Yaradılır..." : "Yarat"}
-                </button>
-              </div>
-            </form>
-          </div>
+      {/* ---------------- Şəkil əlavə / redaktə ---------------- */}
+      <Modal
+        open={modal !== null}
+        onClose={closeModal}
+        zIndex={1000}
+        escape={!categoryModal}
+      >
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-black text-[#1e3a47]">
+            {modal === "add" ? "Yeni şəkil əlavə et" : "Şəkli redaktə et"}
+          </h2>
+          <button
+            type="button"
+            onClick={closeModal}
+            disabled={saving || uploading}
+            className="text-2xl text-slate-400"
+            aria-label="Bağla"
+          >
+            ×
+          </button>
         </div>
-      )}
 
-      {deleteCategory && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="text-lg font-black text-slate-900">
-              Kateqoriyanı silmək istəyirsən?
-            </h2>
+        <form onSubmit={saveGalleryItem} className="space-y-4">
+          <div>
+            <span className={labelClass}>Şəkil *</span>
 
-            <p className="mt-2 text-sm text-slate-600">
-              <strong>{deleteCategory}</strong> kateqoriyası silinəcək. Şəkillər
-              silinməyəcək.
-            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+              onChange={(event) => void handleFileChange(event)}
+              className="hidden"
+            />
 
-            {items.some((item) => item.category === deleteCategory) && (
-              <div className="mt-5">
-                <label
-                  htmlFor="move-gallery-category"
-                  className="mb-2 block text-xs font-bold text-slate-700"
-                >
-                  Şəkilləri hansı kateqoriyaya köçürək?
-                </label>
-                <select
-                  id="move-gallery-category"
-                  value={moveTo}
-                  onChange={(event) => setMoveTo(event.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#1e3a47]"
-                >
-                  {categories
-                    .filter((category) => category !== deleteCategory)
-                    .map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            )}
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setDeleteCategory("")
-                  setMoveTo("")
-                }}
-                disabled={categorySaving}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600"
-              >
-                Ləğv et
-              </button>
-              <button
-                type="button"
-                onClick={() => void confirmDeleteCategory()}
-                disabled={
-                  categorySaving ||
-                  (items.some((item) => item.category === deleteCategory) && !moveTo)
-                }
-                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-              >
-                {categorySaving ? "İcra olunur..." : "Sil və köçür"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {modal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/50 p-4 backdrop-blur-sm">
-          <div className="my-auto w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-black text-[#1e3a47]">
-                {modal === "add" ? "Yeni şəkil əlavə et" : "Şəkli redaktə et"}
-              </h2>
-              <button
-                type="button"
-                onClick={closeModal}
-                disabled={saving}
-                className="text-2xl text-slate-400"
-                aria-label="Bağla"
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={saveGalleryItem} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="gallery-title"
-                  className="mb-1.5 block text-xs font-bold text-slate-700"
-                >
-                  Şəkil başlığı *
-                </label>
-                <input
-                  id="gallery-title"
-                  value={form.title}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, title: event.target.value }))
-                  }
-                  required
-                  maxLength={200}
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-[#1e3a47]"
-                  placeholder="Məsələn, Seminar günü"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="gallery-src"
-                  className="mb-1.5 block text-xs font-bold text-slate-700"
-                >
-                  Şəkil yolu və ya URL *
-                </label>
-                <input
-                  id="gallery-src"
-                  value={form.src}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, src: event.target.value }))
-                  }
-                  required
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-[#1e3a47]"
-                  placeholder="/galereya/seminar.jpeg"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="gallery-alt"
-                  className="mb-1.5 block text-xs font-bold text-slate-700"
-                >
-                  Şəkil təsviri
-                </label>
-                <input
-                  id="gallery-alt"
-                  value={form.alt}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, alt: event.target.value }))
-                  }
-                  className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-[#1e3a47]"
-                  placeholder="Şəklin qısa təsviri"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label
-                    htmlFor="gallery-category"
-                    className="mb-1.5 block text-xs font-bold text-slate-700"
-                  >
-                    Kateqoriya *
-                  </label>
-                  <select
-                    id="gallery-category"
-                    value={form.category}
-                    onChange={(event) =>
-                      setForm((current) => ({
-                        ...current,
-                        category: event.target.value,
-                      }))
-                    }
-                    required
-                    disabled={categoriesLoading || categories.length === 0}
-                    className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#1e3a47] disabled:bg-slate-50"
-                  >
-                    <option value="">Kateqoriya seç</option>
-                    {categories.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNewCategory("")
-                      setCategoryModal(true)
-                    }}
-                    className="mt-2 text-xs font-bold text-indigo-600 hover:text-indigo-800"
-                  >
-                    + Yeni kateqoriya yarat
-                  </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading || saving}
+              className="group relative flex w-full flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 text-center transition hover:border-[#1e3a47] hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {form.src ? (
+                <div className="relative aspect-[16/10] w-full">
+                  <Thumb src={form.src} alt="Seçilmiş şəkil" />
+                  <span className="absolute inset-x-0 bottom-0 bg-slate-950/70 px-3 py-2 text-xs font-bold text-white opacity-0 transition group-hover:opacity-100">
+                    Şəkli dəyiş
+                  </span>
                 </div>
-
-                <div>
-                  <label
-                    htmlFor="gallery-date"
-                    className="mb-1.5 block text-xs font-bold text-slate-700"
-                  >
-                    Tarix
-                  </label>
-                  <input
-                    id="gallery-date"
-                    value={form.date}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, date: event.target.value }))
-                    }
-                    className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#1e3a47]"
-                    placeholder="Oktyabr 2026"
-                  />
-                </div>
-              </div>
-
-              <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 p-4">
-                <span>
-                  <span className="block text-sm font-bold text-slate-800">
-                    Əsas slayderdə göstər
+              ) : (
+                <span className="px-4 py-8">
+                  <span className="block text-2xl">📷</span>
+                  <span className="mt-2 block text-sm font-bold text-slate-700">
+                    Kompüterdən şəkil seç
                   </span>
                   <span className="mt-1 block text-xs text-slate-500">
-                    Ana səhifənin seçilmiş şəkilləri üçün
+                    JPG, PNG, WEBP, GIF · avtomatik kiçildilir
                   </span>
                 </span>
-                <input
-                  type="checkbox"
-                  checked={Boolean(form.featured)}
-                  onChange={(event) =>
-                    setForm((current) => ({
-                      ...current,
-                      featured: event.target.checked,
-                    }))
-                  }
-                  className="h-4 w-4 accent-[#1e3a47]"
-                />
+              )}
+
+              {uploading && (
+                <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/80 text-sm font-bold text-[#1e3a47]">
+                  <span className="h-7 w-7 animate-spin rounded-full border-2 border-[#1e3a47] border-t-transparent" />
+                  Yüklənir...
+                </span>
+              )}
+            </button>
+
+            <details className="mt-2 text-xs text-slate-500">
+              <summary className="cursor-pointer font-bold text-indigo-600">
+                Və ya şəkil ünvanı (URL) daxil et
+              </summary>
+              <input
+                id="gallery-src"
+                value={form.src}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, src: event.target.value }))
+                }
+                className={`${inputClass} mt-2`}
+                placeholder="/galereya/seminar.jpeg və ya https://..."
+              />
+            </details>
+          </div>
+
+          <div>
+            <label htmlFor="gallery-title" className={labelClass}>
+              Şəkil başlığı *
+            </label>
+            <input
+              id="gallery-title"
+              value={form.title}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, title: event.target.value }))
+              }
+              required
+              maxLength={200}
+              className={inputClass}
+              placeholder="Məsələn, Seminar günü"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="gallery-alt" className={labelClass}>
+              Şəkil təsviri
+            </label>
+            <input
+              id="gallery-alt"
+              value={form.alt}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, alt: event.target.value }))
+              }
+              className={inputClass}
+              placeholder="Şəklin qısa təsviri"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="gallery-category" className={labelClass}>
+                Kateqoriya *
               </label>
 
-              <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  disabled={saving}
-                  className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600"
+              {categories.length === 0 ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                  {categoriesLoading
+                    ? "Kateqoriyalar yüklənir..."
+                    : "Kateqoriya yoxdur və ya yüklənmədi."}
+                  {!categoriesLoading && (
+                    <button
+                      type="button"
+                      onClick={() => void reloadAll()}
+                      className="mt-1 block font-bold text-amber-800 underline"
+                    >
+                      Yenidən yüklə
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <select
+                  id="gallery-category"
+                  value={form.category}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, category: event.target.value }))
+                  }
+                  required
+                  className={inputClass}
                 >
-                  Ləğv et
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving || categoriesLoading || categories.length === 0}
-                  className="rounded-xl bg-[#1e3a47] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#162c37] disabled:opacity-50"
-                >
-                  {saving ? "Saxlanılır..." : "Yadda saxla"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                  <option value="">Kateqoriya seç</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              )}
 
-      {deleteId && (
-        <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="text-lg font-black text-slate-900">
-              Şəkli silmək istəyirsən?
-            </h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Bu əməliyyat seçilmiş şəkli qalereyadan siləcək.
-            </p>
-            <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setDeleteId(null)}
-                disabled={deleting}
-                className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600"
+                onClick={openCategoryModal}
+                className="mt-2 text-xs font-bold text-indigo-600 hover:text-indigo-800"
               >
-                Ləğv et
-              </button>
-              <button
-                type="button"
-                onClick={() => void confirmDeleteImage()}
-                disabled={deleting}
-                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-              >
-                {deleting ? "Silinir..." : "Bəli, sil"}
+                + Yeni kateqoriya yarat
               </button>
             </div>
+
+            <div>
+              <label htmlFor="gallery-date" className={labelClass}>
+                Tarix
+              </label>
+              <input
+                id="gallery-date"
+                value={form.date}
+                onChange={(event) =>
+                  setForm((current) => ({ ...current, date: event.target.value }))
+                }
+                className={inputClass}
+                placeholder="Oktyabr 2026"
+              />
+            </div>
           </div>
+
+          <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 p-4">
+            <span>
+              <span className="block text-sm font-bold text-slate-800">
+                Əsas slayderdə göstər
+              </span>
+              <span className="mt-1 block text-xs text-slate-500">
+                Ana səhifənin seçilmiş şəkilləri üçün
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={Boolean(form.featured)}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, featured: event.target.checked }))
+              }
+              className="h-4 w-4 accent-[#1e3a47]"
+            />
+          </label>
+
+          <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+            <button
+              type="button"
+              onClick={closeModal}
+              disabled={saving || uploading}
+              className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-600"
+            >
+              Ləğv et
+            </button>
+            <button
+              type="submit"
+              disabled={saving || uploading}
+              className="rounded-xl bg-[#1e3a47] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#162c37] disabled:opacity-50"
+            >
+              {saving ? "Saxlanılır..." : uploading ? "Yüklənir..." : "Yadda saxla"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ---------------- Yeni kateqoriya ---------------- */}
+      <Modal
+        open={categoryModal}
+        onClose={closeCategoryModal}
+        zIndex={1100}
+        widthClass="max-w-md"
+      >
+        <div className="mb-5 flex items-start justify-between">
+          <div>
+            <h2 className="text-lg font-black text-[#1e3a47]">Yeni kateqoriya</h2>
+            <p className="mt-1 text-xs text-slate-500">
+              Kateqoriya adı maksimum 60 simvol ola bilər.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={closeCategoryModal}
+            disabled={categorySaving}
+            className="text-2xl text-slate-400"
+            aria-label="Bağla"
+          >
+            ×
+          </button>
         </div>
-      )}
+
+        <form onSubmit={createCategory}>
+          <label htmlFor="new-gallery-category" className="mb-2 block text-xs font-bold text-slate-700">
+            Kateqoriya adı
+          </label>
+          <input
+            id="new-gallery-category"
+            value={newCategory}
+            onChange={(event) => setNewCategory(event.target.value)}
+            maxLength={60}
+            required
+            autoFocus
+            placeholder="Məsələn, Yarışlar"
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#1e3a47]"
+          />
+
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={closeCategoryModal}
+              disabled={categorySaving}
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600"
+            >
+              Ləğv et
+            </button>
+            <button
+              type="submit"
+              disabled={categorySaving || !newCategory.trim()}
+              className="rounded-xl bg-[#1e3a47] px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {categorySaving ? "Yaradılır..." : "Yarat"}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ---------------- Kateqoriyanı sil ---------------- */}
+      <Modal
+        open={Boolean(deleteCategory)}
+        onClose={closeDeleteCategory}
+        zIndex={1200}
+        widthClass="max-w-md"
+      >
+        <h2 className="text-lg font-black text-slate-900">
+          Kateqoriyanı silmək istəyirsən?
+        </h2>
+
+        <p className="mt-2 text-sm text-slate-600">
+          <strong>{deleteCategory}</strong> kateqoriyası silinəcək. Şəkillər silinməyəcək.
+        </p>
+
+        {deleteCategoryHasImages && (
+          <div className="mt-5">
+            <label htmlFor="move-gallery-category" className="mb-2 block text-xs font-bold text-slate-700">
+              Şəkilləri hansı kateqoriyaya köçürək?
+            </label>
+            <select
+              id="move-gallery-category"
+              value={moveTo}
+              onChange={(event) => setMoveTo(event.target.value)}
+              className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#1e3a47]"
+            >
+              {categories
+                .filter((category) => category !== deleteCategory)
+                .map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+            </select>
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={closeDeleteCategory}
+            disabled={categorySaving}
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600"
+          >
+            Ləğv et
+          </button>
+          <button
+            type="button"
+            onClick={() => void confirmDeleteCategory()}
+            disabled={categorySaving || (deleteCategoryHasImages && !moveTo)}
+            className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+          >
+            {categorySaving ? "İcra olunur..." : "Sil və köçür"}
+          </button>
+        </div>
+      </Modal>
+
+      {/* ---------------- Şəkli sil ---------------- */}
+      <Modal
+        open={deleteId !== null}
+        onClose={closeDeleteImage}
+        zIndex={1300}
+        widthClass="max-w-sm"
+      >
+        <h2 className="text-lg font-black text-slate-900">Şəkli silmək istəyirsən?</h2>
+        <p className="mt-2 text-sm text-slate-500">
+          Bu əməliyyat seçilmiş şəkli qalereyadan siləcək.
+        </p>
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={closeDeleteImage}
+            disabled={deleting}
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-600"
+          >
+            Ləğv et
+          </button>
+          <button
+            type="button"
+            onClick={() => void confirmDeleteImage()}
+            disabled={deleting}
+            className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
+          >
+            {deleting ? "Silinir..." : "Bəli, sil"}
+          </button>
+        </div>
+      </Modal>
     </div>
+  )
+}
+
+export default function AdminQalereyaPage() {
+  return (
+    <PageErrorBoundary>
+      <AdminQalereyaContent />
+    </PageErrorBoundary>
   )
 }
