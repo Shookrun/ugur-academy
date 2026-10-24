@@ -4,7 +4,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useRef } from "react"
-import type { MouseEvent, PointerEvent } from "react"
+import type { PointerEvent } from "react"
 
 const Hero = () => {
   const cursorRef = useRef<HTMLSpanElement>(null)
@@ -16,15 +16,6 @@ const Hero = () => {
 
     cursorRef.current.style.left = `${event.clientX - rect.left}px`
     cursorRef.current.style.top = `${event.clientY - rect.top}px`
-  }
-
-  const handleButtonClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (!cursorRef.current) return
-
-    const cursor = cursorRef.current
-    cursor.classList.remove("click")
-    void cursor.offsetWidth
-    cursor.classList.add("click")
   }
 
   return (
@@ -68,10 +59,10 @@ const Hero = () => {
         @keyframes heroWhatsAppPulse {
           0%,
           100% {
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.18);
+            box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.25);
           }
           50% {
-            box-shadow: 0 0 0 6px rgba(255, 255, 255, 0);
+            box-shadow: 0 0 0 7px rgba(37, 211, 102, 0);
           }
         }
 
@@ -85,14 +76,15 @@ const Hero = () => {
           }
         }
 
-        @keyframes whatsappCursorClick {
-          0% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0.9;
-          }
+        @keyframes whatsappCursorBlink {
+          0%,
           100% {
-            transform: translate(-50%, -50%) scale(3.5);
-            opacity: 0;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+          50% {
+            opacity: 0.12;
+            transform: translateY(-3px) scale(0.92);
           }
         }
 
@@ -115,53 +107,34 @@ const Hero = () => {
 
         .hero-whatsapp-button {
           animation: heroGoldGlow 3s ease-in-out infinite;
+          cursor: pointer;
         }
 
         .hero-whatsapp-cursor {
           position: absolute;
-          z-index: 30;
-          width: 18px;
-          height: 18px;
+          z-index: 40;
+          left: 50%;
+          top: 50%;
+          width: 30px;
+          height: 30px;
           pointer-events: none;
-          border: 2px solid rgba(255, 255, 255, 0.95);
-          border-radius: 50%;
-          background: rgba(201, 149, 32, 0.3);
-          box-shadow:
-            0 0 0 3px rgba(201, 149, 32, 0.15),
-            0 0 18px rgba(201, 149, 32, 0.8);
-          transform: translate(-50%, -50%) scale(0.65);
           opacity: 0;
-          transition:
-            opacity 0.15s ease,
-            transform 0.15s ease;
+          transform: translate(-50%, -50%);
+          transition: opacity 0.2s ease;
+          filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+        }
+
+        .hero-whatsapp-cursor svg {
+          display: block;
+          width: 100%;
+          height: 100%;
+          overflow: visible;
+          animation: whatsappCursorBlink 1s ease-in-out infinite;
         }
 
         .hero-whatsapp-button:hover .hero-whatsapp-cursor,
         .hero-whatsapp-button:focus-visible .hero-whatsapp-cursor {
           opacity: 1;
-          transform: translate(-50%, -50%) scale(1);
-        }
-
-        .hero-whatsapp-cursor::before,
-        .hero-whatsapp-cursor::after {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          width: 100%;
-          height: 100%;
-          border: 1px solid rgba(255, 255, 255, 0.9);
-          border-radius: 50%;
-          content: "";
-          transform: translate(-50%, -50%) scale(1);
-          opacity: 0;
-        }
-
-        .hero-whatsapp-cursor.click::before {
-          animation: whatsappCursorClick 0.55s ease-out;
-        }
-
-        .hero-whatsapp-cursor.click::after {
-          animation: whatsappCursorClick 0.55s 0.08s ease-out;
         }
 
         @media (pointer: coarse) {
@@ -177,17 +150,21 @@ const Hero = () => {
           .hero-whatsapp-status,
           .hero-whatsapp-button {
             animation: none !important;
-            opacity: 1;
-            transform: none;
           }
 
-          .hero-whatsapp-cursor {
+          .hero-reveal {
+            opacity: 1;
+          }
+
+          .hero-whatsapp-cursor,
+          .hero-whatsapp-cursor svg {
+            animation: none !important;
             display: none;
           }
         }
       `}</style>
 
-      <section className="relative isolate overflow-hidden bg-[#fbfcff] text-[#101e3d]">
+      <section className="relative isolate mt-20 overflow-hidden bg-[#fbfcff] text-[#101e3d] sm:mt-24">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
@@ -283,16 +260,25 @@ const Hero = () => {
                   rel="noopener noreferrer"
                   aria-label="WhatsApp ilə pulsuz məlumat al"
                   onPointerMove={handlePointerMove}
-                  onClick={handleButtonClick}
                   className="hero-whatsapp-button group relative flex min-h-[68px] min-w-0 items-center gap-3 overflow-hidden rounded-[20px] border border-[#c99520] bg-gradient-to-b from-[#243b63] via-[#172b4d] to-[#101e3d] px-3 py-3 text-white transition-[filter,transform] duration-300 hover:-translate-y-1 hover:brightness-110 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c99520] focus-visible:ring-offset-2 sm:min-h-[70px] sm:gap-3 sm:rounded-[23px] sm:px-4"
                 >
                   <span
                     ref={cursorRef}
                     className="hero-whatsapp-cursor"
                     aria-hidden="true"
-                  />
+                  >
+                    <svg viewBox="0 0 32 32" fill="none">
+                      <path
+                        d="M5 2L5 25L11 19L16 29L21 26L16 16L25 16Z"
+                        fill="white"
+                        stroke="#101e3d"
+                        strokeWidth="2"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
 
-                  <span className="hero-whatsapp-status relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white sm:h-[46px] sm:w-[46px]">
+                  <span className="hero-whatsapp-status relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#25D366]/30 bg-[#25D366]/15 text-[#25D366] sm:h-[46px] sm:w-[46px]">
                     <svg
                       viewBox="0 0 24 24"
                       className="hero-whatsapp-icon h-6 w-6 sm:h-7 sm:w-7"
@@ -448,6 +434,7 @@ const Hero = () => {
                 aria-hidden="true"
                 className="hero-float pointer-events-none absolute right-1 top-1 z-0 h-16 w-16 rounded-full border border-[#e5c66d]/60 sm:right-2 sm:top-2 sm:h-24 sm:w-24 lg:-right-1 lg:h-28 lg:w-28"
               />
+
               <div
                 aria-hidden="true"
                 className="hero-float pointer-events-none absolute bottom-1 left-1 z-0 h-14 w-14 rounded-full border border-[#b9d7f4] sm:bottom-2 sm:left-2 sm:h-20 sm:w-20 lg:-left-1 lg:h-24 lg:w-24"
@@ -491,6 +478,7 @@ const Hero = () => {
                         <path d="m5 12 4 4L19 6" />
                       </svg>
                     </span>
+
                     <div className="min-w-0">
                       <p className="text-xs font-extrabold leading-5 text-[#132344] sm:text-sm lg:text-base">
                         İnkişafına başla
