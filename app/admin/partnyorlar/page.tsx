@@ -1,8 +1,10 @@
+
 "use client"
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import type { ChangeEvent, FormEvent } from "react"
 import AdminSidebar from "../AdminSidebar"
 
 type PartnerAdmin = {
@@ -19,11 +21,19 @@ type PartnerAdmin = {
   bio: string
   email?: string
   phone?: string
+  order?: number
 }
 
 type Toast = {
   type: "success" | "error" | "info"
   message: string
+}
+
+const DEFAULT_LOGO = "/Mehman Bayramov.jpg"
+
+const getOrder = (value: unknown, fallback: number) => {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
 }
 
 export default function AdminPartnyorlarPage() {
@@ -39,64 +49,83 @@ export default function AdminPartnyorlarPage() {
   const [search, setSearch] = useState("")
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [isTeacher, setIsTeacher] = useState<boolean>(true)
+  const [isTeacher, setIsTeacher] = useState(true)
   const [toast, setToast] = useState<Toast | null>(null)
   const [uploading, setUploading] = useState(false)
 
-  const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
+  const sortedItems = useMemo(
+    () =>
+      items
+        .map((item, index) => ({
+          ...item,
+          order: getOrder(item.order, index + 1),
+          originalIndex: index,
+        }))
+        .sort(
+          (a, b) =>
+            (a.order ?? 0) - (b.order ?? 0) ||
+            a.originalIndex - b.originalIndex
+        )
+        .map(({ originalIndex: _originalIndex, ...item }) => item),
+    [items]
+  )
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase()
+
+    if (!query) return sortedItems
+
+    return sortedItems.filter((item) =>
+      [
+        item.name,
+        item.position,
+        item.specialty,
+        item.department,
+      ].some((value) => value?.toLocaleLowerCase().includes(query))
+    )
+  }, [sortedItems, search])
+
+  const showToast = (
+    message: string,
+    type: Toast["type"] = "success"
+  ) => {
     setToast({ message, type })
-    setTimeout(() => {
-      setToast((current) => (current?.message === message ? null : current))
+
+    window.setTimeout(() => {
+      setToast((current) =>
+        current?.message === message ? null : current
+      )
     }, 4000)
   }
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploading(true)
-    try {
-      const fd = new FormData()
-      fd.append("file", file)
-      fd.append("folder", "team")
-      const res = await fetch("/api/upload", { method: "POST", body: fd })
-      if (res.ok) {
-        const data = await res.json()
-        setForm((prev) => ({ ...prev, logo: data.url }))
-      } else {
-        const err = await res.json().catch(() => ({}))
-        showToast(err.error || "Şəkil yüklənərkən xəta baş verdi.", "error")
-      }
-    } catch {
-      showToast("Şəbəkə xətası baş verdi.", "error")
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (status === "unauthenticated") router.replace("/admin")
-  }, [status, router])
 
   const fetchPartners = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true)
-      const res = await fetch(`/api/partners?t=${Date.now()}&_nonce=${Math.random().toString(36).slice(2)}`, {
+
+      const res = await fetch(`/api/partners?t=${Date.now()}`, {
         cache: "no-store",
         headers: {
           "Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
           Pragma: "no-cache",
         },
       })
-      if (res.ok) {
-        const data = await res.json()
-        if (Array.isArray(data)) {
-          setItems(data)
-        }
-      } else {
+
+      if (!res.ok) {
         showToast("Əməkdaşlar siyahısını yükləmək mümkün olmadı.", "error")
+        return
       }
-    } catch (err) {
-      console.error(err)
+
+      const data: unknown = await res.json()
+
+      if (Array.isArray(data)) {
+        setItems(
+          data.map((item: PartnerAdmin, index: number) => ({
+            ...item,
+            order: getOrder(item.order, index + 1),
+          }))
+        )
+      }
+    } catch {
       showToast("Şəbəkə xətası baş verdi.", "error")
     } finally {
       if (showLoading) setLoading(false)
@@ -104,11 +133,18 @@ export default function AdminPartnyorlarPage() {
   }
 
   useEffect(() => {
-    fetchPartners(true)
+    if (status === "unauthenticated") {
+      router.replace("/admin")
+    }
+  }, [status, router])
+
+  useEffect(() => {
+    void fetchPartners()
   }, [])
 
   const openAdd = () => {
     setIsTeacher(true)
+    setEditItem(null)
     setForm({
       id: Date.now().toString(),
       name: "",
@@ -116,129 +152,163 @@ export default function AdminPartnyorlarPage() {
       department: "Tədris Şöbəsi",
       specialty: "",
       isTeacher: true,
-      logo: "/Mehman Bayramov.jpg",
+      logo: DEFAULT_LOGO,
       experienceYears: 5,
       studentsCount: 100,
       bio: "",
       phone: "+994 ",
       email: "",
+      order:
+        sortedItems.reduce(
+          (maximum, item) => Math.max(maximum, item.order ?? 0),
+          0
+        ) + 1,
     })
     setModal("add")
   }
 
-  const openEdit = (p: PartnerAdmin) => {
-    const isTeacherRole =
-      p.isTeacher !== undefined
-        ? Boolean(p.isTeacher)
-        : Boolean(p.specialty && p.specialty.trim() !== "")
-    setIsTeacher(isTeacherRole)
-    setEditItem(p)
+  const openEdit = (partner: PartnerAdmin) => {
+    const teacher =
+      partner.isTeacher !== undefined
+        ? Boolean(partner.isTeacher)
+        : Boolean(partner.specialty?.trim())
+
+    setIsTeacher(teacher)
+    setEditItem(partner)
     setForm({
-      ...p,
-      isTeacher: isTeacherRole,
-      specialty: isTeacherRole ? (p.specialty || "") : "",
-      studentsCount: p.studentsCount ?? 0,
-      logo: p.logo || "/Mehman Bayramov.jpg",
+      ...partner,
+      order: getOrder(partner.order, 1),
+      isTeacher: teacher,
+      specialty: teacher ? partner.specialty || "" : "",
+      studentsCount: partner.studentsCount ?? 0,
+      logo: partner.logo || DEFAULT_LOGO,
     })
     setModal("edit")
   }
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleImageUpload = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0]
+    if (!file) return
 
-    if (!form.name?.trim()) {
+    setUploading(true)
+
+    try {
+      const body = new FormData()
+      body.append("file", file)
+      body.append("folder", "team")
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body,
+      })
+
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok || typeof data.url !== "string") {
+        showToast(
+          data.error || "Şəkil yüklənərkən xəta baş verdi.",
+          "error"
+        )
+        return
+      }
+
+      setForm((previous) => ({ ...previous, logo: data.url }))
+      showToast("Şəkil uğurla yükləndi.")
+    } catch {
+      showToast("Şəbəkə xətası baş verdi.", "error")
+    } finally {
+      setUploading(false)
+      event.target.value = ""
+    }
+  }
+
+  const handleSave = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    const name = form.name?.trim() ?? ""
+    const position = form.position?.trim() ?? ""
+    const order = Number(form.order)
+
+    if (!name) {
       showToast("Zəhmət olmasa əməkdaşın ad və soyadını qeyd edin.", "error")
       return
     }
 
-    if (!form.position?.trim()) {
+    if (!position) {
       showToast("Zəhmət olmasa əməkdaşın vəzifəsini qeyd edin.", "error")
+      return
+    }
+
+    if (!Number.isInteger(order) || order < 1) {
+      showToast("Sıra nömrəsi 1 və ya daha böyük tam ədəd olmalıdır.", "error")
+      return
+    }
+
+    if (isTeacher && !form.specialty?.trim()) {
+      showToast("Müəllim üçün ixtisas sahəsini qeyd edin.", "error")
       return
     }
 
     setSaving(true)
 
-    const payload = {
-      ...form,
-      name: form.name.trim(),
-      position: form.position.trim(),
+    const payload: PartnerAdmin = {
+      ...(form as PartnerAdmin),
+      id: String(editItem?.id ?? form.id ?? Date.now()),
+      name,
+      position,
       department: form.department?.trim() || "Tədris Şöbəsi",
       isTeacher,
-      specialty: isTeacher ? (form.specialty?.trim() || "") : "",
-      studentsCount: isTeacher ? (Number(form.studentsCount) || 0) : 0,
-      experienceYears: Number(form.experienceYears) || 0,
-      logo: form.logo?.trim() || "/Mehman Bayramov.jpg",
+      specialty: isTeacher ? form.specialty?.trim() || "" : "",
+      studentsCount: isTeacher ? Math.max(0, Number(form.studentsCount) || 0) : 0,
+      experienceYears: Math.max(0, Number(form.experienceYears) || 0),
+      logo: form.logo?.trim() || DEFAULT_LOGO,
       email: form.email?.trim() || "",
       phone: form.phone?.trim() || "",
       bio: form.bio?.trim() || "",
+      order,
     }
 
     try {
-      if (modal === "add") {
-        const res = await fetch("/api/partners", {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Cache-Control": "no-cache",
-          },
-          body: JSON.stringify(payload),
-        })
+      const isEditing = modal === "edit"
 
-        if (res.ok) {
-          const newPartner = await res.json().catch(() => null)
-          if (newPartner && newPartner.id) {
-            setItems((prev) => [newPartner, ...prev.filter((p) => String(p.id).trim() !== String(newPartner.id).trim())])
-          }
-          setModal(null)
-          setForm({})
-          showToast("Yeni əməkdaş uğurla əlavə edildi!", "success")
-          fetchPartners(false)
-        } else {
-          const err = await res.json().catch(() => ({}))
-          showToast(err.error || "Əməkdaş əlavə edilərkən xəta baş verdi.", "error")
-        }
-      } else if (modal === "edit") {
-        const targetId = editItem?.id !== undefined ? String(editItem.id).trim() : (form.id !== undefined ? String(form.id).trim() : "")
-        const updatePayload = {
-          ...editItem,
-          ...payload,
-          id: targetId,
-        }
+      const res = await fetch("/api/partners", {
+        method: isEditing ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
+        body: JSON.stringify(payload),
+      })
 
-        const res = await fetch("/api/partners", {
-          method: "PUT",
-          headers: { 
-            "Content-Type": "application/json",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-          },
-          body: JSON.stringify(updatePayload),
-        })
+      const data: unknown = await res.json().catch(() => null)
 
-        if (res.ok) {
-          const updatedPartner = await res.json().catch(() => null)
-          const mergedPartner = updatedPartner && updatedPartner.id ? updatedPartner : updatePayload
-          
-          setItems((prev) =>
-            prev.map((item) =>
-              String(item.id).trim() === String(mergedPartner.id).trim() || (mergedPartner.slug && item.slug === mergedPartner.slug)
-                ? { ...item, ...mergedPartner }
-                : item
-            )
-          )
-          setModal(null)
-          setForm({})
-          setEditItem(null)
-          showToast("Əməkdaş məlumatları uğurla yeniləndi!", "success")
-          fetchPartners(false)
-        } else {
-          const err = await res.json().catch(() => ({}))
-          showToast(err.error || "Əməkdaş məlumatları yenilənərkən xəta baş verdi.", "error")
-        }
+      if (!res.ok) {
+        const message =
+          typeof data === "object" &&
+          data !== null &&
+          "error" in data &&
+          typeof data.error === "string"
+            ? data.error
+            : "Əməliyyat zamanı xəta baş verdi."
+
+        showToast(message, "error")
+        return
       }
-    } catch (err) {
-      console.error(err)
-      showToast("Serverlə əlaqə qurulmadı. Zəhmət olmasa yenidən cəhd edin.", "error")
+
+      setModal(null)
+      setEditItem(null)
+      setForm({})
+      showToast(
+        isEditing
+          ? "Əməkdaş məlumatları yeniləndi."
+          : "Yeni əməkdaş uğurla əlavə edildi."
+      )
+
+      await fetchPartners(false)
+    } catch {
+      showToast("Serverlə əlaqə qurulmadı. Yenidən cəhd edin.", "error")
     } finally {
       setSaving(false)
     }
@@ -246,71 +316,67 @@ export default function AdminPartnyorlarPage() {
 
   const handleDelete = async (id: string) => {
     setDeleting(true)
+
     try {
-      const res = await fetch(`/api/partners?id=${encodeURIComponent(id)}&t=${Date.now()}`, { 
-        method: "DELETE",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-        },
-      })
-      if (res.ok) {
-        setItems((prev) => prev.filter((item) => String(item.id).trim() !== String(id).trim() && item.slug !== String(id).trim()))
-        setDeleteId(null)
-        showToast("Əməkdaş uğurla silindi!", "success")
-        fetchPartners(false)
-      } else {
+      const res = await fetch(
+        `/api/partners?id=${encodeURIComponent(id)}&t=${Date.now()}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        }
+      )
+
+      if (!res.ok) {
         showToast("Əməkdaş silinərkən xəta baş verdi.", "error")
+        return
       }
-    } catch (err) {
-      console.error(err)
+
+      setDeleteId(null)
+      showToast("Əməkdaş uğurla silindi.")
+      await fetchPartners(false)
+    } catch {
       showToast("Şəbəkə xətası baş verdi.", "error")
     } finally {
       setDeleting(false)
     }
   }
 
-  const filtered = items.filter(
-    (p) =>
-      (p.name && p.name.toLowerCase().includes(search.toLowerCase())) ||
-      (p.position && p.position.toLowerCase().includes(search.toLowerCase())) ||
-      (p.specialty && p.specialty.toLowerCase().includes(search.toLowerCase())) ||
-      (p.department && p.department.toLowerCase().includes(search.toLowerCase()))
-  )
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1e3a47] border-t-transparent" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
       <AdminSidebar />
 
-      {/* Floating Toast Notification */}
       {toast && (
         <div
           role="status"
           aria-live="polite"
-          className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-xl backdrop-blur-md transition-all duration-300 ${
+          className={`fixed right-6 top-6 z-[9999] flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-xl backdrop-blur-md ${
             toast.type === "success"
               ? "border-emerald-200 bg-emerald-50 text-emerald-950"
               : toast.type === "error"
-              ? "border-rose-200 bg-rose-50 text-rose-950"
-              : "border-sky-200 bg-sky-50 text-sky-950"
+                ? "border-rose-200 bg-rose-50 text-rose-950"
+                : "border-sky-200 bg-sky-50 text-sky-950"
           }`}
         >
-          <div
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-              toast.type === "success"
-                ? "bg-emerald-600 text-white"
-                : toast.type === "error"
-                ? "bg-rose-600 text-white"
-                : "bg-sky-600 text-white"
-            }`}
-          >
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-current/10 text-xs font-bold">
             {toast.type === "success" ? "✓" : toast.type === "error" ? "✕" : "ℹ"}
           </div>
-          <p className="text-xs font-semibold pr-2">{toast.message}</p>
+          <p className="pr-2 text-xs font-semibold">{toast.message}</p>
           <button
             type="button"
             onClick={() => setToast(null)}
-            className="rounded-lg p-1 text-slate-400 hover:text-slate-700 transition"
+            aria-label="Bildirişi bağla"
+            className="rounded-lg p-1 text-slate-400 transition hover:text-slate-700"
           >
             ✕
           </button>
@@ -318,7 +384,6 @@ export default function AdminPartnyorlarPage() {
       )}
 
       <main className="flex-1 overflow-y-auto px-6 py-8 sm:px-10 lg:px-12">
-        {/* Header */}
         <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-[#1e3a47] sm:text-3xl">
@@ -329,28 +394,25 @@ export default function AdminPartnyorlarPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <input
-              type="text"
+              type="search"
               placeholder="Əməkdaş axtar..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 placeholder-slate-400 shadow-xs focus:border-[#1e3a47] focus:outline-hidden"
+              onChange={(event) => setSearch(event.target.value)}
+              className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-medium text-slate-800 shadow-xs placeholder:text-slate-400 focus:border-[#1e3a47] focus:outline-hidden"
             />
             <button
               type="button"
               onClick={openAdd}
               className="flex items-center gap-2 rounded-xl bg-[#1e3a47] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#162c37] active:scale-95"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
-              <span>Yeni Əməkdaş Əlavə Et</span>
+              <span className="text-base">+</span>
+              Yeni Əməkdaş Əlavə Et
             </button>
           </div>
         </div>
 
-        {/* Content Table */}
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1e3a47] border-t-transparent" />
@@ -361,6 +423,7 @@ export default function AdminPartnyorlarPage() {
               <table className="w-full text-left text-xs">
                 <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   <tr>
+                    <th className="px-4 py-3.5">Sıra</th>
                     <th className="px-6 py-3.5">Əməkdaş</th>
                     <th className="px-6 py-3.5">Vəzifə</th>
                     <th className="px-6 py-3.5">İxtisas sahəsi</th>
@@ -372,13 +435,18 @@ export default function AdminPartnyorlarPage() {
                 <tbody className="divide-y divide-slate-100">
                   {filtered.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                      <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                         Heç bir əməkdaş tapılmadı.
                       </td>
                     </tr>
                   ) : (
                     filtered.map((item) => (
                       <tr key={item.id} className="transition-colors hover:bg-slate-50/60">
+                        <td className="px-4 py-4">
+                          <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-lg bg-[#1e3a47]/10 px-2 font-black text-[#1e3a47]">
+                            {item.order}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 font-bold text-slate-900">
                           <div className="flex items-center gap-3">
                             <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#1e3a47]/10 font-bold text-[#1e3a47]">
@@ -387,8 +455,8 @@ export default function AdminPartnyorlarPage() {
                                   src={item.logo}
                                   alt={item.name}
                                   className="h-full w-full object-cover"
-                                  onError={(e) => {
-                                    (e.target as HTMLElement).style.display = "none"
+                                  onError={(event) => {
+                                    event.currentTarget.style.display = "none"
                                   }}
                                 />
                               ) : (
@@ -402,24 +470,23 @@ export default function AdminPartnyorlarPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex rounded-md bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-800 border border-sky-200/60">
+                          <span className="inline-flex rounded-md border border-sky-200/60 bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-800">
                             {item.position}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-slate-600 font-medium max-w-xs truncate">
-                          {item.specialty && item.specialty.trim() ? (
-                            <span title={item.specialty}>{item.specialty}</span>
-                          ) : (
+                        <td className="max-w-xs truncate px-6 py-4 font-medium text-slate-600">
+                          {item.specialty?.trim() || (
                             <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
                               Müəllim deyil
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-4 text-slate-700 font-bold">
+                        <td className="px-6 py-4 font-bold text-slate-700">
                           {item.experienceYears} il
                         </td>
-                        <td className="px-6 py-4 text-slate-700 font-bold">
-                          {item.isTeacher === false || (!item.specialty && (!item.studentsCount || item.studentsCount === 0))
+                        <td className="px-6 py-4 font-bold text-slate-700">
+                          {item.isTeacher === false ||
+                          (!item.specialty && (!item.studentsCount || item.studentsCount === 0))
                             ? "—"
                             : `${item.studentsCount}+`}
                         </td>
@@ -450,10 +517,9 @@ export default function AdminPartnyorlarPage() {
           </div>
         )}
 
-        {/* Modal: Add or Edit */}
         {modal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs overflow-y-auto">
-            <div className="w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-6 shadow-xl my-8">
+          <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/40 p-4 backdrop-blur-xs">
+            <div className="my-8 w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-6 shadow-xl">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <h3 className="text-lg font-bold text-[#1e3a47]">
                   {modal === "add" ? "Yeni Əməkdaş Əlavə Et" : "Əməkdaşı Redaktə Et"}
@@ -462,62 +528,79 @@ export default function AdminPartnyorlarPage() {
                   type="button"
                   onClick={() => setModal(null)}
                   className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  aria-label="Pəncərəni bağla"
                 >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  ✕
                 </button>
               </div>
 
               <form onSubmit={handleSave} className="mt-4 space-y-4">
-                {/* Ad və Soyad */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                  <label className="mb-1 block text-xs font-bold text-slate-700">
                     Ad və Soyad *
                   </label>
                   <input
                     type="text"
                     required
                     value={form.name || ""}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    onChange={(event) => setForm({ ...form, name: event.target.value })}
                     placeholder="Məs: Mehman Bayramov"
                     className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                   />
                 </div>
 
-                {/* Vəzifə və Şöbə */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Vəzifə *
-                    </label>
+                    <label className="mb-1 block text-xs font-bold text-slate-700">Vəzifə *</label>
                     <input
                       type="text"
                       required
                       value={form.position || ""}
-                      onChange={(e) => setForm({ ...form, position: e.target.value })}
-                      placeholder="Baş Təlimçi, Menecer, Həkim..."
+                      onChange={(event) => setForm({ ...form, position: event.target.value })}
+                      placeholder="Baş təlimçi, menecer..."
                       className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Şöbə
-                    </label>
+                    <label className="mb-1 block text-xs font-bold text-slate-700">Şöbə</label>
                     <input
                       type="text"
                       value={form.department || ""}
-                      onChange={(e) => setForm({ ...form, department: e.target.value })}
-                      placeholder="İT, İnzibati, Pedaqogika..."
+                      onChange={(event) => setForm({ ...form, department: event.target.value })}
+                      placeholder="İT, İnzibati..."
                       className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                     />
                   </div>
                 </div>
 
-                {/* Əməkdaş Növü: Müəllim və ya Digər */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  <label className="mb-1 block text-xs font-bold text-slate-700">
+                    Sıra nömrəsi *
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    min={1}
+                    step={1}
+                    value={form.order ?? 1}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        order:
+                          event.target.value === ""
+                            ? undefined
+                            : Math.max(1, Number.parseInt(event.target.value, 10) || 1),
+                      })
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-500">
+                    Kiçik sıra nömrəsi olan əməkdaş saytda daha əvvəl görünəcək.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-xs font-bold text-slate-700">
                     Əməkdaş statusu
                   </label>
                   <div className="grid grid-cols-2 gap-2.5">
@@ -525,90 +608,86 @@ export default function AdminPartnyorlarPage() {
                       type="button"
                       onClick={() => {
                         setIsTeacher(true)
-                        setForm((prev) => ({ ...prev, isTeacher: true }))
+                        setForm((previous) => ({ ...previous, isTeacher: true }))
                       }}
                       className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-bold transition-all ${
                         isTeacher
                           ? "border-[#1e3a47] bg-[#1e3a47] text-white shadow-xs"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                       }`}
                     >
-                      <span className="text-base">👨‍🏫</span>
-                      <span>Müəllim / Təlimçi</span>
+                      👨‍🏫 Müəllim / Təlimçi
                     </button>
                     <button
                       type="button"
                       onClick={() => {
                         setIsTeacher(false)
-                        setForm((prev) => ({ ...prev, isTeacher: false, specialty: "", studentsCount: 0 }))
+                        setForm((previous) => ({
+                          ...previous,
+                          isTeacher: false,
+                          specialty: "",
+                          studentsCount: 0,
+                        }))
                       }}
                       className={`flex items-center justify-center gap-2 rounded-xl border p-2.5 text-xs font-bold transition-all ${
                         !isTeacher
                           ? "border-[#1e3a47] bg-[#1e3a47] text-white shadow-xs"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                       }`}
                     >
-                      <span className="text-base">💼</span>
-                      <span>Digər əməkdaş</span>
+                      💼 Digər əməkdaş
                     </button>
                   </div>
                   <p className="mt-1.5 text-[11px] text-slate-500">
                     {isTeacher
                       ? "Müəllim və təlimçilər üçün ixtisas sahəsi və tələbə sayı qeyd olunur."
-                      : "Müəllim olmayan digər əməkdaşlar üçün ixtisas sahəsi tələb olunmur."}
+                      : "Müəllim olmayan əməkdaşlar üçün ixtisas sahəsi tələb olunmur."}
                   </p>
                 </div>
 
-                {/* İxtisas Sahəsi - Yalnız Müəllimlər üçün */}
                 {isTeacher && (
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      İxtisas Sahəsi *
+                    <label className="mb-1 block text-xs font-bold text-slate-700">
+                      İxtisas sahəsi *
                     </label>
                     <input
                       type="text"
-                      required={isTeacher}
+                      required
                       value={form.specialty || ""}
-                      onChange={(e) => setForm({ ...form, specialty: e.target.value })}
-                      placeholder="Məs: Kompüter savadlılığı, Ofis proqramları..."
+                      onChange={(event) => setForm({ ...form, specialty: event.target.value })}
+                      placeholder="Məs: Kompüter savadlılığı..."
                       className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                     />
                   </div>
                 )}
 
-                {/* Təcrübə və Tələbə Sayı */}
                 <div className={`grid ${isTeacher ? "grid-cols-2" : "grid-cols-1"} gap-3`}>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Təcrübə (il)
-                    </label>
+                    <label className="mb-1 block text-xs font-bold text-slate-700">Təcrübə (il)</label>
                     <input
                       type="number"
                       min={0}
                       value={form.experienceYears ?? 0}
-                      onChange={(e) =>
+                      onChange={(event) =>
                         setForm({
                           ...form,
-                          experienceYears: e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0),
+                          experienceYears: Math.max(0, Number.parseInt(event.target.value, 10) || 0),
                         })
                       }
                       className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                     />
                   </div>
-
                   {isTeacher && (
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">
-                        Tələbə Sayı
-                      </label>
+                      <label className="mb-1 block text-xs font-bold text-slate-700">Tələbə sayı</label>
                       <input
                         type="number"
                         min={0}
                         value={form.studentsCount ?? 0}
-                        onChange={(e) =>
+                        onChange={(event) =>
                           setForm({
                             ...form,
-                            studentsCount: e.target.value === "" ? 0 : Math.max(0, parseInt(e.target.value, 10) || 0),
+                            studentsCount: Math.max(0, Number.parseInt(event.target.value, 10) || 0),
                           })
                         }
                         className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
@@ -617,48 +696,41 @@ export default function AdminPartnyorlarPage() {
                   )}
                 </div>
 
-                {/* Əlaqə: Telefon və Email */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Telefon nömrəsi
-                    </label>
+                    <label className="mb-1 block text-xs font-bold text-slate-700">Telefon nömrəsi</label>
                     <input
                       type="text"
                       value={form.phone || ""}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                      onChange={(event) => setForm({ ...form, phone: event.target.value })}
                       placeholder="+994 50 000 00 00"
                       className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Email ünvanı
-                    </label>
+                    <label className="mb-1 block text-xs font-bold text-slate-700">Email ünvanı</label>
                     <input
                       type="email"
                       value={form.email || ""}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
+                      onChange={(event) => setForm({ ...form, email: event.target.value })}
                       placeholder="ad@ugur.az"
                       className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                     />
                   </div>
                 </div>
 
-                {/* Fotoşəkil (Logo/Avatar) */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Fotoşəkil
-                  </label>
+                  <label className="mb-1 block text-xs font-bold text-slate-700">Fotoşəkil</label>
                   <div className="flex items-start gap-3">
-                    {/* Preview */}
                     <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
                       {form.logo ? (
                         <img
                           src={form.logo}
                           alt="Önbaxış"
                           className="h-full w-full object-cover"
-                          onError={(e) => { (e.target as HTMLElement).style.display = "none" }}
+                          onError={(event) => {
+                            event.currentTarget.style.display = "none"
+                          }}
                         />
                       ) : (
                         <span className="text-[10px] font-bold text-slate-400">Şəkil</span>
@@ -669,12 +741,8 @@ export default function AdminPartnyorlarPage() {
                         </div>
                       )}
                     </div>
-
                     <div className="flex-1 space-y-2">
                       <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-[#1e3a47] hover:bg-slate-100">
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
                         {uploading ? "Yüklənir..." : "Foto yüklə"}
                         <input
                           type="file"
@@ -687,7 +755,7 @@ export default function AdminPartnyorlarPage() {
                       <input
                         type="text"
                         value={form.logo || ""}
-                        onChange={(e) => setForm({ ...form, logo: e.target.value })}
+                        onChange={(event) => setForm({ ...form, logo: event.target.value })}
                         placeholder="və ya yol yazın: /Ad Soyad.jpg"
                         className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                       />
@@ -695,22 +763,20 @@ export default function AdminPartnyorlarPage() {
                   </div>
                 </div>
 
-
-                {/* Bio / Haqqında */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Haqqında Qısa Məlumat
+                  <label className="mb-1 block text-xs font-bold text-slate-700">
+                    Haqqında qısa məlumat
                   </label>
                   <textarea
                     rows={2}
                     value={form.bio || ""}
-                    onChange={(e) => setForm({ ...form, bio: e.target.value })}
+                    onChange={(event) => setForm({ ...form, bio: event.target.value })}
                     placeholder="Əməkdaş haqqında qısa bio..."
                     className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                <div className="flex justify-end gap-3 border-t border-slate-100 pt-3">
                   <button
                     type="button"
                     onClick={() => setModal(null)}
@@ -721,17 +787,10 @@ export default function AdminPartnyorlarPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={saving}
+                    disabled={saving || uploading}
                     className="flex items-center gap-2 rounded-xl bg-[#1e3a47] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#162c37] disabled:opacity-50"
                   >
-                    {saving ? (
-                      <>
-                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        <span>Yadda saxlanılır...</span>
-                      </>
-                    ) : (
-                      <span>Yadda Saxla</span>
-                    )}
+                    {saving ? "Yadda saxlanılır..." : "Yadda Saxla"}
                   </button>
                 </div>
               </form>
@@ -739,7 +798,6 @@ export default function AdminPartnyorlarPage() {
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
         {deleteId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs">
             <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 shadow-xl">
@@ -761,17 +819,10 @@ export default function AdminPartnyorlarPage() {
                 <button
                   type="button"
                   disabled={deleting}
-                  onClick={() => deleteId && handleDelete(deleteId)}
-                  className="flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700 disabled:opacity-50"
+                  onClick={() => void handleDelete(deleteId)}
+                  className="rounded-xl bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700 disabled:opacity-50"
                 >
-                  {deleting ? (
-                    <>
-                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      <span>Silinir...</span>
-                    </>
-                  ) : (
-                    <span>Bəli, Sil</span>
-                  )}
+                  {deleting ? "Silinir..." : "Bəli, Sil"}
                 </button>
               </div>
             </div>
