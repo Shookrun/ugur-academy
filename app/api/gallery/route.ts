@@ -45,7 +45,7 @@ function jsonError(message: string, status: number) {
 }
 
 async function isAdmin() {
-  const session = await getServerSession(authOptions)
+  const session = await auth()
   return Boolean(session)
 }
 
