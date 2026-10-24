@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useCallback, useEffect, useState, type FormEvent } from "react"
@@ -44,7 +43,41 @@ async function getErrorMessage(response: Response, fallback: string): Promise<st
     "error" in data &&
     typeof (data as ApiError).error === "string"
   ) {
-    return (data as ApiError).error!
+    return `${(data as ApiError).error} (HTTP ${response.status})`
+  }
+
+  return `${fallback} (HTTP ${response.status})`
+}
+
+async function apiFetch(url: string, init?: RequestInit): Promise<Response> {
+  const response = await fetch(url, {
+    cache: "no-store",
+    credentials: "same-origin",
+    ...init,
+  })
+
+  if (response.status === 401 || response.status === 403) {
+    window.location.href = "/admin"
+    throw new Error("Sessiya bitib. Yenidən daxil ol.")
+  }
+
+  if (response.redirected && response.url.includes("/admin")) {
+    window.location.href = "/admin"
+    throw new Error("Sessiya bitib. Yenidən daxil ol.")
+  }
+
+  return response
+}
+
+function extractCategories(data: unknown, fallback: string[]): string[] {
+  if (data && typeof data === "object" && "categories" in data) {
+    const list = (data as { categories?: unknown }).categories
+
+    if (Array.isArray(list)) {
+      return list.filter(
+        (category): category is string => typeof category === "string"
+      )
+    }
   }
 
   return fallback
@@ -82,6 +115,14 @@ export default function AdminQalereyaPage() {
   }, [])
 
   useEffect(() => {
+    if (!toast) return
+
+    const timer = window.setTimeout(() => setToast(null), 6000)
+
+    return () => window.clearTimeout(timer)
+  }, [toast])
+
+  useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/admin")
     }
@@ -89,19 +130,21 @@ export default function AdminQalereyaPage() {
 
   const fetchGallery = useCallback(async () => {
     try {
-      const response = await fetch("/api/gallery", {
-        cache: "no-store",
-      })
+      const response = await apiFetch("/api/gallery")
 
       if (!response.ok) {
-        throw new Error("Qalereyanı yükləmək mümkün olmadı.")
+        throw new Error(
+          await getErrorMessage(response, "Qalereyanı yükləmək mümkün olmadı.")
+        )
       }
 
-      const data: unknown = await response.json()
+      const data: unknown = await response.json().catch(() => null)
 
-      if (Array.isArray(data)) {
-        setItems(data as GalleryItem[])
+      if (!Array.isArray(data)) {
+        throw new Error("Server gözlənilməz cavab qaytardı (qalereya).")
       }
+
+      setItems(data as GalleryItem[])
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Qalereya yüklənmədi.",
@@ -114,24 +157,26 @@ export default function AdminQalereyaPage() {
 
   const fetchCategories = useCallback(async () => {
     try {
-      const response = await fetch("/api/gallery/categories", {
-        cache: "no-store",
-      })
+      const response = await apiFetch("/api/gallery/categories")
 
       if (!response.ok) {
-        throw new Error("Kateqoriyaları yükləmək mümkün olmadı.")
-      }
-
-      const data: unknown = await response.json()
-
-      if (Array.isArray(data)) {
-        const valid = data.filter(
-          (category): category is string =>
-            typeof category === "string" && category.trim().length > 0
+        throw new Error(
+          await getErrorMessage(response, "Kateqoriyaları yükləmək mümkün olmadı.")
         )
-
-        setCategories(Array.from(new Set(valid.map((category) => category.trim()))))
       }
+
+      const data: unknown = await response.json().catch(() => null)
+
+      if (!Array.isArray(data)) {
+        throw new Error("Server gözlənilməz cavab qaytardı (kateqoriyalar).")
+      }
+
+      const valid = data.filter(
+        (category): category is string =>
+          typeof category === "string" && category.trim().length > 0
+      )
+
+      setCategories(Array.from(new Set(valid.map((category) => category.trim()))))
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Kateqoriyalar yüklənmədi.",
@@ -179,35 +224,35 @@ export default function AdminQalereyaPage() {
     setCategorySaving(true)
 
     try {
-      const response = await fetch("/api/gallery/categories", {
+      const response = await apiFetch("/api/gallery/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       })
 
       if (!response.ok) {
-        showToast(await getErrorMessage(response, "Kateqoriya yaradıla bilmədi."), "error")
+        showToast(
+          await getErrorMessage(response, "Kateqoriya yaradıla bilmədi."),
+          "error"
+        )
         return
       }
 
-      const data: unknown = await response.json()
-      const returnedCategories =
-        data &&
-        typeof data === "object" &&
-        "categories" in data &&
-        Array.isArray(data.categories)
-          ? data.categories.filter(
-              (category): category is string => typeof category === "string"
-            )
-          : [...categories, name]
+      const data: unknown = await response.json().catch(() => null)
+      const returnedCategories = extractCategories(data, [...categories, name])
 
       setCategories(returnedCategories)
       setForm((current) => ({ ...current, category: name }))
       setNewCategory("")
       setCategoryModal(false)
       showToast(`"${name}" kateqoriyası yaradıldı.`)
-    } catch {
-      showToast("Serverlə əlaqə qurmaq mümkün olmadı.", "error")
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Serverlə əlaqə qurmaq mümkün olmadı.",
+        "error"
+      )
     } finally {
       setCategorySaving(false)
     }
@@ -217,17 +262,16 @@ export default function AdminQalereyaPage() {
     const remaining = categories.filter((item) => item !== category)
     const hasImages = items.some((item) => item.category === category)
 
-    setDeleteCategory(category)
-    setMoveTo(remaining[0] ?? "")
-
     if (hasImages && remaining.length === 0) {
       showToast(
         "Bu kateqoriyanı silməzdən əvvəl başqa kateqoriya yaratmalısan.",
         "error"
       )
-      setCategoryModal(false)
       return
     }
+
+    setDeleteCategory(category)
+    setMoveTo(remaining[0] ?? "")
   }
 
   const confirmDeleteCategory = async () => {
@@ -243,7 +287,7 @@ export default function AdminQalereyaPage() {
     setCategorySaving(true)
 
     try {
-      const response = await fetch("/api/gallery/categories", {
+      const response = await apiFetch("/api/gallery/categories", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -260,17 +304,12 @@ export default function AdminQalereyaPage() {
         return
       }
 
-      const data: unknown = await response.json()
+      const data: unknown = await response.json().catch(() => null)
 
-      const updatedCategories =
-        data &&
-        typeof data === "object" &&
-        "categories" in data &&
-        Array.isArray(data.categories)
-          ? data.categories.filter(
-              (category): category is string => typeof category === "string"
-            )
-          : categories.filter((category) => category !== deleteCategory)
+      const updatedCategories = extractCategories(
+        data,
+        categories.filter((category) => category !== deleteCategory)
+      )
 
       setCategories(updatedCategories)
 
@@ -300,8 +339,13 @@ export default function AdminQalereyaPage() {
       )
 
       await Promise.all([fetchGallery(), fetchCategories()])
-    } catch {
-      showToast("Serverlə əlaqə qurmaq mümkün olmadı.", "error")
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Serverlə əlaqə qurmaq mümkün olmadı.",
+        "error"
+      )
     } finally {
       setCategorySaving(false)
     }
@@ -342,7 +386,7 @@ export default function AdminQalereyaPage() {
         featured: Boolean(form.featured),
       }
 
-      const response = await fetch("/api/gallery", {
+      const response = await apiFetch("/api/gallery", {
         method: editing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -361,8 +405,13 @@ export default function AdminQalereyaPage() {
       showToast(editing ? "Şəkil yeniləndi." : "Şəkil əlavə edildi.")
 
       await fetchGallery()
-    } catch {
-      showToast("Serverlə əlaqə qurmaq mümkün olmadı.", "error")
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Serverlə əlaqə qurmaq mümkün olmadı.",
+        "error"
+      )
     } finally {
       setSaving(false)
     }
@@ -374,13 +423,16 @@ export default function AdminQalereyaPage() {
     setDeleting(true)
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `/api/gallery?id=${encodeURIComponent(deleteId)}`,
-        { method: "DELETE", cache: "no-store" }
+        { method: "DELETE" }
       )
 
       if (!response.ok) {
-        showToast(await getErrorMessage(response, "Şəkli silmək mümkün olmadı."), "error")
+        showToast(
+          await getErrorMessage(response, "Şəkli silmək mümkün olmadı."),
+          "error"
+        )
         return
       }
 
@@ -388,8 +440,13 @@ export default function AdminQalereyaPage() {
       setDeleteId(null)
       showToast("Şəkil silindi.")
       await fetchGallery()
-    } catch {
-      showToast("Serverlə əlaqə qurmaq mümkün olmadı.", "error")
+    } catch (error) {
+      showToast(
+        error instanceof Error
+          ? error.message
+          : "Serverlə əlaqə qurmaq mümkün olmadı.",
+        "error"
+      )
     } finally {
       setDeleting(false)
     }
@@ -414,7 +471,7 @@ export default function AdminQalereyaPage() {
           <div
             role="status"
             aria-live="polite"
-            className={`fixed right-5 top-5 z-[100] max-w-sm rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg ${
+            className={`fixed right-5 top-5 z-[200] max-w-sm rounded-xl border px-4 py-3 text-sm font-semibold shadow-lg ${
               toast.type === "success"
                 ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                 : "border-rose-200 bg-rose-50 text-rose-800"
@@ -422,7 +479,13 @@ export default function AdminQalereyaPage() {
           >
             <div className="flex items-center justify-between gap-4">
               <span>{toast.message}</span>
-              <button type="button" onClick={() => setToast(null)} aria-label="Bildirişi bağla">×</button>
+              <button
+                type="button"
+                onClick={() => setToast(null)}
+                aria-label="Bildirişi bağla"
+              >
+                ×
+              </button>
             </div>
           </div>
         )}
@@ -560,7 +623,9 @@ export default function AdminQalereyaPage() {
             <div className="mb-5 flex items-start justify-between">
               <div>
                 <h2 className="text-lg font-black text-[#1e3a47]">Yeni kateqoriya</h2>
-                <p className="mt-1 text-xs text-slate-500">Kateqoriya adı maksimum 60 simvol ola bilər.</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Kateqoriya adı maksimum 60 simvol ola bilər.
+                </p>
               </div>
               <button
                 type="button"
@@ -574,7 +639,10 @@ export default function AdminQalereyaPage() {
             </div>
 
             <form onSubmit={createCategory}>
-              <label htmlFor="new-gallery-category" className="mb-2 block text-xs font-bold text-slate-700">
+              <label
+                htmlFor="new-gallery-category"
+                className="mb-2 block text-xs font-bold text-slate-700"
+              >
                 Kateqoriya adı
               </label>
               <input
@@ -618,12 +686,16 @@ export default function AdminQalereyaPage() {
             </h2>
 
             <p className="mt-2 text-sm text-slate-600">
-              <strong>{deleteCategory}</strong> kateqoriyası silinəcək. Şəkillər silinməyəcək.
+              <strong>{deleteCategory}</strong> kateqoriyası silinəcək. Şəkillər
+              silinməyəcək.
             </p>
 
             {items.some((item) => item.category === deleteCategory) && (
               <div className="mt-5">
-                <label htmlFor="move-gallery-category" className="mb-2 block text-xs font-bold text-slate-700">
+                <label
+                  htmlFor="move-gallery-category"
+                  className="mb-2 block text-xs font-bold text-slate-700"
+                >
                   Şəkilləri hansı kateqoriyaya köçürək?
                 </label>
                 <select
@@ -691,13 +763,18 @@ export default function AdminQalereyaPage() {
 
             <form onSubmit={saveGalleryItem} className="space-y-4">
               <div>
-                <label htmlFor="gallery-title" className="mb-1.5 block text-xs font-bold text-slate-700">
+                <label
+                  htmlFor="gallery-title"
+                  className="mb-1.5 block text-xs font-bold text-slate-700"
+                >
                   Şəkil başlığı *
                 </label>
                 <input
                   id="gallery-title"
                   value={form.title}
-                  onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, title: event.target.value }))
+                  }
                   required
                   maxLength={200}
                   className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-[#1e3a47]"
@@ -706,13 +783,18 @@ export default function AdminQalereyaPage() {
               </div>
 
               <div>
-                <label htmlFor="gallery-src" className="mb-1.5 block text-xs font-bold text-slate-700">
+                <label
+                  htmlFor="gallery-src"
+                  className="mb-1.5 block text-xs font-bold text-slate-700"
+                >
                   Şəkil yolu və ya URL *
                 </label>
                 <input
                   id="gallery-src"
                   value={form.src}
-                  onChange={(event) => setForm((current) => ({ ...current, src: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, src: event.target.value }))
+                  }
                   required
                   className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-[#1e3a47]"
                   placeholder="/galereya/seminar.jpeg"
@@ -720,13 +802,18 @@ export default function AdminQalereyaPage() {
               </div>
 
               <div>
-                <label htmlFor="gallery-alt" className="mb-1.5 block text-xs font-bold text-slate-700">
+                <label
+                  htmlFor="gallery-alt"
+                  className="mb-1.5 block text-xs font-bold text-slate-700"
+                >
                   Şəkil təsviri
                 </label>
                 <input
                   id="gallery-alt"
                   value={form.alt}
-                  onChange={(event) => setForm((current) => ({ ...current, alt: event.target.value }))}
+                  onChange={(event) =>
+                    setForm((current) => ({ ...current, alt: event.target.value }))
+                  }
                   className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-[#1e3a47]"
                   placeholder="Şəklin qısa təsviri"
                 />
@@ -734,13 +821,21 @@ export default function AdminQalereyaPage() {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="gallery-category" className="mb-1.5 block text-xs font-bold text-slate-700">
+                  <label
+                    htmlFor="gallery-category"
+                    className="mb-1.5 block text-xs font-bold text-slate-700"
+                  >
                     Kateqoriya *
                   </label>
                   <select
                     id="gallery-category"
                     value={form.category}
-                    onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
+                    onChange={(event) =>
+                      setForm((current) => ({
+                        ...current,
+                        category: event.target.value,
+                      }))
+                    }
                     required
                     disabled={categoriesLoading || categories.length === 0}
                     className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#1e3a47] disabled:bg-slate-50"
@@ -765,13 +860,18 @@ export default function AdminQalereyaPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="gallery-date" className="mb-1.5 block text-xs font-bold text-slate-700">
+                  <label
+                    htmlFor="gallery-date"
+                    className="mb-1.5 block text-xs font-bold text-slate-700"
+                  >
                     Tarix
                   </label>
                   <input
                     id="gallery-date"
                     value={form.date}
-                    onChange={(event) => setForm((current) => ({ ...current, date: event.target.value }))}
+                    onChange={(event) =>
+                      setForm((current) => ({ ...current, date: event.target.value }))
+                    }
                     className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-[#1e3a47]"
                     placeholder="Oktyabr 2026"
                   />
@@ -780,13 +880,22 @@ export default function AdminQalereyaPage() {
 
               <label className="flex cursor-pointer items-center justify-between rounded-xl border border-slate-200 p-4">
                 <span>
-                  <span className="block text-sm font-bold text-slate-800">Əsas slayderdə göstər</span>
-                  <span className="mt-1 block text-xs text-slate-500">Ana səhifənin seçilmiş şəkilləri üçün</span>
+                  <span className="block text-sm font-bold text-slate-800">
+                    Əsas slayderdə göstər
+                  </span>
+                  <span className="mt-1 block text-xs text-slate-500">
+                    Ana səhifənin seçilmiş şəkilləri üçün
+                  </span>
                 </span>
                 <input
                   type="checkbox"
                   checked={Boolean(form.featured)}
-                  onChange={(event) => setForm((current) => ({ ...current, featured: event.target.checked }))}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      featured: event.target.checked,
+                    }))
+                  }
                   className="h-4 w-4 accent-[#1e3a47]"
                 />
               </label>
@@ -816,8 +925,12 @@ export default function AdminQalereyaPage() {
       {deleteId && (
         <div className="fixed inset-0 z-[130] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="text-lg font-black text-slate-900">Şəkli silmək istəyirsən?</h2>
-            <p className="mt-2 text-sm text-slate-500">Bu əməliyyat seçilmiş şəkli qalereyadan siləcək.</p>
+            <h2 className="text-lg font-black text-slate-900">
+              Şəkli silmək istəyirsən?
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Bu əməliyyat seçilmiş şəkli qalereyadan siləcək.
+            </p>
             <div className="mt-6 flex justify-end gap-2">
               <button
                 type="button"
