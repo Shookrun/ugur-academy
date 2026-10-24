@@ -1,4 +1,3 @@
-
 "use client"
 
 import Image from "next/image"
@@ -63,21 +62,69 @@ const Hero = () => {
           }
         }
 
-        @keyframes whatsappCursorBlink {
-          0%,
+        /* Kursor: gəlir -> klik edir -> pulse -> çəkilir */
+        @keyframes whatsappCursorMove {
+          0% {
+            opacity: 0;
+            transform: translate(18px, 18px) scale(1);
+          }
+          15% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+          }
+          30% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+          }
+          38% {
+            opacity: 1;
+            transform: translate(-3px, -3px) scale(0.82);
+          }
+          48% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+          }
+          80% {
+            opacity: 1;
+            transform: translate(0, 0) scale(1);
+          }
           100% {
             opacity: 0;
-            transform: translate(0, 0) scale(1);
+            transform: translate(18px, 18px) scale(1);
           }
-          15%,
-          75% {
-            opacity: 1;
+        }
+
+        /* Klik nöqtəsində pulse halqası */
+        @keyframes whatsappCursorRipple {
+          0%,
+          36% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.3);
           }
           40% {
-            transform: translate(-4px, -4px) scale(0.88);
+            opacity: 0.85;
+            transform: translate(-50%, -50%) scale(0.6);
           }
-          55% {
-            transform: translate(0, 0) scale(1);
+          65% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(2.8);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(2.8);
+          }
+        }
+
+        /* Düymənin özünün klik anında yanıb-sönməsi */
+        @keyframes whatsappButtonFlash {
+          0%,
+          36%,
+          60%,
+          100% {
+            filter: brightness(1);
+          }
+          42% {
+            filter: brightness(1.25);
           }
         }
 
@@ -99,7 +146,8 @@ const Hero = () => {
         }
 
         .hero-whatsapp-button {
-          animation: heroGoldGlow 3s ease-in-out infinite;
+          animation: heroGoldGlow 3s ease-in-out infinite,
+            whatsappButtonFlash 2.8s ease-in-out infinite;
           cursor: pointer;
           -webkit-tap-highlight-color: transparent;
         }
@@ -107,13 +155,14 @@ const Hero = () => {
         .hero-whatsapp-cursor {
           position: absolute;
           z-index: 40;
-          right: -2px;
-          bottom: -7px;
-          width: 36px;
-          height: 36px;
+          right: 12%;
+          bottom: -16px;
+          width: 34px;
+          height: 34px;
           pointer-events: none;
           opacity: 0;
-          filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5));
+          animation: whatsappCursorMove 2.8s ease-in-out infinite;
+          filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.45));
         }
 
         .hero-whatsapp-cursor svg {
@@ -123,15 +172,19 @@ const Hero = () => {
           overflow: visible;
         }
 
-        .hero-whatsapp-button:hover .hero-whatsapp-cursor,
-        .hero-whatsapp-button:focus-visible .hero-whatsapp-cursor {
-          animation: whatsappCursorBlink 1.3s ease-in-out infinite;
-        }
-
-        @media (pointer: coarse) {
-          .hero-whatsapp-cursor {
-            display: none;
-          }
+        /* Kursorun ucu (svg-də 5,2 nöqtəsi) */
+        .hero-whatsapp-ripple {
+          position: absolute;
+          left: 5px;
+          top: 2px;
+          width: 26px;
+          height: 26px;
+          border-radius: 9999px;
+          border: 2px solid #25d366;
+          background: rgba(37, 211, 102, 0.28);
+          opacity: 0;
+          transform: translate(-50%, -50%) scale(0.3);
+          animation: whatsappCursorRipple 2.8s ease-out infinite;
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -148,7 +201,14 @@ const Hero = () => {
           }
 
           .hero-whatsapp-cursor {
-            display: none;
+            animation: none !important;
+            opacity: 1;
+            transform: none;
+          }
+
+          .hero-whatsapp-ripple {
+            animation: none !important;
+            opacity: 0;
           }
         }
       `}</style>
@@ -243,17 +303,43 @@ const Hero = () => {
                   </span>
                 </Link>
 
-                <Link
-                  href="https://wa.me/994706703020"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="WhatsApp ilə pulsuz məlumat al"
-                  className="hero-whatsapp-button group relative flex min-h-[68px] min-w-0 items-center gap-3 overflow-hidden rounded-[20px] border border-[#c99520] bg-gradient-to-b from-[#243b63] via-[#172b4d] to-[#101e3d] px-3 py-3 text-white transition-[filter,transform] duration-300 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c99520] focus-visible:ring-offset-2 sm:min-h-[70px] sm:gap-3 sm:rounded-[23px] sm:px-4"
-                >
-                  <span
-                    className="hero-whatsapp-cursor"
-                    aria-hidden="true"
+                {/* Wrapper: kursor overflow-hidden-dən kənarda qalır, kəsilmir */}
+                <div className="relative min-w-0">
+                  <Link
+                    href="https://wa.me/994706703020"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="WhatsApp ilə pulsuz məlumat al"
+                    className="hero-whatsapp-button group relative flex h-full min-h-[68px] min-w-0 items-center gap-3 overflow-hidden rounded-[20px] border border-[#c99520] bg-gradient-to-b from-[#243b63] via-[#172b4d] to-[#101e3d] px-3 py-3 text-white transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c99520] focus-visible:ring-offset-2 sm:min-h-[70px] sm:gap-3 sm:rounded-[23px] sm:px-4"
                   >
+                    <span className="hero-whatsapp-status relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#25D366]/30 bg-[#25D366]/15 text-[#25D366] sm:h-[46px] sm:w-[46px]">
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="hero-whatsapp-icon h-6 w-6 sm:h-7 sm:w-7"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M20.52 3.48A11.86 11.86 0 0 0 12.06 0C5.5 0 .15 5.34.15 11.91c0 2.1.55 4.14 1.59 5.95L.05 24l6.29-1.65a11.9 11.9 0 0 0 5.71 1.46h.01c6.56 0 11.9-5.34 11.9-11.91a11.84 11.84 0 0 0-3.44-8.42ZM12.06 21.8h-.01a9.9 9.9 0 0 1-5.03-1.38l-.36-.22-3.73.98.99-3.64-.24-.37a9.88 9.88 0 0 1-1.51-5.25c0-5.45 4.44-9.88 9.89-9.88a9.82 9.82 0 0 1 6.99 2.9 9.84 9.84 0 0 1 2.89 6.99c0 5.45-4.43 9.87-9.88 9.87Zm5.42-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.22-.65.07-.3-.15-1.25-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.18-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.08-.79.38-.27.3-1.04 1.02-1.04 2.48s1.06 2.85 1.21 3.05c.15.2 2.09 3.2 5.07 4.49.71.3 1.27.49 1.7.62.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35Z" />
+                      </svg>
+                    </span>
+
+                    <span className="relative z-10 flex min-w-0 flex-1 flex-col text-left text-white">
+                      <span className="break-words text-[13px] font-extrabold leading-5 tracking-tight min-[380px]:text-sm sm:text-base lg:text-[15px] xl:text-base">
+                        Pulsuz məlumat al
+                      </span>
+                      <span className="mt-1 break-words text-[10px] leading-4 text-white/80 min-[380px]:text-[11px] sm:text-xs">
+                        Kurs seçimi üçün bizə yaz
+                      </span>
+                    </span>
+
+                    <span className="relative z-10 shrink-0 text-lg text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-2xl">
+                      →
+                    </span>
+                  </Link>
+
+                  {/* Animasiyalı kursor + pulse (klikləri bloklamır) */}
+                  <span className="hero-whatsapp-cursor" aria-hidden="true">
+                    <span className="hero-whatsapp-ripple" />
                     <svg viewBox="0 0 32 32" fill="none">
                       <path
                         d="M5 2L5 25L11 19L16 29L21 26L16 16L25 16Z"
@@ -264,31 +350,7 @@ const Hero = () => {
                       />
                     </svg>
                   </span>
-
-                  <span className="hero-whatsapp-status relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#25D366]/30 bg-[#25D366]/15 text-[#25D366] sm:h-[46px] sm:w-[46px]">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="hero-whatsapp-icon h-6 w-6 sm:h-7 sm:w-7"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path d="M20.52 3.48A11.86 11.86 0 0 0 12.06 0C5.5 0 .15 5.34.15 11.91c0 2.1.55 4.14 1.59 5.95L.05 24l6.29-1.65a11.9 11.9 0 0 0 5.71 1.46h.01c6.56 0 11.9-5.34 11.9-11.91a11.84 11.84 0 0 0-3.44-8.42ZM12.06 21.8h-.01a9.9 9.9 0 0 1-5.03-1.38l-.36-.22-3.73.98.99-3.64-.24-.37a9.88 9.88 0 0 1-1.51-5.25c0-5.45 4.44-9.88 9.89-9.88a9.82 9.82 0 0 1 6.99 2.9 9.84 9.84 0 0 1 2.89 6.99c0 5.45-4.43 9.87-9.88 9.87Zm5.42-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.22-.65.07-.3-.15-1.25-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.18-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.08-.79.38-.27.3-1.04 1.02-1.04 2.48s1.06 2.85 1.21 3.05c.15.2 2.09 3.2 5.07 4.49.71.3 1.27.49 1.7.62.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35Z" />
-                    </svg>
-                  </span>
-
-                  <span className="relative z-10 flex min-w-0 flex-1 flex-col text-left text-white">
-                    <span className="break-words text-[13px] font-extrabold leading-5 tracking-tight min-[380px]:text-sm sm:text-base lg:text-[15px] xl:text-base">
-                      Pulsuz məlumat al
-                    </span>
-                    <span className="mt-1 break-words text-[10px] leading-4 text-white/80 min-[380px]:text-[11px] sm:text-xs">
-                      Kurs seçimi üçün bizə yaz
-                    </span>
-                  </span>
-
-                  <span className="relative z-10 shrink-0 text-lg text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-2xl">
-                    →
-                  </span>
-                </Link>
+                </div>
               </div>
 
               <div
