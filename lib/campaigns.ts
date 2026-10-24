@@ -17,7 +17,7 @@ export const CAMPAIGNS_KEY = "campaigns"
 export const initialCampaigns: Campaign[] = [
   {
     id: "1",
-    slug: "ailə-endirimi",
+    slug: "aile-endirimi",
     title: "Ailə endirimi",
     excerpt:
       "Bacı-qardaş birlikdə öyrəndikdə həm daha çox həvəslənir, həm də bir-birinə dəstək olur.",
