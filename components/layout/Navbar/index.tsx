@@ -20,10 +20,6 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
 
-  if (pathname?.startsWith("/admin")) {
-    return null
-  }
-
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
@@ -31,9 +27,7 @@ const Navbar = () => {
 
     handleScroll()
 
-    window.addEventListener("scroll", handleScroll, {
-      passive: true,
-    })
+    window.addEventListener("scroll", handleScroll, { passive: true })
 
     return () => {
       window.removeEventListener("scroll", handleScroll)
@@ -68,6 +62,11 @@ const Navbar = () => {
     setIsOpen(false)
   }
 
+  // Bütün hook-lardan SONRA
+  if (pathname?.startsWith("/admin")) {
+    return null
+  }
+
   return (
     <header
       className={`
@@ -83,10 +82,7 @@ const Navbar = () => {
         sm:px-5
         sm:pt-4
         lg:px-8
-        ${isScrolled
-          ? "pt-2 sm:pt-3"
-          : ""
-        }
+        ${isScrolled ? "pt-2 sm:pt-3" : ""}
       `}
     >
       <nav
@@ -101,29 +97,30 @@ const Navbar = () => {
           rounded-[1.4rem]
           border
           px-3
+          backdrop-blur-xl
           transition-all
           duration-500
           sm:px-5
-          ${isScrolled
-            ? `
-                border-slate-200/70
-                bg-white/80
-                py-2
-                shadow-[0_8px_30px_rgba(0,0,0,0.06)]
-                backdrop-blur-md
-              `
-            : `
-                border-transparent
-                bg-transparent
-                py-2.5
-                shadow-none
-              `
+          ${
+            isScrolled
+              ? `
+                  border-slate-200/80
+                  bg-white/90
+                  py-2
+                  shadow-[0_8px_30px_rgba(16,30,61,0.10)]
+                `
+              : `
+                  border-white/70
+                  bg-white/65
+                  py-2.5
+                  shadow-[0_4px_20px_rgba(16,30,61,0.06)]
+                `
           }
         `}
       >
-        {/* Decorative shine when scrolled */}
+        {/* Decorative shine */}
         <div
-          className={`
+          className="
             pointer-events-none
             absolute
             inset-x-0
@@ -131,12 +128,9 @@ const Navbar = () => {
             h-px
             bg-gradient-to-r
             from-transparent
-            via-slate-200/70
+            via-white
             to-transparent
-            transition-opacity
-            duration-500
-            ${isScrolled ? "opacity-100" : "opacity-0"}
-          `}
+          "
         />
 
         {/* =========================================
@@ -147,14 +141,7 @@ const Navbar = () => {
           href="/"
           onClick={closeMenu}
           aria-label="Uğur Şəxsi İnkişaf Mərkəzi ana səhifə"
-          className="
-            group
-            relative
-            z-10
-            flex
-            shrink-0
-            items-center
-          "
+          className="group relative z-10 flex shrink-0 items-center"
         >
           {/* Logo glow */}
           <span
@@ -192,13 +179,15 @@ const Navbar = () => {
               duration-500
               group-hover:scale-105
               group-hover:rotate-2
-              ${isOpen
-                ? "h-[64px] w-[64px] sm:h-[72px] sm:w-[72px]"
-                : "h-[102px] w-[102px] sm:h-[114px] sm:w-[114px]"
+              ${
+                isOpen
+                  ? "h-[64px] w-[64px] sm:h-[72px] sm:w-[72px]"
+                  : "h-[102px] w-[102px] sm:h-[114px] sm:w-[114px]"
               }
-              ${isScrolled
-                ? "lg:h-[102px] lg:w-[102px]"
-                : "lg:h-[118px] lg:w-[118px]"
+              ${
+                isScrolled
+                  ? "lg:h-[102px] lg:w-[102px]"
+                  : "lg:h-[118px] lg:w-[118px]"
               }
             `}
           />
@@ -233,9 +222,7 @@ const Navbar = () => {
                 animationDelay: `${index * 50}ms`,
               }}
             >
-              <span className="relative z-10">
-                {item.name}
-              </span>
+              <span className="relative z-10">{item.name}</span>
 
               {/* Hover background */}
               <span
@@ -276,7 +263,7 @@ const Navbar = () => {
           ))}
 
           {/* =====================================
-              RFO BUTTON (Özəl & Diqqətçəkən Dizayn)
+              RFO BUTTON
           ====================================== */}
 
           <Link
@@ -305,9 +292,9 @@ const Navbar = () => {
               duration-300
               hover:-translate-y-0.5
               hover:border-blue-500
-              hover:shadow-[0_8px_25px_rgba(30,120,255,0.3)]
               hover:from-blue-100/90
               hover:to-sky-100/90
+              hover:shadow-[0_8px_25px_rgba(30,120,255,0.3)]
               active:scale-95
             "
           >
@@ -330,7 +317,7 @@ const Navbar = () => {
               "
             />
 
-            {/* RFO Image inside styled frame */}
+            {/* RFO emblem */}
             <div
               className="
                 relative
@@ -360,21 +347,20 @@ const Navbar = () => {
               />
             </div>
 
-            {/* Attention-grabbing text & pulse badge */}
+            {/* Text */}
             <div className="flex flex-col text-left leading-none">
               <div className="flex items-center gap-1.5">
                 <span className="text-[13px] font-black tracking-tight text-slate-900 transition-colors group-hover:text-blue-600">
                   RFO
                 </span>
-
               </div>
-              <span className="text-[9.5px] font-semibold text-slate-500 mt-0.5">
+              <span className="mt-0.5 text-[9.5px] font-semibold text-slate-500">
                 Olimpiada Mərkəzi
               </span>
             </div>
 
             {/* Arrow */}
-            <span className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all text-xs font-bold ml-0.5">
+            <span className="ml-0.5 text-xs font-bold text-slate-400 transition-all group-hover:translate-x-0.5 group-hover:text-blue-600">
               →
             </span>
           </Link>
@@ -492,10 +478,7 @@ const Navbar = () => {
                 bg-gray-950
                 transition-all
                 duration-300
-                ${isOpen
-                  ? "top-[9px] rotate-45"
-                  : ""
-                }
+                ${isOpen ? "top-[9px] rotate-45" : ""}
               `}
             />
 
@@ -511,10 +494,7 @@ const Navbar = () => {
                 bg-gray-950
                 transition-all
                 duration-300
-                ${isOpen
-                  ? "scale-x-0 opacity-0"
-                  : ""
-                }
+                ${isOpen ? "scale-x-0 opacity-0" : ""}
               `}
             />
 
@@ -530,10 +510,7 @@ const Navbar = () => {
                 bg-gray-950
                 transition-all
                 duration-300
-                ${isOpen
-                  ? "top-[9px] -rotate-45"
-                  : ""
-                }
+                ${isOpen ? "top-[9px] -rotate-45" : ""}
               `}
             />
           </span>
@@ -555,9 +532,10 @@ const Navbar = () => {
           transition-all
           duration-500
           lg:hidden
-          ${isOpen
-            ? "pointer-events-auto opacity-100"
-            : "pointer-events-none opacity-0"
+          ${
+            isOpen
+              ? "pointer-events-auto opacity-100"
+              : "pointer-events-none opacity-0"
           }
         `}
       />
@@ -582,9 +560,10 @@ const Navbar = () => {
           transition-all
           duration-500
           lg:hidden
-          ${isOpen
-            ? "max-h-[calc(100dvh_-_6.5rem)] translate-y-0 scale-100 overflow-y-auto overscroll-contain opacity-100"
-            : "pointer-events-none max-h-0 -translate-y-4 scale-[0.98] overflow-hidden opacity-0"
+          ${
+            isOpen
+              ? "max-h-[calc(100dvh_-_6.5rem)] translate-y-0 scale-100 overflow-y-auto overscroll-contain opacity-100"
+              : "pointer-events-none max-h-0 -translate-y-4 scale-[0.98] overflow-hidden opacity-0"
           }
         `}
       >
@@ -602,7 +581,6 @@ const Navbar = () => {
 
         <div className="p-3">
           {/* Mobile nav links */}
-
           <div className="space-y-1">
             {navItems.map((item, index) => (
               <Link
@@ -625,15 +603,14 @@ const Navbar = () => {
                   hover:translate-x-1
                   hover:bg-gray-50
                   hover:text-gray-950
-                  ${isOpen
-                    ? "translate-x-0 opacity-100"
-                    : "translate-x-4 opacity-0"
+                  ${
+                    isOpen
+                      ? "translate-x-0 opacity-100"
+                      : "translate-x-4 opacity-0"
                   }
                 `}
                 style={{
-                  transitionDelay: isOpen
-                    ? `${index * 55 + 80}ms`
-                    : "0ms",
+                  transitionDelay: isOpen ? `${index * 55 + 80}ms` : "0ms",
                 }}
               >
                 <span className="flex items-center gap-3">
@@ -669,7 +646,6 @@ const Navbar = () => {
           </div>
 
           {/* Divider */}
-
           <div
             className={`
               my-3
@@ -677,15 +653,11 @@ const Navbar = () => {
               bg-gray-100
               transition-all
               duration-500
-              ${isOpen
-                ? "opacity-100"
-                : "opacity-0"
-              }
+              ${isOpen ? "opacity-100" : "opacity-0"}
             `}
           />
 
-          {/* Mobile RFO button (Özəl & Diqqətçəkən) */}
-
+          {/* Mobile RFO button */}
           <Link
             href="/rfo"
             onClick={closeMenu}
@@ -711,10 +683,7 @@ const Navbar = () => {
               duration-300
               hover:border-blue-500
               hover:shadow-lg
-              ${isOpen
-                ? "translate-y-0 opacity-100"
-                : "translate-y-3 opacity-0"
-              }
+              ${isOpen ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}
             `}
             style={{
               transitionDelay: isOpen ? "450ms" : "0ms",
@@ -732,26 +701,25 @@ const Navbar = () => {
 
             <div className="flex flex-col text-left">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-black tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
+                <span className="text-sm font-black tracking-tight text-slate-900 transition-colors group-hover:text-blue-600">
                   RFO
                 </span>
                 <span className="flex items-center gap-1 rounded-full bg-blue-600 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                  <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
                   Özəl
                 </span>
               </div>
-              <span className="text-[11px] font-medium text-slate-500 mt-0.5">
+              <span className="mt-0.5 text-[11px] font-medium text-slate-500">
                 Respublika Fənn Olimpiadaları Mərkəzi
               </span>
             </div>
 
-            <span className="ml-auto text-sm text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all font-bold pr-1">
+            <span className="ml-auto pr-1 text-sm font-bold text-slate-400 transition-all group-hover:translate-x-1 group-hover:text-blue-600">
               →
             </span>
           </Link>
 
           {/* Mobile exam button */}
-
           <Link
             href="/"
             onClick={closeMenu}
@@ -771,20 +739,13 @@ const Navbar = () => {
               transition-all
               duration-300
               hover:bg-gray-800
-              ${isOpen
-                ? "translate-y-0 opacity-100"
-                : "translate-y-3 opacity-0"
-              }
+              ${isOpen ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}
             `}
             style={{
-              transitionDelay: isOpen
-                ? "510ms"
-                : "0ms",
+              transitionDelay: isOpen ? "510ms" : "0ms",
             }}
           >
-            <span>
-              Online İmtahan
-            </span>
+            <span>Online İmtahan</span>
 
             <span
               className="
