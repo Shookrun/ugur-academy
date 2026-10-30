@@ -5,6 +5,7 @@ import Link from "next/link"
 
 const words = ["Təhsil", "İnkişaf", "Uğur", "Gələcək", "Bacarıq", "Karyera"]
 
+
 const Hero = () => {
   return (
     <>
