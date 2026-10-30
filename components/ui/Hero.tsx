@@ -3,573 +3,230 @@
 import Image from "next/image"
 import Link from "next/link"
 
+const words = ["Təhsil", "İnkişaf", "Uğur", "Gələcək", "Bacarıq", "Karyera"]
+
 const Hero = () => {
   return (
     <>
       <style jsx global>{`
         @keyframes heroFadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(18px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes heroFloat {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-8px);
-          }
+          0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+          50% { transform: translateY(-10px) rotate(var(--r, 0deg)); }
         }
-
-        @keyframes heroWhatsAppIcon {
-          0%,
-          88%,
-          100% {
-            transform: rotate(0deg);
-          }
-          92% {
-            transform: rotate(-7deg);
-          }
-          96% {
-            transform: rotate(7deg);
-          }
+        @keyframes heroMarquee {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
         }
-
-        @keyframes heroWhatsAppPulse {
-          0%,
-          100% {
-            box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.25);
-          }
-          50% {
-            box-shadow: 0 0 0 7px rgba(37, 211, 102, 0);
-          }
+        @keyframes heroShine {
+          0% { transform: translateX(-120%); }
+          60%, 100% { transform: translateX(120%); }
         }
-
-        @keyframes heroGoldGlow {
-          0%,
-          100% {
-            box-shadow: 0 4px 0 #8d6818, 0 8px 20px rgba(16, 30, 61, 0.16);
-          }
-          50% {
-            box-shadow: 0 4px 0 #8d6818, 0 10px 28px rgba(16, 30, 61, 0.26);
-          }
+        @keyframes heroDot {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(201, 149, 32, 0.45); }
+          50% { box-shadow: 0 0 0 8px rgba(201, 149, 32, 0); }
         }
-
-        /* Kursor: gəlir -> klik edir -> pulse -> çəkilir */
-        @keyframes whatsappCursorMove {
-          0% {
-            opacity: 0;
-            transform: translate(18px, 18px) scale(1);
-          }
-          15% {
-            opacity: 1;
-            transform: translate(0, 0) scale(1);
-          }
-          30% {
-            opacity: 1;
-            transform: translate(0, 0) scale(1);
-          }
-          38% {
-            opacity: 1;
-            transform: translate(-3px, -3px) scale(0.82);
-          }
-          48% {
-            opacity: 1;
-            transform: translate(0, 0) scale(1);
-          }
-          80% {
-            opacity: 1;
-            transform: translate(0, 0) scale(1);
-          }
-          100% {
-            opacity: 0;
-            transform: translate(18px, 18px) scale(1);
-          }
+        @keyframes heroSpin {
+          to { transform: rotate(360deg); }
         }
-
-        /* Klik nöqtəsində pulse halqası */
-        @keyframes whatsappCursorRipple {
-          0%,
-          36% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(0.3);
-          }
-          40% {
-            opacity: 0.85;
-            transform: translate(-50%, -50%) scale(0.6);
-          }
-          65% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(2.8);
-          }
-          100% {
-            opacity: 0;
-            transform: translate(-50%, -50%) scale(2.8);
-          }
-        }
-
-        /* Düymənin özünün klik anında yanıb-sönməsi */
-        @keyframes whatsappButtonFlash {
-          0%,
-          36%,
-          60%,
-          100% {
-            filter: brightness(1);
-          }
-          42% {
-            filter: brightness(1.25);
-          }
-        }
-
-        .hero-reveal {
-          opacity: 0;
-          animation: heroFadeUp 0.7s ease forwards;
-        }
-
-        .hero-float {
-          animation: heroFloat 6s ease-in-out infinite;
-        }
-
-        .hero-whatsapp-icon {
-          animation: heroWhatsAppIcon 6s ease-in-out infinite;
-        }
-
-        .hero-whatsapp-status {
-          animation: heroWhatsAppPulse 2.4s ease-out infinite;
-        }
-
-        .hero-whatsapp-button {
-          animation: heroGoldGlow 3s ease-in-out infinite,
-            whatsappButtonFlash 2.8s ease-in-out infinite;
-          cursor: pointer;
-          -webkit-tap-highlight-color: transparent;
-        }
-
-        .hero-whatsapp-cursor {
+        .hero-reveal { opacity: 0; animation: heroFadeUp 0.7s ease forwards; }
+        .hero-float { animation: heroFloat 6s ease-in-out infinite; }
+        .hero-marquee { animation: heroMarquee 28s linear infinite; }
+        .hero-dot { animation: heroDot 2s ease-out infinite; }
+        .hero-spin { animation: heroSpin 18s linear infinite; }
+        .hero-shine::after {
+          content: "";
           position: absolute;
-          z-index: 40;
-          right: 12%;
-          bottom: -16px;
-          width: 34px;
-          height: 34px;
+          inset: 0;
+          background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.3) 50%, transparent 65%);
+          transform: translateX(-120%);
+          animation: heroShine 3.2s ease-in-out infinite;
           pointer-events: none;
-          opacity: 0;
-          animation: whatsappCursorMove 2.8s ease-in-out infinite;
-          filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.45));
         }
-
-        .hero-whatsapp-cursor svg {
-          display: block;
-          width: 100%;
-          height: 100%;
-          overflow: visible;
-        }
-
-        /* Kursorun ucu (svg-də 5,2 nöqtəsi) */
-        .hero-whatsapp-ripple {
-          position: absolute;
-          left: 5px;
-          top: 2px;
-          width: 26px;
-          height: 26px;
-          border-radius: 9999px;
-          border: 2px solid #25d366;
-          background: rgba(37, 211, 102, 0.28);
-          opacity: 0;
-          transform: translate(-50%, -50%) scale(0.3);
-          animation: whatsappCursorRipple 2.8s ease-out infinite;
-        }
-
         @media (prefers-reduced-motion: reduce) {
-          .hero-reveal,
-          .hero-float,
-          .hero-whatsapp-icon,
-          .hero-whatsapp-status,
-          .hero-whatsapp-button {
+          .hero-reveal { opacity: 1; animation: none !important; }
+          .hero-float, .hero-marquee, .hero-dot, .hero-spin, .hero-shine::after {
             animation: none !important;
-          }
-
-          .hero-reveal {
-            opacity: 1;
-          }
-
-          .hero-whatsapp-cursor {
-            animation: none !important;
-            opacity: 1;
-            transform: none;
-          }
-
-          .hero-whatsapp-ripple {
-            animation: none !important;
-            opacity: 0;
           }
         }
       `}</style>
 
       <section className="relative isolate mt-20 overflow-hidden bg-[#fbfcff] text-[#101e3d] sm:mt-24">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-        >
-          <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-[#dceeff]/70 blur-[85px] sm:-left-40 sm:h-[480px] sm:w-[480px] sm:blur-[110px]" />
-          <div className="absolute -right-24 top-20 h-72 w-72 rounded-full bg-[#f9edce]/65 blur-[85px] sm:-right-40 sm:h-[500px] sm:w-[500px] sm:blur-[120px]" />
-          <div className="absolute bottom-[-150px] left-[20%] h-72 w-72 rounded-full bg-[#e5efff]/70 blur-[90px] sm:bottom-[-220px] sm:left-[30%] sm:h-[420px] sm:w-[420px] sm:blur-[110px]" />
+        {/* Background */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -left-32 top-0 h-80 w-80 rounded-full bg-[#dceeff]/80 blur-[100px] sm:h-[520px] sm:w-[520px]" />
+          <div className="absolute -right-32 top-10 h-80 w-80 rounded-full bg-[#f9edce]/80 blur-[100px] sm:h-[520px] sm:w-[520px]" />
           <div
-            className="absolute inset-0 opacity-[0.13]"
+            className="absolute inset-0 opacity-[0.35]"
             style={{
               backgroundImage:
-                "radial-gradient(#c9a54d 0.8px, transparent 0.8px)",
-              backgroundSize: "17px 17px",
+                "linear-gradient(#e5eaf1 1px, transparent 1px), linear-gradient(90deg, #e5eaf1 1px, transparent 1px)",
+              backgroundSize: "56px 56px",
+              maskImage: "radial-gradient(ellipse at center, #000 30%, transparent 75%)",
+              WebkitMaskImage: "radial-gradient(ellipse at center, #000 30%, transparent 75%)",
             }}
           />
         </div>
 
-        <div className="mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-8 lg:px-10 lg:py-10 xl:px-12">
-          <div className="grid min-w-0 grid-cols-1 items-center gap-10 py-5 sm:gap-12 sm:py-8 lg:grid-cols-[1.08fr_0.92fr] lg:gap-8 lg:py-10 xl:gap-12">
-            <div className="min-w-0">
-              <h1
-                className="hero-reveal max-w-full break-words font-serif text-[clamp(2.8rem,9.2vw,6.8rem)] font-bold leading-[1.02] tracking-[-0.055em] text-[#101e3d] sm:text-[clamp(3.5rem,7vw,6rem)] lg:text-[clamp(3.3rem,5.2vw,5.6rem)] xl:text-[clamp(4rem,5.7vw,6.8rem)]"
-                style={{ animationDelay: "100ms" }}
-              >
-                Gələcəyini <span className="text-[#c99520]">qur!</span>
-              </h1>
+        <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 items-center gap-14 px-4 py-10 sm:px-6 lg:grid-cols-12 lg:gap-10 lg:px-10 lg:py-16">
+          {/* LEFT */}
+          <div className="min-w-0 lg:col-span-7">
+            <div
+              className="hero-reveal inline-flex items-center gap-2.5 rounded-full border border-[#e5c66d]/70 bg-white/80 px-4 py-2 text-xs font-bold text-[#243451] shadow-sm backdrop-blur sm:text-sm"
+              style={{ animationDelay: "50ms" }}
+            >
+              <span className="hero-dot h-2.5 w-2.5 rounded-full bg-[#c99520]" />
+              Uğur Şəxsi İnkişaf Mərkəzi
+            </div>
 
-              <p
-                className="hero-reveal mt-5 max-w-[680px] text-sm leading-7 text-[#65738c] sm:mt-7 sm:text-base sm:leading-8 lg:text-[17px] xl:text-xl xl:leading-9"
-                style={{ animationDelay: "200ms" }}
-              >
-                Uğur Şəxsi İnkişaf Mərkəzi olaraq təhsil və inkişaf sahəsində
-                yüzlərlə insanın həyatına pozitiv təsir etmişik. Hər yaş və
-                peşə qrupuna uyğun kurslarla uğura aparan dəstəyi təqdim
-                edirik. Müasir bilik və bacarıqları öyrənərək öz gələcəyini
-                qur.
-              </p>
-
-              <div
-                className="hero-reveal mt-4 flex items-start gap-3"
-                style={{ animationDelay: "280ms" }}
-              >
-                <span className="mt-1 h-7 w-1 shrink-0 rounded-full bg-[#d5a32d] sm:h-8" />
-                <p className="text-sm font-bold leading-6 text-[#243451] sm:text-base sm:leading-7 lg:text-lg">
-                  Sənin inkişafın üçün lazım olan təhsil burada başlayır.
-                </p>
-              </div>
-
-              <div
-                className="hero-reveal mt-7 grid min-w-0 grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:mt-8 sm:gap-4"
-                style={{ animationDelay: "350ms" }}
-              >
-                <Link
-                  href="/haqqimizda"
-                  className="group flex min-h-[64px] min-w-0 items-center justify-between gap-3 rounded-[20px] border-2 border-[#172746] bg-white/90 px-4 py-3 text-sm font-bold text-[#172746] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(16,30,61,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c99520] sm:min-h-[70px] sm:rounded-[23px] sm:px-5 sm:text-base"
+            <h1
+              className="hero-reveal mt-6 font-serif text-[clamp(3.2rem,11vw,7.5rem)] font-bold leading-[0.95] tracking-[-0.05em]"
+              style={{ animationDelay: "150ms" }}
+            >
+              <span className="relative inline-block">
+                Gələcəyini
+                <svg
+                  viewBox="0 0 300 14"
+                  preserveAspectRatio="none"
+                  className="absolute -bottom-2 left-0 h-3 w-full text-[#c99520]"
+                  fill="none"
+                  aria-hidden="true"
                 >
-                  <span className="flex min-w-0 items-center gap-3">
-                    <svg
-                      viewBox="0 0 32 32"
-                      className="h-7 w-7 shrink-0 sm:h-8 sm:w-8"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M4 8.5C8 6.3 12 6.8 16 9.5V26C12 23.3 8 22.8 4 25V8.5Z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M28 8.5C24 6.3 20 6.8 16 9.5V26C20 23.3 24 22.8 28 25V8.5Z"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M8 12L12 13.5M8 16L12 17.5M20 13.5L24 12M20 17.5L24 16"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <span className="truncate">Haqqımızda</span>
-                  </span>
-                  <span className="shrink-0 text-xl transition-transform duration-300 group-hover:translate-x-1 sm:text-2xl">
-                    →
-                  </span>
-                </Link>
+                  <path d="M2 9C60 2 130 2 298 8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                </svg>
+              </span>
+              <br />
+              <span className="italic text-[#c99520]">qur!</span>
+            </h1>
 
-                {/* Wrapper: kursor overflow-hidden-dən kənarda qalır, kəsilmir */}
-                <div className="relative min-w-0">
-                  <Link
-                    href="https://wa.me/994706703020"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="WhatsApp ilə pulsuz məlumat al"
-                    className="hero-whatsapp-button group relative flex h-full min-h-[68px] min-w-0 items-center gap-3 overflow-hidden rounded-[20px] border border-[#c99520] bg-gradient-to-b from-[#243b63] via-[#172b4d] to-[#101e3d] px-3 py-3 text-white transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c99520] focus-visible:ring-offset-2 sm:min-h-[70px] sm:gap-3 sm:rounded-[23px] sm:px-4"
-                  >
-                    <span className="hero-whatsapp-status relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#25D366]/30 bg-[#25D366]/15 text-[#25D366] sm:h-[46px] sm:w-[46px]">
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="hero-whatsapp-icon h-6 w-6 sm:h-7 sm:w-7"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path d="M20.52 3.48A11.86 11.86 0 0 0 12.06 0C5.5 0 .15 5.34.15 11.91c0 2.1.55 4.14 1.59 5.95L.05 24l6.29-1.65a11.9 11.9 0 0 0 5.71 1.46h.01c6.56 0 11.9-5.34 11.9-11.91a11.84 11.84 0 0 0-3.44-8.42ZM12.06 21.8h-.01a9.9 9.9 0 0 1-5.03-1.38l-.36-.22-3.73.98.99-3.64-.24-.37a9.88 9.88 0 0 1-1.51-5.25c0-5.45 4.44-9.88 9.89-9.88a9.82 9.82 0 0 1 6.99 2.9 9.84 9.84 0 0 1 2.89 6.99c0 5.45-4.43 9.87-9.88 9.87Zm5.42-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.22-.65.07-.3-.15-1.25-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.18-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.08-.79.38-.27.3-1.04 1.02-1.04 2.48s1.06 2.85 1.21 3.05c.15.2 2.09 3.2 5.07 4.49.71.3 1.27.49 1.7.62.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35Z" />
-                      </svg>
-                    </span>
+            <p
+              className="hero-reveal mt-8 max-w-[620px] text-base leading-8 text-[#65738c] xl:text-lg"
+              style={{ animationDelay: "250ms" }}
+            >
+              Təhsil və inkişaf sahəsində yüzlərlə insanın həyatına pozitiv təsir
+              etmişik. Hər yaş və peşə qrupuna uyğun kurslarla müasir bilik və
+              bacarıqları öyrən, öz gələcəyini qur.
+            </p>
 
-                    <span className="relative z-10 flex min-w-0 flex-1 flex-col text-left text-white">
-                      <span className="break-words text-[13px] font-extrabold leading-5 tracking-tight min-[380px]:text-sm sm:text-base lg:text-[15px] xl:text-base">
-                        Pulsuz məlumat al
-                      </span>
-                      <span className="mt-1 break-words text-[10px] leading-4 text-white/80 min-[380px]:text-[11px] sm:text-xs">
-                        Kurs seçimi üçün bizə yaz
-                      </span>
-                    </span>
-
-                    <span className="relative z-10 shrink-0 text-lg text-white transition-transform duration-300 group-hover:translate-x-1 sm:text-2xl">
-                      →
-                    </span>
-                  </Link>
-
-                  {/* Animasiyalı kursor + pulse (klikləri bloklamır) */}
-                  <span className="hero-whatsapp-cursor" aria-hidden="true">
-                    <span className="hero-whatsapp-ripple" />
-                    <svg viewBox="0 0 32 32" fill="none">
-                      <path
-                        d="M5 2L5 25L11 19L16 29L21 26L16 16L25 16Z"
-                        fill="white"
-                        stroke="#101e3d"
-                        strokeWidth="2"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </span>
-                </div>
-              </div>
-
-              <div
-                className="hero-reveal mt-9 grid grid-cols-3 border-t border-[#e5eaf1] pt-6 sm:mt-12 sm:pt-7 lg:mt-10 xl:mt-12"
-                style={{ animationDelay: "450ms" }}
-              >
-                <div className="min-w-0 border-r border-[#e1e6ed] pr-2 sm:pr-4">
-                  <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-                    <svg
-                      viewBox="0 0 40 40"
-                      className="hidden h-8 w-8 shrink-0 text-[#c99a2c] min-[430px]:block sm:h-9 sm:w-9 lg:h-8 lg:w-8 xl:h-10 xl:w-10"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M4 10C9 7 14 8 20 12V34C14 30 9 29 4 32V10Z"
-                        stroke="currentColor"
-                        strokeWidth="2.3"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M36 10C31 7 26 8 20 12V34C26 30 31 29 36 32V10Z"
-                        stroke="currentColor"
-                        strokeWidth="2.3"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M8 15L15 17M8 20L15 22M25 17L32 15M25 22L32 20"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="min-w-0">
-                      <p className="text-xl font-extrabold tracking-tight text-[#132344] min-[380px]:text-2xl sm:text-3xl xl:text-4xl">
-                        10+
-                      </p>
-                      <p className="mt-1 text-[11px] text-[#78859a] sm:text-sm xl:text-base">
-                        Kurs
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="min-w-0 border-r border-[#e1e6ed] px-2 sm:px-4">
-                  <div className="flex min-w-0 items-center justify-center gap-2 sm:gap-3">
-                    <svg
-                      viewBox="0 0 40 40"
-                      className="hidden h-8 w-8 shrink-0 text-[#c99a2c] min-[430px]:block sm:h-9 sm:w-9 lg:h-8 lg:w-8 xl:h-10 xl:w-10"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <circle
-                        cx="20"
-                        cy="11"
-                        r="6"
-                        stroke="currentColor"
-                        strokeWidth="2.3"
-                      />
-                      <path
-                        d="M8 34V30C8 24.5 13 21 20 21C27 21 32 24.5 32 30V34H8Z"
-                        stroke="currentColor"
-                        strokeWidth="2.3"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M7 14C3.5 15 3 20 6 22M33 14C36.5 15 37 20 34 22"
-                        stroke="currentColor"
-                        strokeWidth="2.1"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="min-w-0">
-                      <p className="text-xl font-extrabold tracking-tight text-[#132344] min-[380px]:text-2xl sm:text-3xl xl:text-4xl">
-                        1000+
-                      </p>
-                      <p className="mt-1 text-[11px] text-[#78859a] sm:text-sm xl:text-base">
-                        Tələbə
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="min-w-0 pl-2 sm:pl-4">
-                  <div className="flex min-w-0 items-center justify-end gap-2 sm:gap-3">
-                    <svg
-                      viewBox="0 0 40 40"
-                      className="hidden h-8 w-8 shrink-0 text-[#c99a2c] min-[430px]:block sm:h-9 sm:w-9 lg:h-8 lg:w-8 xl:h-10 xl:w-10"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M4 34H37"
-                        stroke="currentColor"
-                        strokeWidth="2.3"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M7 29V22H13V29M18 29V15H24V29M29 29V7H35V29"
-                        stroke="currentColor"
-                        strokeWidth="2.3"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M7 17L17 10L23 12L34 3M27 3H34V10"
-                        stroke="currentColor"
-                        strokeWidth="2.3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="min-w-0">
-                      <p className="text-xl font-extrabold tracking-tight text-[#132344] min-[380px]:text-2xl sm:text-3xl xl:text-4xl">
-                        5+
-                      </p>
-                      <p className="mt-1 text-[11px] text-[#78859a] sm:text-sm xl:text-base">
-                        İl təcrübə
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div
+              className="hero-reveal mt-5 flex items-center gap-3"
+              style={{ animationDelay: "320ms" }}
+            >
+              <span className="h-7 w-1 rounded-full bg-[#d5a32d]" />
+              <p className="text-sm font-bold text-[#243451] sm:text-base">
+                Sənin inkişafın üçün lazım olan təhsil burada başlayır.
+              </p>
             </div>
 
             <div
-              className="hero-reveal relative mx-auto w-full min-w-0 max-w-[560px] lg:max-w-none"
-              style={{ animationDelay: "250ms" }}
+              className="hero-reveal mt-9 flex flex-col gap-4 min-[480px]:flex-row"
+              style={{ animationDelay: "400ms" }}
             >
-              <div
-                aria-hidden="true"
-                className="hero-float pointer-events-none absolute right-1 top-1 z-0 h-16 w-16 rounded-full border border-[#e5c66d]/60 sm:right-2 sm:top-2 sm:h-24 sm:w-24 lg:-right-1 lg:h-28 lg:w-28"
-              />
-
-              <div
-                aria-hidden="true"
-                className="hero-float pointer-events-none absolute bottom-1 left-1 z-0 h-14 w-14 rounded-full border border-[#b9d7f4] sm:bottom-2 sm:left-2 sm:h-20 sm:w-20 lg:-left-1 lg:h-24 lg:w-24"
-                style={{ animationDelay: "1.5s" }}
-              />
-
-              <div className="relative mx-auto aspect-[1/1.02] w-full max-w-[510px]">
-                <div className="absolute right-[3%] top-[2%] h-[76%] w-[63%] overflow-hidden rounded-[42%_42%_22px_22px] border-4 border-white bg-[#e6eff8] shadow-[0_20px_55px_rgba(20,39,72,0.12)] sm:rounded-[44%_44%_28px_28px] sm:border-[6px]">
-                  <Image
-                    src="/student_girl.jpg"
-                    alt="Təhsil alan qız şagird"
-                    fill
-                    sizes="(max-width: 639px) 55vw, (max-width: 1023px) 45vw, 340px"
-                    className="object-cover object-top transition-transform duration-700 hover:scale-[1.04]"
-                  />
-                </div>
-
-                <div className="absolute bottom-[3%] left-[2%] z-10 h-[66%] w-[60%] overflow-hidden rounded-[22px] border-4 border-white bg-[#e6eff8] shadow-[0_20px_55px_rgba(20,39,72,0.16)] sm:rounded-[28px] sm:border-[6px]">
-                  <Image
-                    src="/student_boy.jpg"
-                    alt="Təhsil alan oğlan şagird"
-                    fill
-                    sizes="(max-width: 639px) 53vw, (max-width: 1023px) 42vw, 320px"
-                    className="object-cover object-top transition-transform duration-700 hover:scale-[1.04]"
-                  />
-                </div>
-
-                <div className="absolute right-0 top-[42%] z-20 max-w-[72%] rounded-xl border border-white/90 bg-white/95 px-3 py-2.5 shadow-[0_12px_35px_rgba(20,39,72,0.12)] backdrop-blur-md sm:right-0 sm:max-w-none sm:rounded-2xl sm:px-4 sm:py-3 lg:right-[-1%] xl:right-[-2%] xl:px-5 xl:py-4">
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#fff4d7] text-[#bd8c1f] sm:h-10 sm:w-10 sm:rounded-xl">
-                      <svg
-                        viewBox="0 0 24 24"
-                        className="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="m5 12 4 4L19 6" />
-                      </svg>
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-extrabold leading-5 text-[#132344] sm:text-sm lg:text-base">
-                        İnkişafına başla
-                      </p>
-                      <p className="mt-0.5 text-[10px] leading-4 text-[#78859a] sm:text-xs">
-                        Gələcəyin üçün bu gün
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="absolute left-[8%] top-[5%] z-20 flex h-11 w-11 items-center justify-center rounded-xl border border-white bg-white/95 text-[#c99a2c] shadow-lg backdrop-blur-sm sm:h-14 sm:w-14 sm:rounded-2xl lg:h-16 lg:w-16">
-                  <svg
-                    viewBox="0 0 40 40"
-                    className="h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M5 15L20 7L35 15L20 23L5 15Z"
-                      fill="currentColor"
-                      fillOpacity=".15"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M11 19V26C16 30 24 30 29 26V19"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M35 15V25"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                    <circle cx="35" cy="28" r="2" fill="currentColor" />
+              <Link
+                href="https://wa.me/994706703020"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp ilə pulsuz məlumat al"
+                className="hero-shine group relative flex min-h-[68px] items-center gap-3 overflow-hidden rounded-full border border-[#c99520] bg-gradient-to-b from-[#243b63] via-[#172b4d] to-[#101e3d] py-3 pl-3 pr-6 text-white shadow-[0_12px_30px_rgba(16,30,61,0.25)] transition-transform duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c99520] focus-visible:ring-offset-2"
+              >
+                <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white">
+                  <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden="true">
+                    <path d="M20.52 3.48A11.86 11.86 0 0 0 12.06 0C5.5 0 .15 5.34.15 11.91c0 2.1.55 4.14 1.59 5.95L.05 24l6.29-1.65a11.9 11.9 0 0 0 5.71 1.46h.01c6.56 0 11.9-5.34 11.9-11.91a11.84 11.84 0 0 0-3.44-8.42ZM12.06 21.8h-.01a9.9 9.9 0 0 1-5.03-1.38l-.36-.22-3.73.98.99-3.64-.24-.37a9.88 9.88 0 0 1-1.51-5.25c0-5.45 4.44-9.88 9.89-9.88a9.82 9.82 0 0 1 6.99 2.9 9.84 9.84 0 0 1 2.89 6.99c0 5.45-4.43 9.87-9.88 9.87Zm5.42-7.39c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.18.2-.35.22-.65.07-.3-.15-1.25-.46-2.39-1.47-.88-.79-1.48-1.76-1.65-2.06-.18-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.08-.79.38-.27.3-1.04 1.02-1.04 2.48s1.06 2.85 1.21 3.05c.15.2 2.09 3.2 5.07 4.49.71.3 1.27.49 1.7.62.71.23 1.36.2 1.87.12.57-.08 1.76-.72 2.01-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35Z" />
                   </svg>
-                </div>
+                </span>
+                <span className="relative z-10 flex flex-col text-left">
+                  <span className="text-base font-extrabold leading-5">Pulsuz məlumat al</span>
+                  <span className="text-xs text-white/75">Kurs seçimi üçün bizə yaz</span>
+                </span>
+                <span className="relative z-10 ml-2 text-xl transition-transform duration-300 group-hover:translate-x-1">→</span>
+              </Link>
+
+              <Link
+                href="/haqqimizda"
+                className="group flex min-h-[68px] items-center justify-center gap-3 rounded-full border-2 border-[#172746] bg-white/80 px-7 text-base font-bold text-[#172746] backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:bg-[#172746] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c99520]"
+              >
+                Haqqımızda
+                <span className="text-xl transition-transform duration-300 group-hover:translate-x-1">→</span>
+              </Link>
+            </div>
+          </div>
+
+          {/* RIGHT */}
+          <div
+            className="hero-reveal relative mx-auto w-full max-w-[520px] min-w-0 lg:col-span-5"
+            style={{ animationDelay: "300ms" }}
+          >
+            <div className="relative aspect-square w-full">
+              <div className="absolute right-0 top-0 h-[78%] w-[58%] overflow-hidden rounded-t-full rounded-b-[28px] border-[6px] border-white bg-[#e6eff8] shadow-[0_24px_60px_rgba(20,39,72,0.18)]">
+                <Image
+                  src="/student_girl.jpg"
+                  alt="Təhsil alan qız şagird"
+                  fill
+                  sizes="(max-width: 1023px) 55vw, 320px"
+                  className="object-cover object-top transition-transform duration-700 hover:scale-105"
+                />
+              </div>
+
+              <div
+                className="hero-float absolute bottom-[2%] left-0 h-[55%] w-[52%] overflow-hidden rounded-[28px] border-[6px] border-white bg-[#e6eff8] shadow-[0_24px_60px_rgba(20,39,72,0.2)]"
+                style={{ ["--r" as string]: "-4deg" }}
+              >
+                <Image
+                  src="/student_boy.jpg"
+                  alt="Təhsil alan oğlan şagird"
+                  fill
+                  sizes="(max-width: 1023px) 50vw, 300px"
+                  className="object-cover object-top transition-transform duration-700 hover:scale-105"
+                />
+              </div>
+
+              <div
+                className="hero-float absolute left-[2%] top-[8%] z-20 rounded-2xl bg-[#101e3d] px-5 py-4 text-white shadow-[0_16px_40px_rgba(16,30,61,0.35)]"
+                style={{ ["--r" as string]: "-3deg", animationDelay: "0.8s" }}
+              >
+                <p className="text-3xl font-extrabold leading-none text-[#e5c66d] sm:text-4xl">1000+</p>
+                <p className="mt-1 text-xs text-white/80 sm:text-sm">Tələbə</p>
+              </div>
+
+              <div
+                className="hero-float absolute bottom-[5%] right-[2%] z-20 rounded-2xl bg-gradient-to-br from-[#e5c66d] to-[#c99520] px-5 py-4 text-[#101e3d] shadow-[0_16px_40px_rgba(201,149,32,0.4)]"
+                style={{ ["--r" as string]: "3deg", animationDelay: "1.6s" }}
+              >
+                <p className="text-3xl font-extrabold leading-none sm:text-4xl">10+</p>
+                <p className="mt-1 text-xs font-semibold sm:text-sm">Kurs</p>
+              </div>
+
+              <div className="absolute left-[42%] top-[46%] z-30 flex h-24 w-24 items-center justify-center rounded-full border border-[#e5c66d]/60 bg-white shadow-xl sm:h-28 sm:w-28">
+                <svg viewBox="0 0 120 120" className="hero-spin absolute inset-0 h-full w-full" aria-hidden="true">
+                  <defs>
+                    <path id="heroCircle" d="M60 60m-44 0a44 44 0 1 1 88 0a44 44 0 1 1 -88 0" />
+                  </defs>
+                  <text fill="#243451" fontSize="11" fontWeight="700" letterSpacing="2.4">
+                    <textPath href="#heroCircle">İL TƏCRÜBƏ • İL TƏCRÜBƏ • İL TƏCRÜBƏ •</textPath>
+                  </text>
+                </svg>
+                <span className="font-serif text-2xl font-bold text-[#c99520] sm:text-3xl">5+</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Marquee */}
+        <div className="overflow-hidden border-y border-[#c99520]/40 bg-[#101e3d] py-4" aria-hidden="true">
+          <div className="hero-marquee flex w-max items-center">
+            {[0, 1].map((g) => (
+              <div key={g} className="flex shrink-0 items-center">
+                {words.map((w) => (
+                  <span key={`${g}-${w}`} className="flex items-center">
+                    <span className="px-6 font-serif text-xl font-bold tracking-tight text-white sm:text-2xl">{w}</span>
+                    <span className="text-[#e5c66d]">✦</span>
+                  </span>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
       </section>
