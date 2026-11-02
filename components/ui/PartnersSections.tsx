@@ -1,413 +1,490 @@
 
 "use client"
 
-import { useState, type FormEvent } from "react"
+import Image from "next/image"
+import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
+import type { PointerEvent } from "react"
 
-interface Props {
-  partnerName: string
-}
-
-interface FormData {
+type Partner = {
+  id?: string
   name: string
-  phone: string
-  topic: string
-  message: string
+  position: string
+  logo: string
+  slug?: string
+  order?: number
 }
 
-const initialFormData: FormData = {
-  name: "",
-  phone: "",
-  topic: "",
-  message: "",
+const partnerSlugMap: Record<string, string> = {
+  "Mehman Bayramov": "mehman-bayramov",
+  "Aynur Ələkbərova": "aynur-elekberova",
+  "Könül Əsədova": "konul-esedova",
+  "Gülnaz Cəfərova": "gulnaz-ceferova",
+  "Səkinə Babayeva": "sekine-babayeva",
+  "Fidan Məmmədli": "fidan-memmedli",
+  "Günay Məmmədova": "gunay-memmedova",
 }
 
-export default function PartnerContactForm({ partnerName }: Props) {
-  const [formData, setFormData] = useState<FormData>(initialFormData)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSuccess, setIsSuccess] = useState(false)
+const partners: Partner[] = [
+  {
+    name: "Mehman Bayramov",
+    position: "Əməkdaş",
+    logo: "/Mehman Bayramov.jpg",
+    order: 1,
+  },
+  {
+    name: "Aynur Ələkbərova",
+    position: "Əməkdaş",
+    logo: "/Aynur Ələkbərova.jpg",
+    order: 2,
+  },
+  {
+    name: "Könül Əsədova",
+    position: "Əməkdaş",
+    logo: "/Könül Əsədova.jpg",
+    order: 3,
+  },
+  {
+    name: "Gülnaz Cəfərova",
+    position: "Əməkdaş",
+    logo: "/Gülnaz Cəfərova.jpg",
+    order: 4,
+  },
+  {
+    name: "Səkinə Babayeva",
+    position: "Əməkdaş",
+    logo: "/Səkinə Babayeva.jpg",
+    order: 5,
+  },
+  {
+    name: "Fidan Məmmədli",
+    position: "Əməkdaş",
+    logo: "/Fidan Məmmədli.jpg",
+    order: 6,
+  },
+  {
+    name: "Günay Məmmədova",
+    position: "Əməkdaş",
+    logo: "/Günay Məmmədova.jpg",
+    order: 7,
+  },
+]
 
-  const handleChange = (
-    field: keyof FormData,
-    value: string
-  ) => {
-    setFormData((previous) => ({
-      ...previous,
-      [field]: value,
+const sortPartners = (items: Partner[]): Partner[] =>
+  items
+    .map((partner, index) => ({
+      partner: {
+        ...partner,
+        order:
+          Number.isInteger(Number(partner.order)) &&
+          Number(partner.order) > 0
+            ? Number(partner.order)
+            : index + 1,
+      },
+      index,
     }))
+    .sort(
+      (a, b) =>
+        (a.partner.order ?? 0) - (b.partner.order ?? 0) ||
+        a.index - b.index
+    )
+    .map(({ partner }) => partner)
+
+export default function Partners() {
+  const [partnerList, setPartnerList] = useState<Partner[]>(partners)
+  const [dragging, setDragging] = useState(false)
+  const [isVisible, setIsVisible] = useState(false)
+
+  const sectionRef = useRef<HTMLElement>(null)
+  const sliderRef = useRef<HTMLDivElement>(null)
+
+  const isDragging = useRef(false)
+  const hasMoved = useRef(false)
+  const startX = useRef(0)
+  const startScrollLeft = useRef(0)
+  const activePointerId = useRef<number | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    const loadPartners = async () => {
+      try {
+        const response = await fetch(`/api/partners?t=${Date.now()}`, {
+          cache: "no-store",
+          signal: controller.signal,
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        })
+
+        if (!response.ok) return
+
+        const data: unknown = await response.json()
+        if (!Array.isArray(data) || data.length === 0) return
+
+        const validPartners = data.filter(
+          (item): item is Partner =>
+            typeof item === "object" &&
+            item !== null &&
+            "name" in item &&
+            "position" in item &&
+            "logo" in item &&
+            typeof item.name === "string" &&
+            typeof item.position === "string" &&
+            typeof item.logo === "string"
+        )
+
+        if (validPartners.length > 0) {
+          setPartnerList(sortPartners(validPartners))
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Əməkdaşları yükləmək mümkün olmadı.", error)
+        }
+      }
+    }
+
+    void loadPartners()
+
+    return () => controller.abort()
+  }, [])
+
+  useEffect(() => {
+    const section = sectionRef.current
+    if (!section) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      {
+        threshold: 0.12,
+        rootMargin: "0px 0px -80px 0px",
+      }
+    )
+
+    observer.observe(section)
+
+    return () => observer.disconnect()
+  }, [])
+
+  const getScrollAmount = () => {
+    const slider = sliderRef.current
+    if (!slider) return 398
+
+    const card = slider.querySelector(
+      "[data-partner-card]"
+    ) as HTMLElement | null
+
+    if (!card) return 398
+
+    const styles = window.getComputedStyle(slider)
+    const gap = parseFloat(styles.columnGap || styles.gap || "0") || 0
+
+    return card.offsetWidth + gap
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  const nextSlide = () => {
+    const slider = sliderRef.current
+    if (!slider) return
 
-    if (isSubmitting) return
+    const maxScroll = slider.scrollWidth - slider.clientWidth
 
-    setIsSubmitting(true)
+    slider.scrollTo({
+      left: Math.min(slider.scrollLeft + getScrollAmount(), maxScroll),
+      behavior: "smooth",
+    })
+  }
+
+  const previousSlide = () => {
+    const slider = sliderRef.current
+    if (!slider) return
+
+    slider.scrollTo({
+      left: Math.max(0, slider.scrollLeft - getScrollAmount()),
+      behavior: "smooth",
+    })
+  }
+
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    const slider = sliderRef.current
+    if (!slider) return
+
+    const target = event.target as HTMLElement
+
+    if (target.closest("button") || target.closest("a")) return
+
+    if (event.pointerType === "mouse" && event.button !== 0) return
+
+    isDragging.current = true
+    hasMoved.current = false
+    activePointerId.current = event.pointerId
+    startX.current = event.clientX
+    startScrollLeft.current = slider.scrollLeft
+
+    setDragging(true)
+
+    try {
+      slider.setPointerCapture(event.pointerId)
+    } catch {}
+  }
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    const slider = sliderRef.current
+
+    if (
+      !slider ||
+      !isDragging.current ||
+      activePointerId.current !== event.pointerId
+    ) {
+      return
+    }
+
+    const distance = event.clientX - startX.current
+
+    if (Math.abs(distance) > 5) {
+      hasMoved.current = true
+    }
+
+    if (!hasMoved.current) return
+
+    slider.scrollLeft = startScrollLeft.current - distance
+
+    if (event.pointerType === "mouse") {
+      event.preventDefault()
+    }
+  }
+
+  const stopDragging = (event?: PointerEvent<HTMLDivElement>) => {
+    const slider = sliderRef.current
+
+    if (!isDragging.current) return
+
+    if (
+      slider &&
+      event &&
+      activePointerId.current === event.pointerId
+    ) {
+      try {
+        if (slider.hasPointerCapture(event.pointerId)) {
+          slider.releasePointerCapture(event.pointerId)
+        }
+      } catch {}
+    }
+
+    isDragging.current = false
+    activePointerId.current = null
+    setDragging(false)
 
     window.setTimeout(() => {
-      setIsSubmitting(false)
-      setIsSuccess(true)
-    }, 750)
+      hasMoved.current = false
+    }, 0)
   }
 
-  const resetForm = () => {
-    setFormData(initialFormData)
-    setIsSuccess(false)
+  const handlePointerCancel = (event: PointerEvent<HTMLDivElement>) => {
+    const slider = sliderRef.current
+
+    if (
+      slider &&
+      activePointerId.current === event.pointerId
+    ) {
+      try {
+        if (slider.hasPointerCapture(event.pointerId)) {
+          slider.releasePointerCapture(event.pointerId)
+        }
+      } catch {}
+    }
+
+    isDragging.current = false
+    activePointerId.current = null
+    hasMoved.current = false
+    setDragging(false)
+  }
+
+  const handleLostPointerCapture = () => {
+    if (!isDragging.current) return
+
+    isDragging.current = false
+    activePointerId.current = null
+    hasMoved.current = false
+    setDragging(false)
   }
 
   return (
-    <section className="relative isolate overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_20px_70px_-30px_rgba(15,23,42,0.22)]">
-
-      <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-indigo-100/60 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-20 h-64 w-64 rounded-full bg-violet-100/50 blur-3xl" />
-
-      <div className="relative">
-
-        {isSuccess ? (
-          <div className="flex min-h-[510px] flex-col items-center justify-center px-6 py-12 text-center sm:px-10">
-
-            <div className="relative mb-7">
-              <div className="absolute inset-0 animate-ping rounded-full bg-emerald-100 opacity-50" />
-              <div className="relative flex h-20 w-20 items-center justify-center rounded-[26px] bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/20">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="h-10 w-10"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="m5 12 4 4L19 6" />
-                </svg>
-              </div>
+    <section ref={sectionRef} className="relative overflow-hidden">
+      <div className="mx-auto max-w-full px-6 py-24 sm:px-8 lg:px-10">
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-end">
+          <div
+            className={`max-w-2xl transform transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-12 opacity-0"
+            }`}
+          >
+            <div className="mb-6 flex items-center gap-3">
+              <span
+                className={`h-px bg-black transition-all duration-700 ${
+                  isVisible ? "w-8 opacity-100" : "w-0 opacity-0"
+                }`}
+              />
+              <span className="text-sm font-medium tracking-wide text-gray-500">
+                Əməkdaşlarımız
+              </span>
             </div>
 
-            <span className="mb-3 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-700">
-              Müraciət tamamlandı
-            </span>
+            <h2 className="text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-gray-950 sm:text-5xl lg:text-6xl">
+              Birlikdə
+              <br />
+              daha güclüyük.
+            </h2>
+          </div>
 
-            <h3 className="max-w-md text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-              Təşəkkür edirik!
-            </h3>
+          <div
+            className={`max-w-xl transform transition-all delay-150 duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] lg:ml-auto ${
+              isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-12 opacity-0"
+            }`}
+          >
+            <p className="text-base leading-7 text-gray-500 sm:text-lg sm:leading-8">
+              Layihəmizin inkişafında bizimlə birlikdə çalışan
+              dəyərli və peşəkar əməkdaşlarımız.
+            </p>
+          </div>
+        </div>
 
-            <p className="mt-3 max-w-sm text-sm leading-7 text-slate-500">
-              Müraciətiniz qeydə alındı.{" "}
-              <span className="font-bold text-slate-800">
-                {partnerName}
-              </span>{" "}
-              ilə görüş və ya konsultasiya üçün sizinlə əlaqə saxlanılacaq.
+        <div
+          className={`relative mt-14 flex flex-col transform transition-all duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            isVisible
+              ? "translate-y-0 opacity-100"
+              : "translate-y-16 opacity-0"
+          }`}
+        >
+          <div
+            ref={sliderRef}
+            className={`flex gap-7 overflow-x-auto overflow-y-hidden py-6 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+              dragging ? "cursor-grabbing" : "cursor-grab"
+            }`}
+            style={{
+              touchAction: "pan-y",
+              WebkitOverflowScrolling: "touch",
+              userSelect: "none",
+              scrollbarWidth: "none",
+            }}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={stopDragging}
+            onPointerCancel={handlePointerCancel}
+            onLostPointerCapture={handleLostPointerCapture}
+          >
+            {partnerList.map((partner, index) => {
+              const slug = partner.slug || partnerSlugMap[partner.name]
+
+              return (
+                <article
+                  key={partner.id || partner.slug || partner.name}
+                  data-partner-card
+                  className={`group relative w-[78vw] max-w-[300px] shrink-0 overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm transform transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-2 hover:shadow-xl ${
+                    isVisible
+                      ? "translate-y-0 opacity-100"
+                      : "translate-y-20 opacity-0"
+                  }`}
+                  style={{
+                    transitionDelay: isVisible
+                      ? `${250 + index * 100}ms`
+                      : "0ms",
+                  }}
+                >
+                  <div className="relative h-[300px] min-[420px]:h-[340px] overflow-hidden bg-gray-100 sm:h-[430px] lg:h-[450px]">
+                    <Image
+                      src={partner.logo}
+                      alt={partner.name}
+                      fill
+                      draggable={false}
+                      sizes="(max-width: 639px) 300px, (max-width: 1023px) 350px, 380px"
+                      className="pointer-events-none object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+
+                    <div className="absolute left-6 top-6 flex h-11 w-11 items-center justify-center rounded-full border border-white/50 bg-black/20 text-xs font-medium text-white backdrop-blur-md">
+                      {String(index + 1).padStart(2, "0")}
+                    </div>
+
+                    <div className="absolute right-7 top-7 h-2 w-2 rounded-full bg-white shadow" />
+                  </div>
+
+                  <div className="px-5 pb-5 pt-5 sm:px-7 sm:pb-7 sm:pt-6">
+                    <div className="mb-3 flex items-center gap-3 sm:mb-5">
+                      <span className="h-px w-8 bg-black" />
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-400">
+                        Əməkdaş
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-semibold tracking-[-0.025em] text-gray-950 sm:text-2xl">
+                      {partner.name}
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-gray-500">
+                      {partner.position}
+                    </p>
+
+                    <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4 sm:mt-6 sm:pt-5">
+                      <span className="text-xs font-medium tracking-wide text-gray-400">
+                        Uğur Şəxsi İnkişaf Mərkəzi
+                      </span>
+
+                      <Link
+                        href={slug ? `/emekdaslar/${slug}` : "/emekdaslar"}
+                        onClick={(event) => {
+                          if (hasMoved.current) event.preventDefault()
+                        }}
+                        className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-sm text-gray-500 transition-all duration-300 group-hover:border-black group-hover:bg-black group-hover:text-white"
+                      >
+                        ↗
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+
+          <div
+            className={`mt-6 flex items-center justify-between transform transition-all delay-700 duration-700 max-sm:order-first max-sm:mb-1 max-sm:mt-0 ${
+              isVisible
+                ? "translate-y-0 opacity-100"
+                : "translate-y-8 opacity-0"
+            }`}
+          >
+            <p className="hidden text-xs font-medium tracking-wide text-gray-400 sm:block">
+              Kartları sürüşdürərək bax
             </p>
 
-            <button
-              type="button"
-              onClick={resetForm}
-              className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-700 hover:shadow-indigo-700/20 active:translate-y-0"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                className="h-4 w-4"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
-                <path d="M3 3v5h5" />
-              </svg>
-              Yeni müraciət
-            </button>
-          </div>
-        ) : (
-          <>
-            <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-6 pb-9 pt-8 sm:px-9 sm:pt-10">
-
-              <div className="pointer-events-none absolute -right-8 -top-16 h-56 w-56 rounded-full border border-white/[0.07]" />
-              <div className="pointer-events-none absolute -right-1 -top-9 h-44 w-44 rounded-full border border-white/[0.07]" />
-              <div className="pointer-events-none absolute bottom-0 right-20 h-32 w-32 rounded-full bg-indigo-500/20 blur-3xl" />
-
-              <div className="relative">
-                <div className="mb-6 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-3.5 py-2 backdrop-blur-md">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
-                    <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-200">
-                      Fərdi konsultasiya
-                    </span>
-                  </div>
-
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08] text-indigo-200 backdrop-blur-md">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="h-6 w-6"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="10" cy="7" r="4" />
-                      <path d="M20 8v6m-3-3h6" />
-                    </svg>
-                  </div>
-                </div>
-
-                <h3 className="max-w-md text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-[30px]">
-                  Doğru addım,
-                  <span className="block bg-gradient-to-r from-indigo-300 to-violet-300 bg-clip-text text-transparent">
-                    fərdi yanaşma.
-                  </span>
-                </h3>
-
-                <p className="mt-3 max-w-md text-sm leading-6 text-slate-300">
-                  Mütəxəssislə birbaşa əlaqə yaradın. Müraciətinizi
-                  göndərin, sizə uyğun həll yolunu birlikdə müəyyənləşdirək.
-                </p>
-
-                <div className="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-sm font-bold text-white">
-                    {partnerName.trim().charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
-                      Müraciət etdiyiniz mütəxəssis
-                    </p>
-                    <p className="mt-0.5 truncate text-sm font-bold text-white">
-                      {partnerName}
-                    </p>
-                  </div>
-                  <div className="ml-auto flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-2.5 py-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    <span className="text-[10px] font-semibold text-emerald-300">
-                      Əlaqə
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="relative space-y-5 px-6 py-7 sm:px-9 sm:py-8">
-
-              <div className="mb-1">
-                <h4 className="text-base font-extrabold text-slate-900">
-                  Müraciət məlumatları
-                </h4>
-                <p className="mt-1 text-xs text-slate-500">
-                  Zəhmət olmasa, aşağıdakı məlumatları daxil edin.
-                </p>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-
-                <div className="sm:col-span-2">
-                  <label
-                    htmlFor="pName"
-                    className="mb-2 block text-xs font-bold text-slate-700"
-                  >
-                    Ad və soyad <span className="text-rose-500">*</span>
-                  </label>
-
-                  <div className="group relative">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-600"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <circle cx="12" cy="8" r="4" />
-                      <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
-                    </svg>
-
-                    <input
-                      id="pName"
-                      name="name"
-                      type="text"
-                      autoComplete="name"
-                      required
-                      minLength={3}
-                      maxLength={100}
-                      placeholder="Məsələn, Leyla Əliyeva"
-                      value={formData.name}
-                      onChange={(event) => handleChange("name", event.target.value)}
-                      className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition-all duration-200 placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
-                    />
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label
-                    htmlFor="pPhone"
-                    className="mb-2 block text-xs font-bold text-slate-700"
-                  >
-                    Əlaqə nömrəsi <span className="text-rose-500">*</span>
-                  </label>
-
-                  <div className="group relative">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-600"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.35 1.9.69 2.8a2 2 0 0 1-.45 2.11L8.08 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.84.57 2.8.69a2 2 0 0 1 1.74 2.04z" />
-                    </svg>
-
-                    <input
-                      id="pPhone"
-                      name="phone"
-                      type="tel"
-                      autoComplete="tel"
-                      required
-                      maxLength={25}
-                      placeholder="+994 50 000 00 00"
-                      value={formData.phone}
-                      onChange={(event) => handleChange("phone", event.target.value)}
-                      className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition-all duration-200 placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
-                    />
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label
-                    htmlFor="pTopic"
-                    className="mb-2 block text-xs font-bold text-slate-700"
-                  >
-                    Müraciət mövzusu
-                    <span className="ml-1 font-normal text-slate-400">
-                      (İstəyə bağlı)
-                    </span>
-                  </label>
-
-                  <div className="group relative">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-600"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M8 6h13M8 12h13M8 18h13" />
-                      <path d="M3 6h.01M3 12h.01M3 18h.01" />
-                    </svg>
-
-                    <input
-                      id="pTopic"
-                      name="topic"
-                      type="text"
-                      maxLength={150}
-                      placeholder="Məsələn, fərdi konsultasiya"
-                      value={formData.topic}
-                      onChange={(event) => handleChange("topic", event.target.value)}
-                      className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition-all duration-200 placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
-                    />
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <label
-                      htmlFor="pMsg"
-                      className="text-xs font-bold text-slate-700"
-                    >
-                      Əlavə qeydiniz
-                    </label>
-                    <span className="text-[10px] text-slate-400">
-                      {formData.message.length}/500
-                    </span>
-                  </div>
-
-                  <textarea
-                    id="pMsg"
-                    name="message"
-                    rows={4}
-                    maxLength={500}
-                    placeholder="Maraqlandığınız məsələni qısaca qeyd edə bilərsiniz..."
-                    value={formData.message}
-                    onChange={(event) => handleChange("message", event.target.value)}
-                    className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3.5 text-sm font-medium leading-6 text-slate-900 outline-none transition-all duration-200 placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
-                  />
-                </div>
-              </div>
-
+            <div className="ml-auto flex items-center gap-2">
               <button
-                type="submit"
-                disabled={isSubmitting}
-                className="group relative flex min-h-[56px] w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-slate-950 via-indigo-950 to-indigo-900 px-6 py-4 text-sm font-bold text-white shadow-[0_10px_25px_-10px_rgba(49,46,129,0.55)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_-10px_rgba(79,70,229,0.45)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70"
+                type="button"
+                aria-label="Əvvəlki əməkdaş"
+                onClick={previousSlide}
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-lg text-gray-950 shadow-sm transition-all duration-300 hover:-translate-x-1 hover:border-black hover:bg-black hover:text-white active:scale-95"
               >
-                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-
-                {isSubmitting ? (
-                  <>
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="relative h-5 w-5 animate-spin"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="9"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        className="opacity-25"
-                      />
-                      <path
-                        d="M21 12a9 9 0 0 0-9-9"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <span className="relative">Göndərilir...</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="relative">Görüş üçün müraciət et</span>
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="relative h-5 w-5 transition-transform duration-300 group-hover:translate-x-1"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M5 12h14" />
-                      <path d="m12 5 7 7-7 7" />
-                    </svg>
-                  </>
-                )}
+                ←
               </button>
 
-              <div className="flex items-center justify-center gap-2 text-center">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="h-4 w-4 shrink-0 text-slate-400"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-                <p className="text-[10px] leading-5 text-slate-400 sm:text-xs">
-                  Məlumatlarınız yalnız müraciətinizlə əlaqədar istifadə olunur.
-                </p>
-              </div>
-            </form>
-          </>
-        )}
+              <button
+                type="button"
+                aria-label="Növbəti əməkdaş"
+                onClick={nextSlide}
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-lg text-white shadow-sm transition-all duration-300 hover:translate-x-1 hover:bg-gray-800 active:scale-95"
+              >
+                →
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <div className="absolute bottom-0 left-0 h-px w-full bg-gray-100" />
     </section>
   )
 }
