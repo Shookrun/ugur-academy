@@ -1,382 +1,413 @@
+
 "use client"
 
-import { useId, useState, type ChangeEvent, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 
 interface Props {
   partnerName: string
 }
 
-interface FormState {
+interface FormData {
   name: string
   phone: string
   topic: string
   message: string
 }
 
-const EMPTY_FORM: FormState = { name: "", phone: "", topic: "", message: "" }
-
-const TOPIC_SUGGESTIONS: readonly string[] = [
-  "Fərdi konsultasiya",
-  "Məşğələyə yazılmaq",
-  "Qrup dərsi",
-  "Qiymət haqqında",
-]
-
-const MESSAGE_LIMIT = 280
-
-/** "+994 50 123 45 67" formatı. Yalnız yerli hissənin 9 rəqəmini saxlayır. */
-function formatPhone(raw: string): string {
-  let digits = raw.replace(/\D/g, "")
-
-  if (digits.startsWith("994")) {
-    digits = digits.slice(3)
-  } else if (digits.startsWith("0")) {
-    digits = digits.slice(1)
-  }
-
-  digits = digits.slice(0, 9)
-  if (digits.length === 0) return ""
-
-  const groups = [
-    digits.slice(0, 2),
-    digits.slice(2, 5),
-    digits.slice(5, 7),
-    digits.slice(7, 9),
-  ].filter((part) => part.length > 0)
-
-  return `+994 ${groups.join(" ")}`
+const initialFormData: FormData = {
+  name: "",
+  phone: "",
+  topic: "",
+  message: "",
 }
-
-function isPhoneComplete(phone: string): boolean {
-  return phone.replace(/\D/g, "").length === 12
-}
-
-function getInitials(fullName: string): string {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean)
-  if (parts.length === 0) return "?"
-  const first = parts[0].charAt(0)
-  const second = parts.length > 1 ? parts[parts.length - 1].charAt(0) : ""
-  return (first + second).toLocaleUpperCase("az")
-}
-
-const fieldClass =
-  "w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-[inset_0_1px_0_rgba(15,23,42,0.03)] transition placeholder:text-slate-400 hover:border-slate-300 focus:border-amber-500 focus:outline-none focus:ring-4 focus:ring-amber-100"
-
-const labelClass = "mb-1.5 block text-sm font-medium text-slate-700"
 
 export default function PartnerContactForm({ partnerName }: Props) {
-  const uid = useId()
-  const ids = {
-    name: `${uid}-name`,
-    phone: `${uid}-phone`,
-    topic: `${uid}-topic`,
-    message: `${uid}-message`,
-    phoneError: `${uid}-phone-error`,
-  }
+  const [formData, setFormData] = useState<FormData>(initialFormData)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
 
-  const [formData, setFormData] = useState<FormState>(EMPTY_FORM)
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
-  const [isSuccess, setIsSuccess] = useState<boolean>(false)
-  const [phoneError, setPhoneError] = useState<string>("")
-
-  const updateField =
-    (field: keyof FormState) =>
-    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
-      let value = e.target.value
-
-      if (field === "phone") {
-        value = formatPhone(value)
-        if (phoneError) setPhoneError("")
-      }
-      if (field === "message") {
-        value = value.slice(0, MESSAGE_LIMIT)
-      }
-
-      setFormData((prev) => ({ ...prev, [field]: value }))
-    }
-
-  const pickTopic = (topic: string): void => {
-    setFormData((prev) => ({
-      ...prev,
-      topic: prev.topic === topic ? "" : topic,
+  const handleChange = (
+    field: keyof FormData,
+    value: string
+  ) => {
+    setFormData((previous) => ({
+      ...previous,
+      [field]: value,
     }))
   }
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault()
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
 
-    if (!isPhoneComplete(formData.phone)) {
-      setPhoneError("Nömrəni tam daxil edin. Məsələn: +994 50 123 45 67")
-      return
-    }
+    if (isSubmitting) return
 
     setIsSubmitting(true)
-    try {
-      // Burada real API sorğusunu göndərə bilərsiniz:
-      // await fetch("/api/partner-contact", { method: "POST", body: JSON.stringify({ partnerName, ...formData }) })
-      await new Promise<void>((resolve) => setTimeout(resolve, 750))
-      setIsSuccess(true)
-    } finally {
+
+    window.setTimeout(() => {
       setIsSubmitting(false)
-    }
+      setIsSuccess(true)
+    }, 750)
   }
 
-  const resetForm = (): void => {
+  const resetForm = () => {
+    setFormData(initialFormData)
     setIsSuccess(false)
-    setPhoneError("")
-    setFormData(EMPTY_FORM)
   }
-
-  const initials = getInitials(partnerName)
 
   return (
-    <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_50px_-24px_rgba(15,23,42,0.35)]">
-      {/* Başlıq zolağı */}
-      <div className="relative bg-slate-900 px-6 pb-7 pt-6 text-white sm:px-8">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full border border-white/10"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-2 -top-2 h-20 w-20 rounded-full border border-white/10"
-        />
+    <section className="relative isolate overflow-hidden rounded-[28px] border border-slate-200/80 bg-white shadow-[0_20px_70px_-30px_rgba(15,23,42,0.22)]">
 
-        <div className="relative flex items-center gap-4">
-          <div
-            aria-hidden="true"
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-lg font-bold text-slate-900 -rotate-3"
-          >
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm text-slate-300">Əlaqə saxlayırsınız</p>
-            <p className="truncate text-lg font-semibold leading-tight sm:text-xl">
-              {partnerName}
-            </p>
-          </div>
-        </div>
+      <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-indigo-100/60 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-20 h-64 w-64 rounded-full bg-violet-100/50 blur-3xl" />
 
-        <div className="relative mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs text-slate-100">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 motion-safe:animate-ping" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-          </span>
-          Adətən 1 iş günü ərzində cavab verir
-        </div>
-      </div>
+      <div className="relative">
 
-      {/* Məzmun */}
-      <div className="p-6 sm:p-8">
         {isSuccess ? (
-          <div role="status" aria-live="polite" className="text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60">
-              <svg
-                viewBox="0 0 24 24"
-                className="h-6 w-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M5 12.5l4.5 4.5L19 7.5" />
-              </svg>
+          <div className="flex min-h-[510px] flex-col items-center justify-center px-6 py-12 text-center sm:px-10">
+
+            <div className="relative mb-7">
+              <div className="absolute inset-0 animate-ping rounded-full bg-emerald-100 opacity-50" />
+              <div className="relative flex h-20 w-20 items-center justify-center rounded-[26px] bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/20">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-10 w-10"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="m5 12 4 4L19 6" />
+                </svg>
+              </div>
             </div>
 
-            <h3 className="text-xl font-bold tracking-tight text-slate-900">
-              Müraciətiniz qeydə alındı
-            </h3>
-            <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-slate-500">
-              <span className="font-semibold text-slate-700">{partnerName}</span>{" "}
-              görüş və ya konsultasiya üçün sizinlə əlaqə saxlayacaq.
-            </p>
+            <span className="mb-3 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-700">
+              Müraciət tamamlandı
+            </span>
 
-            <dl className="mx-auto mt-6 max-w-sm space-y-2.5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-left text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Ad</dt>
-                <dd className="truncate font-medium text-slate-900">{formData.name}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Nömrə</dt>
-                <dd className="font-medium text-slate-900">{formData.phone}</dd>
-              </div>
-              {formData.topic.trim() !== "" && (
-                <div className="flex justify-between gap-4">
-                  <dt className="text-slate-500">Mövzu</dt>
-                  <dd className="truncate font-medium text-slate-900">{formData.topic}</dd>
-                </div>
-              )}
-            </dl>
+            <h3 className="max-w-md text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              Təşəkkür edirik!
+            </h3>
+
+            <p className="mt-3 max-w-sm text-sm leading-7 text-slate-500">
+              Müraciətiniz qeydə alındı.{" "}
+              <span className="font-bold text-slate-800">
+                {partnerName}
+              </span>{" "}
+              ilə görüş və ya konsultasiya üçün sizinlə əlaqə saxlanılacaq.
+            </p>
 
             <button
               type="button"
               onClick={resetForm}
-              className="mt-6 inline-flex cursor-pointer items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100"
+              className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-slate-900/15 transition-all duration-300 hover:-translate-y-1 hover:bg-indigo-700 hover:shadow-indigo-700/20 active:translate-y-0"
             >
-              Yeni müraciət göndər
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-4 w-4"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+              Yeni müraciət
             </button>
           </div>
         ) : (
           <>
-            <div className="mb-6">
-              <h3 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
-                Görüş təyin edək
-              </h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-slate-500">
-                Məşğələ, konsultasiya və ya suallarınız üçün qısa forma doldurun. Qalanını biz həll edərik.
-              </p>
+            <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 px-6 pb-9 pt-8 sm:px-9 sm:pt-10">
+
+              <div className="pointer-events-none absolute -right-8 -top-16 h-56 w-56 rounded-full border border-white/[0.07]" />
+              <div className="pointer-events-none absolute -right-1 -top-9 h-44 w-44 rounded-full border border-white/[0.07]" />
+              <div className="pointer-events-none absolute bottom-0 right-20 h-32 w-32 rounded-full bg-indigo-500/20 blur-3xl" />
+
+              <div className="relative">
+                <div className="mb-6 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-3.5 py-2 backdrop-blur-md">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-200">
+                      Fərdi konsultasiya
+                    </span>
+                  </div>
+
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.08] text-indigo-200 backdrop-blur-md">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="h-6 w-6"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="10" cy="7" r="4" />
+                      <path d="M20 8v6m-3-3h6" />
+                    </svg>
+                  </div>
+                </div>
+
+                <h3 className="max-w-md text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-[30px]">
+                  Doğru addım,
+                  <span className="block bg-gradient-to-r from-indigo-300 to-violet-300 bg-clip-text text-transparent">
+                    fərdi yanaşma.
+                  </span>
+                </h3>
+
+                <p className="mt-3 max-w-md text-sm leading-6 text-slate-300">
+                  Mütəxəssislə birbaşa əlaqə yaradın. Müraciətinizi
+                  göndərin, sizə uyğun həll yolunu birlikdə müəyyənləşdirək.
+                </p>
+
+                <div className="mt-6 flex items-center gap-3 border-t border-white/10 pt-5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-sm font-bold text-white">
+                    {partnerName.trim().charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                      Müraciət etdiyiniz mütəxəssis
+                    </p>
+                    <p className="mt-0.5 truncate text-sm font-bold text-white">
+                      {partnerName}
+                    </p>
+                  </div>
+                  <div className="ml-auto flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-2.5 py-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    <span className="text-[10px] font-semibold text-emerald-300">
+                      Əlaqə
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-              <div>
-                <label htmlFor={ids.name} className={labelClass}>
-                  Adınız və soyadınız <span className="text-amber-600">*</span>
-                </label>
-                <input
-                  id={ids.name}
-                  type="text"
-                  required
-                  autoComplete="name"
-                  placeholder="Məs: Leyla Əliyeva"
-                  value={formData.name}
-                  onChange={updateField("name")}
-                  className={fieldClass}
-                />
+            <form onSubmit={handleSubmit} className="relative space-y-5 px-6 py-7 sm:px-9 sm:py-8">
+
+              <div className="mb-1">
+                <h4 className="text-base font-extrabold text-slate-900">
+                  Müraciət məlumatları
+                </h4>
+                <p className="mt-1 text-xs text-slate-500">
+                  Zəhmət olmasa, aşağıdakı məlumatları daxil edin.
+                </p>
               </div>
 
-              <div>
-                <label htmlFor={ids.phone} className={labelClass}>
-                  Əlaqə nömrəniz <span className="text-amber-600">*</span>
-                </label>
-                <input
-                  id={ids.phone}
-                  type="tel"
-                  inputMode="tel"
-                  required
-                  autoComplete="tel"
-                  placeholder="+994 50 123 45 67"
-                  value={formData.phone}
-                  onChange={updateField("phone")}
-                  aria-invalid={phoneError !== ""}
-                  aria-describedby={phoneError !== "" ? ids.phoneError : undefined}
-                  className={`${fieldClass} ${
-                    phoneError !== ""
-                      ? "border-rose-400 focus:border-rose-500 focus:ring-rose-100"
-                      : ""
-                  }`}
-                />
-                {phoneError !== "" && (
-                  <p id={ids.phoneError} role="alert" className="mt-1.5 text-xs text-rose-600">
-                    {phoneError}
-                  </p>
-                )}
-              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
 
-              <div>
-                <label htmlFor={ids.topic} className={labelClass}>
-                  Müraciət mövzusu
-                </label>
-                <div className="mb-2.5 flex flex-wrap gap-2">
-                  {TOPIC_SUGGESTIONS.map((topic) => {
-                    const active = formData.topic === topic
-                    return (
-                      <button
-                        key={topic}
-                        type="button"
-                        onClick={() => pickTopic(topic)}
-                        aria-pressed={active}
-                        className={`cursor-pointer rounded-full border px-3.5 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-100 ${
-                          active
-                            ? "border-slate-900 bg-slate-900 text-white"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-900"
-                        }`}
-                      >
-                        {topic}
-                      </button>
-                    )
-                  })}
-                </div>
-                <input
-                  id={ids.topic}
-                  type="text"
-                  placeholder="Və ya öz mövzunuzu yazın"
-                  value={formData.topic}
-                  onChange={updateField("topic")}
-                  className={fieldClass}
-                />
-              </div>
-
-              <div>
-                <div className="mb-1.5 flex items-baseline justify-between">
-                  <label htmlFor={ids.message} className="text-sm font-medium text-slate-700">
-                    Qısa qeydiniz
-                  </label>
-                  <span
-                    className={`text-xs tabular-nums ${
-                      formData.message.length >= MESSAGE_LIMIT - 20
-                        ? "text-amber-600"
-                        : "text-slate-400"
-                    }`}
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="pName"
+                    className="mb-2 block text-xs font-bold text-slate-700"
                   >
-                    {formData.message.length}/{MESSAGE_LIMIT}
-                  </span>
+                    Ad və soyad <span className="text-rose-500">*</span>
+                  </label>
+
+                  <div className="group relative">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-600"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <circle cx="12" cy="8" r="4" />
+                      <path d="M5 21v-2a7 7 0 0 1 14 0v2" />
+                    </svg>
+
+                    <input
+                      id="pName"
+                      name="name"
+                      type="text"
+                      autoComplete="name"
+                      required
+                      minLength={3}
+                      maxLength={100}
+                      placeholder="Məsələn, Leyla Əliyeva"
+                      value={formData.name}
+                      onChange={(event) => handleChange("name", event.target.value)}
+                      className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition-all duration-200 placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                    />
+                  </div>
                 </div>
-                <textarea
-                  id={ids.message}
-                  rows={3}
-                  placeholder="Öyrənmək istədiyiniz məsələni qısaca yazın..."
-                  value={formData.message}
-                  onChange={updateField("message")}
-                  className={`${fieldClass} resize-none`}
-                />
+
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="pPhone"
+                    className="mb-2 block text-xs font-bold text-slate-700"
+                  >
+                    Əlaqə nömrəsi <span className="text-rose-500">*</span>
+                  </label>
+
+                  <div className="group relative">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-600"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.96.35 1.9.69 2.8a2 2 0 0 1-.45 2.11L8.08 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.84.57 2.8.69a2 2 0 0 1 1.74 2.04z" />
+                    </svg>
+
+                    <input
+                      id="pPhone"
+                      name="phone"
+                      type="tel"
+                      autoComplete="tel"
+                      required
+                      maxLength={25}
+                      placeholder="+994 50 000 00 00"
+                      value={formData.phone}
+                      onChange={(event) => handleChange("phone", event.target.value)}
+                      className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition-all duration-200 placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor="pTopic"
+                    className="mb-2 block text-xs font-bold text-slate-700"
+                  >
+                    Müraciət mövzusu
+                    <span className="ml-1 font-normal text-slate-400">
+                      (İstəyə bağlı)
+                    </span>
+                  </label>
+
+                  <div className="group relative">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-indigo-600"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M8 6h13M8 12h13M8 18h13" />
+                      <path d="M3 6h.01M3 12h.01M3 18h.01" />
+                    </svg>
+
+                    <input
+                      id="pTopic"
+                      name="topic"
+                      type="text"
+                      maxLength={150}
+                      placeholder="Məsələn, fərdi konsultasiya"
+                      value={formData.topic}
+                      onChange={(event) => handleChange("topic", event.target.value)}
+                      className="h-[52px] w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-12 pr-4 text-sm font-medium text-slate-900 outline-none transition-all duration-200 placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <label
+                      htmlFor="pMsg"
+                      className="text-xs font-bold text-slate-700"
+                    >
+                      Əlavə qeydiniz
+                    </label>
+                    <span className="text-[10px] text-slate-400">
+                      {formData.message.length}/500
+                    </span>
+                  </div>
+
+                  <textarea
+                    id="pMsg"
+                    name="message"
+                    rows={4}
+                    maxLength={500}
+                    placeholder="Maraqlandığınız məsələni qısaca qeyd edə bilərsiniz..."
+                    value={formData.message}
+                    onChange={(event) => handleChange("message", event.target.value)}
+                    className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3.5 text-sm font-medium leading-6 text-slate-900 outline-none transition-all duration-200 placeholder:font-normal placeholder:text-slate-400 hover:border-slate-300 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="group mt-2 flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl bg-slate-900 px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
+                className="group relative flex min-h-[56px] w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-slate-950 via-indigo-950 to-indigo-900 px-6 py-4 text-sm font-bold text-white shadow-[0_10px_25px_-10px_rgba(49,46,129,0.55)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_-10px_rgba(79,70,229,0.45)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70"
               >
+                <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
                 {isSubmitting ? (
                   <>
                     <svg
                       viewBox="0 0 24 24"
-                      className="h-4 w-4 motion-safe:animate-spin"
                       fill="none"
-                      aria-hidden="true"
+                      className="relative h-5 w-5 animate-spin"
                     >
-                      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity={0.3} strokeWidth={3} />
-                      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth={3} strokeLinecap="round" />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="9"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        className="opacity-25"
+                      />
+                      <path
+                        d="M21 12a9 9 0 0 0-9-9"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeLinecap="round"
+                      />
                     </svg>
-                    <span>Göndərilir...</span>
+                    <span className="relative">Göndərilir...</span>
                   </>
                 ) : (
                   <>
-                    <span>Görüş təyin et</span>
+                    <span className="relative">Görüş üçün müraciət et</span>
                     <svg
                       viewBox="0 0 24 24"
-                      className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                       fill="none"
+                      className="relative h-5 w-5 transition-transform duration-300 group-hover:translate-x-1"
                       stroke="currentColor"
-                      strokeWidth={2}
+                      strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      aria-hidden="true"
                     >
-                      <path d="M5 12l14-7-5 14-2.5-5.5L5 12z" />
+                      <path d="M5 12h14" />
+                      <path d="m12 5 7 7-7 7" />
                     </svg>
                   </>
                 )}
               </button>
 
-              <p className="text-center text-xs text-slate-400">
-                Məlumatlarınız yalnız sizinlə əlaqə saxlamaq üçün istifadə olunur.
-              </p>
+              <div className="flex items-center justify-center gap-2 text-center">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="h-4 w-4 shrink-0 text-slate-400"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <p className="text-[10px] leading-5 text-slate-400 sm:text-xs">
+                  Məlumatlarınız yalnız müraciətinizlə əlaqədar istifadə olunur.
+                </p>
+              </div>
             </form>
           </>
         )}
       </div>
-    </div>
+    </section>
   )
 }
