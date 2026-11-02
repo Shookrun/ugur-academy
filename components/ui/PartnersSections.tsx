@@ -360,7 +360,7 @@ export default function Partners() {
         >
           <div
             ref={sliderRef}
-            className={`flex gap-7 overflow-x-auto overflow-y-hidden pb-16 pt-6 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+            className={`flex gap-7 overflow-x-auto overflow-y-hidden py-6 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
               dragging ? "cursor-grabbing" : "cursor-grab"
             }`}
             style={{
@@ -382,16 +382,14 @@ export default function Partners() {
                 <article
                   key={partner.id || partner.slug || partner.name}
                   data-partner-card
-                  className={`group relative w-[78vw] max-w-[300px] shrink-0 transform transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                    index % 2 === 1 ? "sm:mt-12" : ""
-                  } ${
+                  className={`group relative w-[72vw] max-w-[290px] shrink-0 transform transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                     isVisible
                       ? "translate-y-0 opacity-100"
-                      : "translate-y-20 opacity-0"
+                      : "translate-y-16 opacity-0"
                   }`}
                   style={{
                     transitionDelay: isVisible
-                      ? `${250 + index * 100}ms`
+                      ? `${250 + index * 90}ms`
                       : "0ms",
                   }}
                 >
@@ -402,46 +400,34 @@ export default function Partners() {
                     onClick={(event) => {
                       if (hasMoved.current) event.preventDefault()
                     }}
-                    className="relative block h-[390px] overflow-hidden rounded-[2rem] bg-gray-200 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-2 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/20 min-[420px]:h-[430px] sm:h-[480px] lg:h-[500px]"
+                    className="block rounded-[1.25rem] border border-gray-200 bg-white p-2 transition-colors duration-300 hover:border-gray-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
                   >
-                    <Image
-                      src={partner.logo}
-                      alt=""
-                      fill
-                      draggable={false}
-                      sizes="(max-width: 639px) 300px, (max-width: 1023px) 350px, 380px"
-                      className="pointer-events-none object-cover grayscale-[0.35] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
-                    />
-
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20" />
-
-                    <div className="absolute left-5 top-5 flex h-11 items-center gap-2 rounded-full border border-white/40 bg-black/20 pl-4 pr-4 text-xs font-medium text-white backdrop-blur-md">
-                      <span>{String(index + 1).padStart(2, "0")}</span>
-                      <span className="h-px w-3 bg-white/60 transition-all duration-500 group-hover:w-6" />
+                    <div className="relative aspect-[4/5] overflow-hidden rounded-[0.9rem] bg-gray-100">
+                      <Image
+                        src={partner.logo}
+                        alt=""
+                        fill
+                        draggable={false}
+                        sizes="(max-width: 639px) 290px, 290px"
+                        className="pointer-events-none object-cover object-top grayscale transition duration-500 group-hover:grayscale-0"
+                      />
                     </div>
 
-                    <div className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white text-base text-gray-950 shadow-lg transition-all duration-500 group-hover:rotate-45 group-hover:scale-110">
-                      ↗
-                    </div>
+                    <div className="px-2 pb-2 pt-4">
+                      <div className="flex items-baseline justify-between text-[11px] text-gray-400">
+                        <span className="tabular-nums">
+                          № {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span>{partner.position}</span>
+                      </div>
 
-                    <div className="absolute inset-x-3 bottom-3 rounded-[1.5rem] border border-white/25 bg-white/10 p-5 backdrop-blur-xl transition-all duration-500 group-hover:border-white group-hover:bg-white">
-                      <p className="mb-3 flex items-center gap-2 text-xs font-medium text-white/70 transition-colors duration-500 group-hover:text-gray-500">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        {partner.position}
-                      </p>
-
-                      <h3 className="text-xl font-semibold leading-tight tracking-[-0.025em] text-white transition-colors duration-500 group-hover:text-gray-950 sm:text-2xl">
+                      <h3 className="mt-2 text-[22px] font-semibold leading-tight tracking-[-0.03em] text-gray-950">
                         {partner.name}
                       </h3>
 
-                      <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-3 transition-colors duration-500 group-hover:border-gray-200">
-                        <span className="text-xs text-white/70 transition-colors duration-500 group-hover:text-gray-500">
-                          Uğur Şəxsi İnkişaf Mərkəzi
-                        </span>
-                        <span className="text-xs font-semibold text-white transition-all duration-500 group-hover:translate-x-1 group-hover:text-gray-950">
-                          Profilə bax
-                        </span>
-                      </div>
+                      <p className="mt-3 inline-block border-b border-gray-300 pb-0.5 text-sm text-gray-600 transition-colors duration-300 group-hover:border-gray-950 group-hover:text-gray-950">
+                        Profilə bax
+                      </p>
                     </div>
                   </Link>
                 </article>
