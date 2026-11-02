@@ -70,6 +70,22 @@ const partners: Partner[] = [
   },
 ]
 
+const cardTints: readonly string[] = [
+  "bg-amber-200",
+  "bg-sky-200",
+  "bg-rose-200",
+  "bg-emerald-200",
+  "bg-violet-200",
+  "bg-orange-200",
+  "bg-teal-200",
+]
+
+const splitName = (fullName: string): [string, string] => {
+  const parts = fullName.trim().split(/\s+/)
+  if (parts.length < 2) return [fullName, ""]
+  return [parts[0], parts.slice(1).join(" ")]
+}
+
 const sortPartners = (items: Partner[]): Partner[] =>
   items
     .map((partner, index) => ({
@@ -213,7 +229,7 @@ export default function Partners() {
 
     if (target.closest("button")) return
 
-    if (event.pointerType === "mouse" && event.button !== 0) return
+    if (event.pointerType !== "mouse" || event.button !== 0) return
 
     isDragging.current = true
     hasMoved.current = false
@@ -361,10 +377,11 @@ export default function Partners() {
           <div
             ref={sliderRef}
             className={`flex gap-7 overflow-x-auto overflow-y-hidden py-6 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-              dragging ? "cursor-grabbing" : "cursor-grab"
+              dragging
+                ? "cursor-grabbing snap-none"
+                : "cursor-grab snap-x snap-proximity"
             }`}
             style={{
-              touchAction: "pan-y",
               WebkitOverflowScrolling: "touch",
               userSelect: "none",
               scrollbarWidth: "none",
@@ -382,7 +399,7 @@ export default function Partners() {
                 <article
                   key={partner.id || partner.slug || partner.name}
                   data-partner-card
-                  className={`group relative w-[72vw] max-w-[290px] shrink-0 transform transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  className={`group relative w-[68vw] max-w-[280px] shrink-0 snap-start transform transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                     isVisible
                       ? "translate-y-0 opacity-100"
                       : "translate-y-16 opacity-0"
@@ -400,34 +417,55 @@ export default function Partners() {
                     onClick={(event) => {
                       if (hasMoved.current) event.preventDefault()
                     }}
-                    className="block rounded-[1.25rem] border border-gray-200 bg-white p-2 transition-colors duration-300 hover:border-gray-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-2"
+                    className="block rounded-t-[999px] rounded-b-[1.5rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-4"
                   >
-                    <div className="relative aspect-[4/5] overflow-hidden rounded-[0.9rem] bg-gray-100">
-                      <Image
-                        src={partner.logo}
-                        alt=""
-                        fill
-                        draggable={false}
-                        sizes="(max-width: 639px) 290px, 290px"
-                        className="pointer-events-none object-cover object-top grayscale transition duration-500 group-hover:grayscale-0"
+                    <div className="relative mr-3 pb-3">
+                      <div
+                        aria-hidden="true"
+                        className={`absolute inset-0 left-3 top-3 rounded-t-[999px] rounded-b-[1.5rem] transition-all duration-500 group-hover:left-1.5 group-hover:top-1.5 ${
+                          cardTints[index % cardTints.length]
+                        }`}
                       />
+
+                      <div className="relative aspect-[3/4] overflow-hidden rounded-t-[999px] rounded-b-[1.5rem] bg-gray-200">
+                        <Image
+                          src={partner.logo}
+                          alt=""
+                          fill
+                          draggable={false}
+                          sizes="280px"
+                          className="pointer-events-none object-cover object-top grayscale transition duration-700 group-hover:scale-105 group-hover:grayscale-0"
+                        />
+                      </div>
                     </div>
 
-                    <div className="px-2 pb-2 pt-4">
-                      <div className="flex items-baseline justify-between text-[11px] text-gray-400">
-                        <span className="tabular-nums">
-                          № {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <span>{partner.position}</span>
-                      </div>
+                    <div className="relative px-1 pt-6">
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute -top-2 right-0 text-7xl font-semibold leading-none tracking-tighter text-transparent transition-all duration-500 [-webkit-text-stroke:1px_#d1d5db] group-hover:[-webkit-text-stroke:1px_#030712]"
+                      >
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
 
-                      <h3 className="mt-2 text-[22px] font-semibold leading-tight tracking-[-0.03em] text-gray-950">
-                        {partner.name}
+                      <h3 className="relative text-[26px] leading-[1.05] tracking-[-0.035em] text-gray-950">
+                        <span className="block font-light text-gray-500">
+                          {splitName(partner.name)[0]}
+                        </span>
+                        <span className="block font-semibold">
+                          {splitName(partner.name)[1]}
+                        </span>
                       </h3>
 
-                      <p className="mt-3 inline-block border-b border-gray-300 pb-0.5 text-sm text-gray-600 transition-colors duration-300 group-hover:border-gray-950 group-hover:text-gray-950">
-                        Profilə bax
-                      </p>
+                      <div className="mt-4 flex items-center gap-3 text-sm text-gray-600">
+                        <span className="h-px w-6 bg-gray-400 transition-all duration-500 group-hover:w-12 group-hover:bg-gray-950" />
+                        <span>{partner.position}</span>
+                        <span
+                          aria-hidden="true"
+                          className="ml-auto text-gray-400 transition-all duration-300 group-hover:translate-x-1 group-hover:text-gray-950"
+                        >
+                          →
+                        </span>
+                      </div>
                     </div>
                   </Link>
                 </article>
