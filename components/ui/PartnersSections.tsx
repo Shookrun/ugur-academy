@@ -211,7 +211,7 @@ export default function Partners() {
 
     const target = event.target as HTMLElement
 
-    if (target.closest("button") || target.closest("a")) return
+    if (target.closest("button")) return
 
     if (event.pointerType === "mouse" && event.button !== 0) return
 
@@ -220,12 +220,6 @@ export default function Partners() {
     activePointerId.current = event.pointerId
     startX.current = event.clientX
     startScrollLeft.current = slider.scrollLeft
-
-    setDragging(true)
-
-    try {
-      slider.setPointerCapture(event.pointerId)
-    } catch {}
   }
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
@@ -241,8 +235,13 @@ export default function Partners() {
 
     const distance = event.clientX - startX.current
 
-    if (Math.abs(distance) > 5) {
+    if (!hasMoved.current && Math.abs(distance) > 5) {
       hasMoved.current = true
+      setDragging(true)
+
+      try {
+        slider.setPointerCapture(event.pointerId)
+      } catch {}
     }
 
     if (!hasMoved.current) return
@@ -361,7 +360,7 @@ export default function Partners() {
         >
           <div
             ref={sliderRef}
-            className={`flex gap-7 overflow-x-auto overflow-y-hidden py-6 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+            className={`flex gap-7 overflow-x-auto overflow-y-hidden pb-16 pt-6 select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
               dragging ? "cursor-grabbing" : "cursor-grab"
             }`}
             style={{
@@ -383,7 +382,9 @@ export default function Partners() {
                 <article
                   key={partner.id || partner.slug || partner.name}
                   data-partner-card
-                  className={`group relative w-[78vw] max-w-[300px] shrink-0 overflow-hidden rounded-[2rem] border border-gray-100 bg-white shadow-sm transform transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-2 hover:shadow-xl ${
+                  className={`group relative w-[78vw] max-w-[300px] shrink-0 transform transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    index % 2 === 1 ? "sm:mt-12" : ""
+                  } ${
                     isVisible
                       ? "translate-y-0 opacity-100"
                       : "translate-y-20 opacity-0"
@@ -394,57 +395,55 @@ export default function Partners() {
                       : "0ms",
                   }}
                 >
-                  <div className="relative h-[300px] min-[420px]:h-[340px] overflow-hidden bg-gray-100 sm:h-[430px] lg:h-[450px]">
+                  <Link
+                    href={slug ? `/emekdaslar/${slug}` : "/emekdaslar"}
+                    draggable={false}
+                    aria-label={`${partner.name} profilinə bax`}
+                    onClick={(event) => {
+                      if (hasMoved.current) event.preventDefault()
+                    }}
+                    className="relative block h-[390px] overflow-hidden rounded-[2rem] bg-gray-200 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-2 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/20 min-[420px]:h-[430px] sm:h-[480px] lg:h-[500px]"
+                  >
                     <Image
                       src={partner.logo}
-                      alt={partner.name}
+                      alt=""
                       fill
                       draggable={false}
                       sizes="(max-width: 639px) 300px, (max-width: 1023px) 350px, 380px"
-                      className="pointer-events-none object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="pointer-events-none object-cover grayscale-[0.35] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0"
                     />
 
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/0 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-black/20" />
 
-                    <div className="absolute left-6 top-6 flex h-11 w-11 items-center justify-center rounded-full border border-white/50 bg-black/20 text-xs font-medium text-white backdrop-blur-md">
-                      {String(index + 1).padStart(2, "0")}
+                    <div className="absolute left-5 top-5 flex h-11 items-center gap-2 rounded-full border border-white/40 bg-black/20 pl-4 pr-4 text-xs font-medium text-white backdrop-blur-md">
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <span className="h-px w-3 bg-white/60 transition-all duration-500 group-hover:w-6" />
                     </div>
 
-                    <div className="absolute right-7 top-7 h-2 w-2 rounded-full bg-white shadow" />
-                  </div>
-
-                  <div className="px-5 pb-5 pt-5 sm:px-7 sm:pb-7 sm:pt-6">
-                    <div className="mb-3 flex items-center gap-3 sm:mb-5">
-                      <span className="h-px w-8 bg-black" />
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-400">
-                        Əməkdaş
-                      </span>
+                    <div className="absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full bg-white text-base text-gray-950 shadow-lg transition-all duration-500 group-hover:rotate-45 group-hover:scale-110">
+                      ↗
                     </div>
 
-                    <h3 className="text-xl font-semibold tracking-[-0.025em] text-gray-950 sm:text-2xl">
-                      {partner.name}
-                    </h3>
+                    <div className="absolute inset-x-3 bottom-3 rounded-[1.5rem] border border-white/25 bg-white/10 p-5 backdrop-blur-xl transition-all duration-500 group-hover:border-white group-hover:bg-white">
+                      <p className="mb-3 flex items-center gap-2 text-xs font-medium text-white/70 transition-colors duration-500 group-hover:text-gray-500">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        {partner.position}
+                      </p>
 
-                    <p className="mt-2 text-sm leading-6 text-gray-500">
-                      {partner.position}
-                    </p>
+                      <h3 className="text-xl font-semibold leading-tight tracking-[-0.025em] text-white transition-colors duration-500 group-hover:text-gray-950 sm:text-2xl">
+                        {partner.name}
+                      </h3>
 
-                    <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-4 sm:mt-6 sm:pt-5">
-                      <span className="text-xs font-medium tracking-wide text-gray-400">
-                        Uğur Şəxsi İnkişaf Mərkəzi
-                      </span>
-
-                      <Link
-                        href={slug ? `/emekdaslar/${slug}` : "/emekdaslar"}
-                        onClick={(event) => {
-                          if (hasMoved.current) event.preventDefault()
-                        }}
-                        className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-sm text-gray-500 transition-all duration-300 group-hover:border-black group-hover:bg-black group-hover:text-white"
-                      >
-                        ↗
-                      </Link>
+                      <div className="mt-4 flex items-center justify-between border-t border-white/20 pt-3 transition-colors duration-500 group-hover:border-gray-200">
+                        <span className="text-xs text-white/70 transition-colors duration-500 group-hover:text-gray-500">
+                          Uğur Şəxsi İnkişaf Mərkəzi
+                        </span>
+                        <span className="text-xs font-semibold text-white transition-all duration-500 group-hover:translate-x-1 group-hover:text-gray-950">
+                          Profilə bax
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 </article>
               )
             })}
