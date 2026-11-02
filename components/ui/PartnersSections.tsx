@@ -1,10 +1,14 @@
 
 "use client"
 
-import { useState, type ChangeEvent, type FormEvent } from "react"
+import {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react"
 
 interface Props {
-  partnerName: string
+  partnerName?: string
 }
 
 interface FormData {
@@ -21,10 +25,12 @@ const INITIAL_FORM: FormData = {
   message: "",
 }
 
-const inputClass =
+const INPUT_CLASS =
   "w-full rounded-2xl border border-white/15 bg-white/[0.055] px-5 py-4 text-sm text-white outline-none backdrop-blur-xl transition-all duration-300 placeholder:text-slate-500 hover:border-indigo-300/40 hover:bg-white/[0.08] focus:border-violet-400/70 focus:bg-white/[0.09] focus:ring-4 focus:ring-violet-500/10"
 
-export default function PartnerContactForm({ partnerName }: Props) {
+export default function PartnerContactForm({
+  partnerName = "Uğur Academy mütəxəssisi",
+}: Props) {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -34,7 +40,12 @@ export default function PartnerContactForm({ partnerName }: Props) {
   ) => {
     const { name, value } = event.target
 
-    if (name in INITIAL_FORM) {
+    if (
+      name === "name" ||
+      name === "phone" ||
+      name === "topic" ||
+      name === "message"
+    ) {
       setFormData((previous) => ({
         ...previous,
         [name]: value,
@@ -62,7 +73,6 @@ export default function PartnerContactForm({ partnerName }: Props) {
 
   return (
     <section className="relative isolate w-full overflow-hidden rounded-[32px] border border-white/15 bg-[#080b1a] text-white shadow-[0_35px_100px_-35px_rgba(49,46,129,0.65)]">
-
       <style jsx>{`
         @keyframes glassFloat {
           0%, 100% {
@@ -165,17 +175,19 @@ export default function PartnerContactForm({ partnerName }: Props) {
 
       <div className="pointer-events-none absolute right-8 top-8 hidden opacity-20 sm:block">
         <svg viewBox="0 0 180 180" className="h-36 w-36" fill="none">
-          <path d="M90 0V180M0 90H180M26 26L154 154M154 26L26 154" stroke="white" strokeWidth=".7" />
+          <path
+            d="M90 0V180M0 90H180M26 26L154 154M154 26L26 154"
+            stroke="white"
+            strokeWidth=".7"
+          />
           <circle cx="90" cy="90" r="65" stroke="white" strokeWidth=".7" />
           <circle cx="90" cy="90" r="40" stroke="white" strokeWidth=".7" />
         </svg>
       </div>
 
       <div className="relative grid lg:grid-cols-[0.85fr_1.15fr]">
-
         <aside className="relative flex min-h-[340px] flex-col justify-between overflow-hidden border-b border-white/10 px-7 py-9 sm:px-10 sm:py-11 lg:min-h-[760px] lg:border-b-0 lg:border-r">
-
-          <div className="absolute right-[-35px] top-[140px] h-52 w-52 rounded-full border border-white/[0.07] glass-float" />
+          <div className="glass-float absolute right-[-35px] top-[140px] h-52 w-52 rounded-full border border-white/[0.07]" />
 
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2.5 rounded-full border border-emerald-300/20 bg-emerald-400/[0.08] px-4 py-2 backdrop-blur-xl">
@@ -193,7 +205,7 @@ export default function PartnerContactForm({ partnerName }: Props) {
             </p>
 
             <h2 className="mt-5 max-w-sm text-[42px] font-black leading-[1.05] tracking-[-0.055em] sm:text-[52px] lg:text-[58px]">
-              Let's
+              Let&apos;s
               <span className="block bg-gradient-to-r from-indigo-300 via-violet-300 to-fuchsia-300 bg-clip-text text-transparent">
                 create
               </span>
@@ -210,7 +222,15 @@ export default function PartnerContactForm({ partnerName }: Props) {
           <div className="relative z-10 mt-10">
             <div className="glass-float relative max-w-[330px] rounded-[26px] border border-white/15 bg-white/[0.075] p-5 shadow-[0_25px_60px_-20px_rgba(0,0,0,0.6)] backdrop-blur-2xl">
               <div className="absolute -right-3 -top-3 flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-lg shadow-violet-600/30">
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="10" cy="7" r="4" />
                   <path d="M20 8v6m-3-3h6" />
@@ -223,7 +243,7 @@ export default function PartnerContactForm({ partnerName }: Props) {
 
               <div className="mt-5 flex items-center gap-4">
                 <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-gradient-to-br from-indigo-400/30 to-fuchsia-500/30 text-2xl font-black text-white shadow-inner">
-                  {partnerName.trim().charAt(0).toUpperCase()}
+                  {partnerName.trim().charAt(0).toUpperCase() || "U"}
                 </div>
 
                 <div className="min-w-0">
@@ -249,14 +269,26 @@ export default function PartnerContactForm({ partnerName }: Props) {
             <div className="glass-float-delayed absolute -bottom-5 right-0 hidden rounded-2xl border border-white/15 bg-white/[0.08] p-3 backdrop-blur-2xl sm:block">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-300">
-                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.64 5.64l2.12 2.12m8.48 8.48 2.12 2.12m0-12.72-2.12 2.12m-8.48 8.48-2.12 2.12" />
                     <circle cx="12" cy="12" r="4" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-white">Your next step</p>
-                  <p className="text-[9px] text-slate-400">Starts with a message</p>
+                  <p className="text-[10px] font-bold text-white">
+                    Your next step
+                  </p>
+                  <p className="text-[9px] text-slate-400">
+                    Starts with a message
+                  </p>
                 </div>
               </div>
             </div>
@@ -264,11 +296,18 @@ export default function PartnerContactForm({ partnerName }: Props) {
         </aside>
 
         <main className="relative flex flex-col justify-center px-6 py-9 sm:px-10 sm:py-12 lg:px-12">
-
           {isSuccess ? (
             <div className="glass-reveal flex flex-col items-start justify-center py-12">
               <div className="glass-success-icon flex h-24 w-24 items-center justify-center rounded-[30px] border border-emerald-300/20 bg-gradient-to-br from-emerald-400/20 to-teal-500/10 shadow-[0_0_60px_rgba(16,185,129,0.15)] backdrop-blur-2xl">
-                <svg viewBox="0 0 24 24" className="h-12 w-12 text-emerald-300" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-12 w-12 text-emerald-300"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="m5 12 4 4L19 6" />
                 </svg>
               </div>
@@ -278,7 +317,7 @@ export default function PartnerContactForm({ partnerName }: Props) {
               </p>
 
               <h3 className="mt-4 text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl">
-                You're
+                You&apos;re
                 <span className="block bg-gradient-to-r from-emerald-300 to-cyan-300 bg-clip-text text-transparent">
                   on the list.
                 </span>
@@ -286,7 +325,9 @@ export default function PartnerContactForm({ partnerName }: Props) {
 
               <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">
                 Təşəkkür edirik! Müraciətiniz qeydə alındı.
-                <span className="font-bold text-white"> {partnerName}</span>
+                <span className="font-bold text-white">
+                  {" "}{partnerName}
+                </span>
                 {" "}ilə əlaqə üçün sizinlə geri dönüş ediləcək.
               </p>
 
@@ -295,7 +336,15 @@ export default function PartnerContactForm({ partnerName }: Props) {
                 onClick={resetForm}
                 className="mt-9 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/[0.07] px-6 py-4 text-sm font-bold text-white backdrop-blur-xl transition-all hover:border-indigo-400/50 hover:bg-indigo-500/15"
               >
-                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
                   <path d="M3 3v5h5" />
                 </svg>
@@ -326,10 +375,12 @@ export default function PartnerContactForm({ partnerName }: Props) {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
-
                 <div className="grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="pName" className="mb-2.5 block text-xs font-bold text-slate-300">
+                    <label
+                      htmlFor="pName"
+                      className="mb-2.5 block text-xs font-bold text-slate-300"
+                    >
                       Ad və soyad <span className="text-fuchsia-400">*</span>
                     </label>
                     <input
@@ -343,12 +394,15 @@ export default function PartnerContactForm({ partnerName }: Props) {
                       placeholder="Adınız və soyadınız"
                       value={formData.name}
                       onChange={handleChange}
-                      className={inputClass}
+                      className={INPUT_CLASS}
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="pPhone" className="mb-2.5 block text-xs font-bold text-slate-300">
+                    <label
+                      htmlFor="pPhone"
+                      className="mb-2.5 block text-xs font-bold text-slate-300"
+                    >
                       Telefon <span className="text-fuchsia-400">*</span>
                     </label>
                     <input
@@ -361,13 +415,16 @@ export default function PartnerContactForm({ partnerName }: Props) {
                       placeholder="+994 50 000 00 00"
                       value={formData.phone}
                       onChange={handleChange}
-                      className={inputClass}
+                      className={INPUT_CLASS}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="pTopic" className="mb-2.5 block text-xs font-bold text-slate-300">
+                  <label
+                    htmlFor="pTopic"
+                    className="mb-2.5 block text-xs font-bold text-slate-300"
+                  >
                     Müraciət mövzusu
                   </label>
                   <input
@@ -378,13 +435,16 @@ export default function PartnerContactForm({ partnerName }: Props) {
                     placeholder="Nə barədə danışmaq istəyirsiniz?"
                     value={formData.topic}
                     onChange={handleChange}
-                    className={inputClass}
+                    className={INPUT_CLASS}
                   />
                 </div>
 
                 <div>
                   <div className="mb-2.5 flex items-center justify-between">
-                    <label htmlFor="pMsg" className="text-xs font-bold text-slate-300">
+                    <label
+                      htmlFor="pMsg"
+                      className="text-xs font-bold text-slate-300"
+                    >
                       Mesajınız
                     </label>
                     <span className="text-[10px] tabular-nums text-slate-500">
@@ -400,7 +460,7 @@ export default function PartnerContactForm({ partnerName }: Props) {
                     placeholder="Fikirlərinizi bizimlə bölüşün..."
                     value={formData.message}
                     onChange={handleChange}
-                    className={`${inputClass} min-h-[125px] resize-none leading-6`}
+                    className={`${INPUT_CLASS} min-h-[125px] resize-none leading-6`}
                   />
                 </div>
 
@@ -417,9 +477,25 @@ export default function PartnerContactForm({ partnerName }: Props) {
                     <span className="relative flex items-center gap-3">
                       {isSubmitting ? (
                         <>
-                          <svg viewBox="0 0 24 24" className="h-5 w-5 animate-spin" fill="none">
-                            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" className="opacity-25" />
-                            <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-5 w-5 animate-spin"
+                            fill="none"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="9"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              className="opacity-25"
+                            />
+                            <path
+                              d="M21 12a9 9 0 0 0-9-9"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                            />
                           </svg>
                           Müraciət göndərilir...
                         </>
@@ -438,7 +514,15 @@ export default function PartnerContactForm({ partnerName }: Props) {
                 </div>
 
                 <div className="flex items-center justify-center gap-2 pt-1">
-                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-slate-500" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-3.5 w-3.5 shrink-0 text-slate-500"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <rect x="3" y="11" width="18" height="11" rx="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                   </svg>
