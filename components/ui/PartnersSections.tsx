@@ -434,7 +434,7 @@ export default function Partners() {
                           fill
                           draggable={false}
                           sizes="280px"
-                          className="pointer-events-none object-cover object-top grayscale transition duration-700 group-hover:scale-105 group-hover:grayscale-0"
+                          className="pointer-events-none object-cover object-top transition duration-700 group-hover:scale-105"
                         />
                       </div>
                     </div>
