@@ -1,4 +1,3 @@
-
 "use client"
 
 import Image from "next/image"
@@ -417,17 +416,17 @@ export default function Partners() {
                     onClick={(event) => {
                       if (hasMoved.current) event.preventDefault()
                     }}
-                    className="block rounded-t-[999px] rounded-b-[1.5rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-4"
+                    className="block rounded-[1.5rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-950 focus-visible:ring-offset-4"
                   >
                     <div className="relative mr-3 pb-3">
                       <div
                         aria-hidden="true"
-                        className={`absolute inset-0 left-3 top-3 rounded-t-[999px] rounded-b-[1.5rem] transition-all duration-500 group-hover:left-1.5 group-hover:top-1.5 ${
+                        className={`absolute inset-0 left-3 top-3 rounded-[1.5rem] transition-all duration-500 group-hover:left-1.5 group-hover:top-1.5 ${
                           cardTints[index % cardTints.length]
                         }`}
                       />
 
-                      <div className="relative aspect-[3/4] overflow-hidden rounded-t-[999px] rounded-b-[1.5rem] bg-gray-200">
+                      <div className="relative aspect-[3/4] overflow-hidden rounded-[1.5rem] bg-gray-200">
                         <Image
                           src={partner.logo}
                           alt=""
@@ -440,13 +439,6 @@ export default function Partners() {
                     </div>
 
                     <div className="relative px-1 pt-6">
-                      <span
-                        aria-hidden="true"
-                        className="pointer-events-none absolute -top-2 right-0 text-7xl font-semibold leading-none tracking-tighter text-transparent transition-all duration-500 [-webkit-text-stroke:1px_#d1d5db] group-hover:[-webkit-text-stroke:1px_#030712]"
-                      >
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-
                       <h3 className="relative text-[26px] leading-[1.05] tracking-[-0.035em] text-gray-950">
                         <span className="block font-light text-gray-500">
                           {splitName(partner.name)[0]}
