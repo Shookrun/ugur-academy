@@ -5,7 +5,6 @@ import Link from "next/link"
 
 const words = ["Təhsil", "İnkişaf", "Uğur", "Gələcək", "Bacarıq", "Karyera"]
 
-
 const Hero = () => {
   return (
     <>
@@ -75,26 +74,23 @@ const Hero = () => {
         <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 items-center gap-14 px-4 py-10 sm:px-6 lg:grid-cols-12 lg:gap-10 lg:px-10 lg:py-16">
           {/* LEFT */}
           <div className="min-w-0 lg:col-span-7">
-            
-
             <h1
               className="hero-reveal mt-6 font-serif text-[clamp(3.2rem,11vw,7.5rem)] font-bold leading-[0.95] tracking-[-0.05em]"
               style={{ animationDelay: "150ms" }}
             >
-              <span className="relative inline-block">
+              <span className="relative inline-block pb-[0.12em]">
                 Gələcəyini
                 <svg
                   viewBox="0 0 300 14"
                   preserveAspectRatio="none"
-                  className="absolute -bottom-2 left-0 h-3 w-full text-[#c99520]"
+                  className="absolute -bottom-[0.14em] left-0 h-[0.1em] min-h-[8px] w-full text-[#c99520]"
                   fill="none"
                   aria-hidden="true"
                 >
                   <path d="M2 9C60 2 130 2 298 8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
                 </svg>
               </span>
-              <br />
-              <span className="italic text-[#c99520]">qur!</span>
+              <span className="mt-[0.12em] block italic text-[#c99520]">qur!</span>
             </h1>
 
             <p
