@@ -5,7 +5,6 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 import { getCourseTags } from "@/lib/courseTags"
 
-
 interface CourseData {
   id: string | number
   title: string
@@ -20,6 +19,7 @@ interface CourseData {
   hasChildren?: boolean
   children?: string[]
   technologies?: string[]
+  order?: number
 }
 
 const academyCourses: CourseData[] = [
@@ -36,6 +36,7 @@ const academyCourses: CourseData[] = [
     discountPrice: "99 AZN / ay",
     hasChildren: true,
     children: ["Kompüter operatoru", "Microsoft Office", "Qrafik dizayn"],
+    order: 0,
   },
   {
     id: 2,
@@ -48,6 +49,7 @@ const academyCourses: CourseData[] = [
     duration: "12 - 18 ay",
     price: "150 AZN / ay",
     discountPrice: "125 AZN / ay",
+    order: 1,
   },
   {
     id: 3,
@@ -60,6 +62,7 @@ const academyCourses: CourseData[] = [
     duration: "-",
     price: "140 AZN / ay",
     discountPrice: "115 AZN / ay",
+    order: 2,
   },
   {
     id: 4,
@@ -72,6 +75,7 @@ const academyCourses: CourseData[] = [
     duration: "-",
     price: "160 AZN / ay",
     discountPrice: "135 AZN / ay",
+    order: 3,
   },
   {
     id: 5,
@@ -84,6 +88,7 @@ const academyCourses: CourseData[] = [
     duration: "12 ay",
     price: "150 AZN / ay",
     discountPrice: "120 AZN / ay",
+    order: 4,
   },
   {
     id: 6,
@@ -96,6 +101,7 @@ const academyCourses: CourseData[] = [
     duration: "3 - 6 ay",
     price: "130 AZN / ay",
     discountPrice: "105 AZN / ay",
+    order: 5,
   },
   {
     id: 7,
@@ -108,6 +114,7 @@ const academyCourses: CourseData[] = [
     duration: "-",
     price: "140 AZN / ay",
     discountPrice: "110 AZN / ay",
+    order: 6,
   },
   {
     id: 8,
@@ -122,6 +129,7 @@ const academyCourses: CourseData[] = [
     discountPrice: "105 AZN / ay",
     hasChildren: true,
     children: ["Qanunvericilik", "Məntiq", "İnformatika", "Azərbaycan Dili"],
+    order: 7,
   },
   {
     id: 9,
@@ -136,6 +144,7 @@ const academyCourses: CourseData[] = [
     discountPrice: "120 AZN / ay",
     hasChildren: true,
     children: ["Azərbaycan dili", "İngilis dili", "İxtisas fənləri", "Test strategiyası"],
+    order: 8,
   },
   {
     id: 10,
@@ -150,21 +159,39 @@ const academyCourses: CourseData[] = [
     discountPrice: "135 AZN / ay",
     hasChildren: true,
     children: ["HTML & CSS", "JavaScript", "Python", "React", "Mobile App", "Backend"],
+    order: 9,
   },
 ]
 
+/** order-ə görə düzür; order olmayan kurslar öz yerini saxlayır. */
+function sortByOrder(list: CourseData[]): CourseData[] {
+  return [...list].sort(
+    (a, b) =>
+      (typeof a.order === "number" ? a.order : Number.MAX_SAFE_INTEGER) -
+      (typeof b.order === "number" ? b.order : Number.MAX_SAFE_INTEGER),
+  )
+}
+
 export default function CourseSection() {
-  const [courses, setCourses] = useState<CourseData[]>(academyCourses)
+  const [courses, setCourses] = useState<CourseData[]>(sortByOrder(academyCourses))
 
   useEffect(() => {
-    fetch("/api/courses")
+    let cancelled = false
+
+    fetch(`/api/courses?t=${Date.now()}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data && Array.isArray(data) && data.length > 0) {
-          setCourses(data)
+      .then((data: unknown) => {
+        if (cancelled) return
+
+        if (Array.isArray(data) && data.length > 0) {
+          setCourses(sortByOrder(data as CourseData[]))
         }
       })
       .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return (
@@ -258,7 +285,6 @@ export default function CourseSection() {
                       Müddət:{" "}
                       <strong className="text-slate-700">{course.duration || "—"}</strong>
                     </span>
-                    
                   </div>
 
                   <Link
