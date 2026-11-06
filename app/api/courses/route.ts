@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from "next/server"
 import { revalidatePath } from "next/cache"
 import fs from "fs/promises"
@@ -17,6 +16,7 @@ type CourseRecord = Record<string, unknown> & {
   title: string
   slug: string
   technologies: string[]
+  order: number
 }
 
 function normalizeTechnologies(value: unknown): string[] {
@@ -32,6 +32,16 @@ function normalizeTechnologies(value: unknown): string[] {
   )
 }
 
+function normalizeOrder(value: unknown): number {
+  if (value === undefined || value === null || value === "") {
+    return Number.MAX_SAFE_INTEGER
+  }
+
+  const parsed = Number(value)
+
+  return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER
+}
+
 function normalizeCourse(value: unknown): CourseRecord {
   const course =
     typeof value === "object" && value !== null
@@ -44,10 +54,21 @@ function normalizeCourse(value: unknown): CourseRecord {
     title: String(course.title ?? ""),
     slug: String(course.slug ?? ""),
     technologies: normalizeTechnologies(course.technologies),
+    order: normalizeOrder(course.order),
   }
 }
 
-const initialCourses: CourseRecord[] = coursesData.map((course) =>
+/**
+ * order-ə görə düzür və 0,1,2... kimi yenidən nömrələyir.
+ * order-i olmayan köhnə kurslar öz mövcud yerini saxlayır (stable sort).
+ */
+function sortCourses(list: CourseRecord[]): CourseRecord[] {
+  return [...list]
+    .sort((a, b) => a.order - b.order)
+    .map((course, index) => ({ ...course, order: index }))
+}
+
+const initialCourses: CourseRecord[] = coursesData.map((course, index) =>
   normalizeCourse({
     id: String(course.id),
     title: course.title,
@@ -60,6 +81,7 @@ const initialCourses: CourseRecord[] = coursesData.map((course) =>
     image: course.image || "/hero.jpeg",
     slug: course.slug,
     technologies: [],
+    order: index,
     buttonText:
       course.slug === "komputer" || course.slug === "tibb"
         ? "İstiqamətlərə bax"
@@ -113,7 +135,7 @@ async function readCourses(): Promise<CourseRecord[]> {
   const stored = await getCollection(COLLECTION_KEY)
 
   if (Array.isArray(stored)) {
-    return stored.map(normalizeCourse)
+    return sortCourses(stored.map(normalizeCourse))
   }
 
   let seed: CourseRecord[] = initialCourses
@@ -128,13 +150,15 @@ async function readCourses(): Promise<CourseRecord[]> {
     }
   } catch {}
 
-  await setCollection(COLLECTION_KEY, seed)
+  const sortedSeed = sortCourses(seed)
 
-  return seed
+  await setCollection(COLLECTION_KEY, sortedSeed)
+
+  return sortedSeed
 }
 
 async function writeCourses(data: CourseRecord[]): Promise<void> {
-  await setCollection(COLLECTION_KEY, data)
+  await setCollection(COLLECTION_KEY, sortCourses(data))
 }
 
 function revalidateCoursePages(): void {
@@ -193,6 +217,8 @@ export async function POST(req: NextRequest) {
       glowGradient: input.glowGradient || "rgba(14, 165, 233, 0.8)",
       iconType: input.iconType || "star",
       buttonText: input.buttonText || "Ətraflı məlumat",
+      // Yeni kurs həmişə siyahının sonuna düşür
+      order: courses.length,
     })
 
     if (!newCourse.title.trim() || !newCourse.slug.trim()) {
@@ -205,6 +231,13 @@ export async function POST(req: NextRequest) {
     if (courses.some((course) => course.id === newCourse.id)) {
       return NextResponse.json(
         { error: "Course ID already exists" },
+        { status: 409 },
+      )
+    }
+
+    if (courses.some((course) => course.slug === newCourse.slug)) {
+      return NextResponse.json(
+        { error: "Course slug already exists" },
         { status: 409 },
       )
     }
@@ -267,6 +300,8 @@ export async function PUT(req: NextRequest) {
         input.technologies === undefined
           ? existingCourse.technologies
           : normalizeTechnologies(input.technologies),
+      // Sıra yalnız PATCH ilə dəyişir, redaktə zamanı qorunur
+      order: existingCourse.order,
     })
 
     if (!updatedCourse.title.trim() || !updatedCourse.slug.trim()) {
@@ -305,6 +340,79 @@ export async function PUT(req: NextRequest) {
   }
 }
 
+/** Sıralamanı yeniləyir: body = { orders: [{ id, order }] } */
+export async function PATCH(req: NextRequest) {
+  try {
+    const body: unknown = await req.json()
+
+    if (
+      typeof body !== "object" ||
+      body === null ||
+      Array.isArray(body) ||
+      !Array.isArray((body as Record<string, unknown>).orders)
+    ) {
+      return NextResponse.json(
+        { error: "orders array required" },
+        { status: 400 },
+      )
+    }
+
+    const rawOrders = (body as { orders: unknown[] }).orders
+    const orderMap = new Map<string, number>()
+
+    for (const entry of rawOrders) {
+      if (typeof entry !== "object" || entry === null) continue
+
+      const item = entry as Record<string, unknown>
+      const id = item.id === undefined || item.id === null ? "" : String(item.id).trim()
+      const order = Number(item.order)
+
+      if (!id || !Number.isFinite(order)) continue
+
+      orderMap.set(id, order)
+    }
+
+    if (orderMap.size === 0) {
+      return NextResponse.json(
+        { error: "No valid order entries" },
+        { status: 400 },
+      )
+    }
+
+    const courses = await readCourses()
+
+    if (!courses.some((course) => orderMap.has(course.id))) {
+      return NextResponse.json(
+        { error: "Course not found" },
+        { status: 404 },
+      )
+    }
+
+    const updated = courses.map((course) =>
+      orderMap.has(course.id)
+        ? { ...course, order: orderMap.get(course.id) as number }
+        : course,
+    )
+
+    const sorted = sortCourses(updated)
+
+    await writeCourses(sorted)
+    revalidateCoursePages()
+
+    return NextResponse.json(
+      { success: true, orders: sorted.map(({ id, order }) => ({ id, order })) },
+      { headers: noCacheHeaders() },
+    )
+  } catch (error) {
+    console.error("PATCH /api/courses error:", error)
+
+    return NextResponse.json(
+      { error: "Failed to update order" },
+      { status: 500 },
+    )
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -330,6 +438,7 @@ export async function DELETE(req: NextRequest) {
       )
     }
 
+    // writeCourses sıranı yenidən 0,1,2... kimi nömrələyir
     await writeCourses(filteredCourses)
     revalidateCoursePages()
 
