@@ -2,7 +2,16 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react"
 import AdminSidebar from "../AdminSidebar"
 
 type Course = {
@@ -21,9 +30,10 @@ type Course = {
   technologies: string[]
   glowGradient?: string
   iconType?: string
+  order: number
 }
 
-type CourseForm = Omit<Course, "id"> & { id?: string }
+type CourseForm = Omit<Course, "id" | "order"> & { id?: string }
 
 type Toast = {
   id: number
@@ -81,6 +91,8 @@ function normalizeCourse(value: unknown): Course | null {
     return null
   }
 
+  const rawOrder = Number(item.order)
+
   return {
     id: String(item.id),
     title: typeof item.title === "string" ? item.title : "",
@@ -97,6 +109,7 @@ function normalizeCourse(value: unknown): Course | null {
     technologies: normalizeTechnologies(item.technologies),
     glowGradient: typeof item.glowGradient === "string" ? item.glowGradient : DEFAULT_FORM.glowGradient,
     iconType: typeof item.iconType === "string" ? item.iconType : DEFAULT_FORM.iconType,
+    order: item.order !== undefined && item.order !== null && Number.isFinite(rawOrder) ? rawOrder : Number.MAX_SAFE_INTEGER,
   }
 }
 
@@ -118,6 +131,13 @@ function slugify(value: string): string {
     .replace(/^-|-$/g, "")
 }
 
+/** Kursları order-ə görə düzür, sonra 0,1,2... kimi yenidən nömrələyir. */
+function sortCourses(list: Course[]): Course[] {
+  return [...list]
+    .sort((a, b) => a.order - b.order)
+    .map((course, index) => ({ ...course, order: index }))
+}
+
 export default function AdminKurslarPage() {
   const { status } = useSession()
   const router = useRouter()
@@ -128,10 +148,14 @@ export default function AdminKurslarPage() {
   const [editItem, setEditItem] = useState<Course | null>(null)
   const [search, setSearch] = useState("")
   const [form, setForm] = useState<CourseForm>({ ...DEFAULT_FORM })
+  const [techInput, setTechInput] = useState("")
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [reordering, setReordering] = useState(false)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
   const [toasts, setToasts] = useState<Toast[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -145,43 +169,48 @@ export default function AdminKurslarPage() {
     }, 4000)
   }, [])
 
-  const fetchCourses = useCallback(async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true)
+  const fetchCourses = useCallback(
+    async (showLoading = true) => {
+      try {
+        if (showLoading) setLoading(true)
 
-      const response = await fetch(`/api/courses?t=${Date.now()}`, {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-        },
-      })
+        const response = await fetch(`/api/courses?t=${Date.now()}`, {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        })
 
-      if (!response.ok) {
-        throw new Error("Kursları yükləmək mümkün olmadı.")
+        if (!response.ok) {
+          throw new Error("Kursları yükləmək mümkün olmadı.")
+        }
+
+        const data: unknown = await response.json()
+
+        if (!Array.isArray(data)) {
+          throw new Error("Serverdən düzgün kurs məlumatı gəlmədi.")
+        }
+
+        setCourses(
+          sortCourses(
+            data
+              .map(normalizeCourse)
+              .filter((course): course is Course => course !== null),
+          ),
+        )
+      } catch (error) {
+        console.error("fetchCourses:", error)
+        showToast(
+          error instanceof Error ? error.message : "Şəbəkə xətası baş verdi.",
+          "error",
+        )
+      } finally {
+        if (showLoading) setLoading(false)
       }
-
-      const data: unknown = await response.json()
-
-      if (!Array.isArray(data)) {
-        throw new Error("Serverdən düzgün kurs məlumatı gəlmədi.")
-      }
-
-      setCourses(
-        data
-          .map(normalizeCourse)
-          .filter((course): course is Course => course !== null),
-      )
-    } catch (error) {
-      console.error("fetchCourses:", error)
-      showToast(
-        error instanceof Error ? error.message : "Şəbəkə xətası baş verdi.",
-        "error",
-      )
-    } finally {
-      if (showLoading) setLoading(false)
-    }
-  }, [showToast])
+    },
+    [showToast],
+  )
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -192,6 +221,8 @@ export default function AdminKurslarPage() {
       void fetchCourses()
     }
   }, [status, router, fetchCourses])
+
+  const canReorder = search.trim() === "" && !reordering
 
   const filteredCourses = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("az-AZ")
@@ -213,44 +244,46 @@ export default function AdminKurslarPage() {
     )
   }, [courses, search])
 
-  const openAdd = () => {
-    setEditItem(null)
-    setForm({ ...DEFAULT_FORM, technologies: [] })
-    setModal("add")
-  }
-
-  const openEdit = (course: Course) => {
-    setEditItem(course)
-    setForm({
-      ...course,
-      technologies: [...course.technologies],
-    })
-    setModal("edit")
-  }
-
-  const closeModal = () => {
-    if (saving || uploading) return
-
+  const resetModalState = () => {
     setModal(null)
     setEditItem(null)
     setForm({ ...DEFAULT_FORM, technologies: [] })
+    setTechInput("")
 
     if (fileInputRef.current) {
       fileInputRef.current.value = ""
     }
   }
 
-  const updateForm = <K extends keyof CourseForm>(
-    field: K,
-    value: CourseForm[K],
-  ) => {
+  const openAdd = () => {
+    setEditItem(null)
+    setForm({ ...DEFAULT_FORM, technologies: [] })
+    setTechInput("")
+    setModal("add")
+  }
+
+  const openEdit = (course: Course) => {
+    const { order: _order, ...rest } = course
+    void _order
+
+    setEditItem(course)
+    setForm({ ...rest, technologies: [...course.technologies] })
+    setTechInput("")
+    setModal("edit")
+  }
+
+  const closeModal = () => {
+    if (saving || uploading) return
+    resetModalState()
+  }
+
+  const updateForm = <K extends keyof CourseForm>(field: K, value: CourseForm[K]) => {
     setForm((current) => ({ ...current, [field]: value }))
   }
 
   const handleTitleChange = (title: string) => {
     setForm((current) => {
-      const shouldUpdateSlug =
-        !current.slug || current.slug === slugify(current.title)
+      const shouldUpdateSlug = !current.slug || current.slug === slugify(current.title)
 
       return {
         ...current,
@@ -260,8 +293,27 @@ export default function AdminKurslarPage() {
     })
   }
 
-  const handleTechnologiesChange = (value: string) => {
-    updateForm("technologies", normalizeTechnologies(value.split(",")))
+  const addTechnologies = (raw: string) => {
+    const incoming = normalizeTechnologies(raw.split(","))
+
+    if (incoming.length === 0) return
+
+    setForm((current) => ({
+      ...current,
+      technologies: normalizeTechnologies([...current.technologies, ...incoming]),
+    }))
+    setTechInput("")
+  }
+
+  const handleTechKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" || event.key === ",") {
+      event.preventDefault()
+      addTechnologies(techInput)
+    }
+
+    if (event.key === "Backspace" && techInput === "" && form.technologies.length > 0) {
+      updateForm("technologies", form.technologies.slice(0, -1))
+    }
   }
 
   const removeTechnology = (technology: string) => {
@@ -292,6 +344,13 @@ export default function AdminKurslarPage() {
 
     const isEditing = modal === "edit" && Boolean(editItem)
 
+    // Gözləyən texnologiya yazısı qalıbsa, onu da əlavə et
+    const pendingTech = normalizeTechnologies(techInput.split(","))
+    const technologies = normalizeTechnologies([...form.technologies, ...pendingTech])
+
+    const nextOrder =
+      courses.length === 0 ? 0 : Math.max(...courses.map((course) => course.order)) + 1
+
     const payload: Course = {
       id: isEditing && editItem ? editItem.id : Date.now().toString(),
       title,
@@ -305,9 +364,10 @@ export default function AdminKurslarPage() {
       slug,
       buttonText: form.buttonText?.trim() || "Ətraflı məlumat",
       neonColor: form.neonColor || DEFAULT_FORM.neonColor,
-      technologies: normalizeTechnologies(form.technologies),
+      technologies,
       glowGradient: form.glowGradient || DEFAULT_FORM.glowGradient,
       iconType: form.iconType || DEFAULT_FORM.iconType,
+      order: isEditing && editItem ? editItem.order : nextOrder,
     }
 
     setSaving(true)
@@ -333,24 +393,23 @@ export default function AdminKurslarPage() {
         throw new Error(message)
       }
 
-      const savedCourse = normalizeCourse(data) ?? payload
+      const normalized = normalizeCourse(data)
+      // Server order qaytarmırsa, öz order dəyərimizi saxlayırıq
+      const savedCourse: Course = normalized
+        ? { ...normalized, order: normalized.order === Number.MAX_SAFE_INTEGER ? payload.order : normalized.order }
+        : payload
 
       if (isEditing) {
         setCourses((current) =>
-          current.map((course) =>
-            course.id === payload.id ? savedCourse : course,
-          ),
+          sortCourses(current.map((course) => (course.id === payload.id ? savedCourse : course))),
         )
         showToast("Kurs məlumatları uğurla yeniləndi!")
       } else {
-        setCourses((current) => [savedCourse, ...current])
+        setCourses((current) => sortCourses([...current, savedCourse]))
         showToast("Yeni kurs uğurla əlavə edildi!")
       }
 
-      setModal(null)
-      setEditItem(null)
-      setForm({ ...DEFAULT_FORM, technologies: [] })
-
+      resetModalState()
       await fetchCourses(false)
     } catch (error) {
       console.error("handleSave:", error)
@@ -369,22 +428,19 @@ export default function AdminKurslarPage() {
     setDeleting(true)
 
     try {
-      const response = await fetch(
-        `/api/courses?id=${encodeURIComponent(deleteId)}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-          },
+      const response = await fetch(`/api/courses?id=${encodeURIComponent(deleteId)}`, {
+        method: "DELETE",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
         },
-      )
+      })
 
       if (!response.ok) {
         throw new Error("Kurs silinərkən xəta baş verdi.")
       }
 
       setCourses((current) =>
-        current.filter((course) => course.id !== deleteId),
+        sortCourses(current.filter((course) => course.id !== deleteId)),
       )
 
       setDeleteId(null)
@@ -401,17 +457,67 @@ export default function AdminKurslarPage() {
     }
   }
 
+  const reorderCourses = async (from: number, to: number) => {
+    if (reordering) return
+    if (from === to || from < 0 || to < 0 || from >= courses.length || to >= courses.length) return
+
+    const previous = courses
+    const next = [...courses]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+
+    const reordered = next.map((course, index) => ({ ...course, order: index }))
+
+    setCourses(reordered)
+    setReordering(true)
+
+    try {
+      const response = await fetch("/api/courses", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
+        },
+        body: JSON.stringify({
+          orders: reordered.map(({ id, order }) => ({ id, order })),
+        }),
+      })
+
+      if (!response.ok) {
+        const data: unknown = await response.json().catch(() => null)
+        const message =
+          data && typeof data === "object" && "error" in data && typeof data.error === "string"
+            ? data.error
+            : "Sıralama yadda saxlanmadı."
+
+        throw new Error(message)
+      }
+
+      showToast("Sıralama yeniləndi!")
+    } catch (error) {
+      console.error("reorderCourses:", error)
+      setCourses(previous)
+      showToast(error instanceof Error ? error.message : "Sıralama xətası.", "error")
+    } finally {
+      setReordering(false)
+    }
+  }
+
+  const handleDrop = (targetIndex: number) => {
+    if (dragIndex !== null) {
+      void reorderCourses(dragIndex, targetIndex)
+    }
+
+    setDragIndex(null)
+    setOverIndex(null)
+  }
+
   const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
 
     if (!file) return
 
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-    ]
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 
     if (!allowedTypes.includes(file.type)) {
       showToast("JPG, PNG, WEBP və ya GIF şəkli seç.", "error")
@@ -479,6 +585,12 @@ export default function AdminKurslarPage() {
 
   if (status === "unauthenticated") return null
 
+  const deleteTarget = deleteId ? courses.find((course) => course.id === deleteId) : null
+
+  const inputClass =
+    "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-800 outline-none focus:border-[#1e3a47]"
+  const labelClass = "mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-500"
+
   return (
     <div className="flex min-h-screen bg-[#f8fafc]">
       <AdminSidebar />
@@ -506,9 +618,7 @@ export default function AdminKurslarPage() {
                 type="button"
                 aria-label="Bildirişi bağla"
                 onClick={() =>
-                  setToasts((current) =>
-                    current.filter((item) => item.id !== toast.id),
-                  )
+                  setToasts((current) => current.filter((item) => item.id !== toast.id))
                 }
                 className="ml-auto text-lg"
               >
@@ -526,7 +636,7 @@ export default function AdminKurslarPage() {
               Kursların İdarə Edilməsi
             </h1>
             <p className="mt-1 text-sm font-medium text-slate-500">
-              Kursları və onların texnologiyalarını idarə et ({courses.length} kurs)
+              Kursları, texnologiyaları və sıralamanı idarə et ({courses.length} kurs)
             </p>
           </div>
 
@@ -548,6 +658,12 @@ export default function AdminKurslarPage() {
           </div>
         </div>
 
+        {search.trim() !== "" && (
+          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs font-semibold text-amber-900">
+            Axtarış aktivdir, ona görə sıralama müvəqqəti söndürülüb. Yer dəyişmək üçün axtarışı təmizlə.
+          </p>
+        )}
+
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#1e3a47] border-t-transparent" />
@@ -555,10 +671,11 @@ export default function AdminKurslarPage() {
         ) : (
           <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[850px] text-left text-xs">
+              <table className="w-full min-w-[950px] text-left text-xs">
                 <thead className="border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
                   <tr>
-                    <th className="px-6 py-3.5">Kurs adı</th>
+                    <th className="w-32 px-4 py-3.5">Sıra</th>
+                    <th className="px-4 py-3.5">Kurs adı</th>
                     <th className="px-4 py-3.5">Kateqoriya</th>
                     <th className="px-4 py-3.5">Texnologiyalar</th>
                     <th className="px-4 py-3.5">Müddət</th>
@@ -570,374 +687,435 @@ export default function AdminKurslarPage() {
                 <tbody className="divide-y divide-slate-100">
                   {filteredCourses.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                      <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                         Heç bir kurs tapılmadı.
                       </td>
                     </tr>
                   ) : (
-                    filteredCourses.map((course) => (
-                      <tr key={course.id} className="transition-colors hover:bg-slate-50/60">
-                        <td className="px-6 py-4">
-                          <p className="text-sm font-bold text-slate-900">{course.title}</p>
-                          <p className="mt-0.5 line-clamp-1 max-w-xs text-[11px] text-slate-500">
-                            {course.subtitle || course.description}
-                          </p>
-                        </td>
+                    filteredCourses.map((course) => {
+                      const index = courses.findIndex((item) => item.id === course.id)
 
-                        <td className="px-4 py-4">
-                          <span className="inline-flex rounded-md border border-sky-200/60 bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-800">
-                            {course.category}
-                          </span>
-                        </td>
+                      return (
+                        <tr
+                          key={course.id}
+                          draggable={canReorder}
+                          onDragStart={(event) => {
+                            if (!canReorder) return
+                            event.dataTransfer.effectAllowed = "move"
+                            setDragIndex(index)
+                          }}
+                          onDragOver={(event) => {
+                            if (!canReorder || dragIndex === null) return
+                            event.preventDefault()
+                            setOverIndex(index)
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault()
+                            handleDrop(index)
+                          }}
+                          onDragEnd={() => {
+                            setDragIndex(null)
+                            setOverIndex(null)
+                          }}
+                          className={`transition-colors hover:bg-slate-50/60 ${
+                            dragIndex === index ? "opacity-40" : ""
+                          } ${
+                            overIndex === index && dragIndex !== null && dragIndex !== index
+                              ? "bg-sky-50 outline outline-2 -outline-offset-2 outline-sky-300"
+                              : ""
+                          }`}
+                        >
+                          <td className="px-4 py-4">
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                title={canReorder ? "Sürüşdürmək üçün tut" : undefined}
+                                className={`select-none text-base leading-none text-slate-400 ${
+                                  canReorder ? "cursor-grab active:cursor-grabbing" : "opacity-30"
+                                }`}
+                              >
+                                ⋮⋮
+                              </span>
+                              <span className="w-5 text-center text-[11px] font-bold text-slate-500">
+                                {index + 1}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={!canReorder || index <= 0}
+                                onClick={() => void reorderCourses(index, index - 1)}
+                                aria-label="Yuxarı daşı"
+                                className="rounded-md border border-slate-200 px-1.5 py-1 text-xs hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+                              >
+                                ↑
+                              </button>
+                              <button
+                                type="button"
+                                disabled={!canReorder || index === courses.length - 1}
+                                onClick={() => void reorderCourses(index, index + 1)}
+                                aria-label="Aşağı daşı"
+                                className="rounded-md border border-slate-200 px-1.5 py-1 text-xs hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-30"
+                              >
+                                ↓
+                              </button>
+                            </div>
+                          </td>
 
-                        <td className="max-w-[300px] px-4 py-4">
-                          <div className="flex flex-wrap gap-1.5">
-                            {course.technologies.length > 0 ? (
-                              course.technologies.map((technology) => (
-                                <span
-                                  key={technology}
-                                  className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700"
-                                >
-                                  {technology}
-                                </span>
-                              ))
-                            ) : (
-                              <span className="text-slate-400">Əlavə edilməyib</span>
-                            )}
-                          </div>
-                        </td>
+                          <td className="px-4 py-4">
+                            <p className="text-sm font-bold text-slate-900">{course.title}</p>
+                            <p className="mt-0.5 line-clamp-1 max-w-xs text-[11px] text-slate-500">
+                              {course.subtitle || course.description}
+                            </p>
+                          </td>
 
-                        <td className="px-4 py-4 font-medium text-slate-600">
-                          {course.duration || "—"}
-                        </td>
+                          <td className="px-4 py-4">
+                            <span className="inline-flex rounded-md border border-sky-200/60 bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-800">
+                              {course.category}
+                            </span>
+                          </td>
 
-                        <td className="px-4 py-4 font-bold text-slate-900">
-                          {course.discountPrice || course.price || "—"}
-                        </td>
+                          <td className="max-w-[300px] px-4 py-4">
+                            <div className="flex flex-wrap gap-1.5">
+                              {course.technologies.length > 0 ? (
+                                course.technologies.map((technology) => (
+                                  <span
+                                    key={technology}
+                                    className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-700"
+                                  >
+                                    {technology}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-slate-400">Əlavə edilməyib</span>
+                              )}
+                            </div>
+                          </td>
 
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => openEdit(course)}
-                              className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                            >
-                              Redaktə
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeleteId(course.id)}
-                              className="rounded-lg border border-rose-100 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100"
-                            >
-                              Sil
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                          <td className="px-4 py-4 font-medium text-slate-600">
+                            {course.duration || "—"}
+                          </td>
+
+                          <td className="px-4 py-4 font-bold text-slate-900">
+                            {course.discountPrice || course.price || "—"}
+                          </td>
+
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openEdit(course)}
+                                className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                              >
+                                Redaktə
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteId(course.id)}
+                                className="rounded-lg border border-rose-100 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-100"
+                              >
+                                Sil
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
                   )}
                 </tbody>
               </table>
             </div>
           </div>
         )}
+      </main>
 
-        {/* Modal: Add or Edit Course */}
-        {modal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/40 p-4 backdrop-blur-xs">
-            <div className="my-auto w-full max-w-lg rounded-2xl border border-slate-100 bg-white p-6 shadow-xl">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <h3 className="text-lg font-bold text-[#1e3a47]">
-                  {modal === "add" ? "Yeni Kurs Əlavə Et" : "Kursu Redaktə Et"}
-                </h3>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  aria-label="Bağla"
-                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+      {/* Əlavə et / Redaktə modalı */}
+      {modal && (
+        <div
+          className="fixed inset-0 z-[9998] flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 sm:items-center"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeModal()
+          }}
+        >
+          <form
+            onSubmit={handleSave}
+            role="dialog"
+            aria-modal="true"
+            className="my-6 w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl"
+          >
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-black text-[#1e3a47]">
+                {modal === "edit" ? "Kursu redaktə et" : "Yeni kurs əlavə et"}
+              </h2>
+              <button
+                type="button"
+                onClick={closeModal}
+                aria-label="Bağla"
+                className="text-2xl leading-none text-slate-400 hover:text-slate-700"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Kurs adı *</label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={(event) => handleTitleChange(event.target.value)}
+                  className={inputClass}
+                  required
+                />
               </div>
 
-              <form onSubmit={handleSave} className="mt-4 space-y-4">
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-700">Kursun Adı *</label>
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Alt başlıq</label>
+                <input
+                  type="text"
+                  value={form.subtitle ?? ""}
+                  onChange={(event) => updateForm("subtitle", event.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Slug</label>
+                <input
+                  type="text"
+                  value={form.slug}
+                  onChange={(event) => updateForm("slug", event.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Kateqoriya *</label>
+                <select
+                  value={form.category}
+                  onChange={(event) => updateForm("category", event.target.value)}
+                  className={inputClass}
+                >
+                  {CATEGORIES.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Təsvir</label>
+                <textarea
+                  rows={3}
+                  value={form.description}
+                  onChange={(event) => updateForm("description", event.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Müddət</label>
+                <input
+                  type="text"
+                  value={form.duration}
+                  onChange={(event) => updateForm("duration", event.target.value)}
+                  placeholder="3 ay"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Düymə mətni</label>
+                <input
+                  type="text"
+                  value={form.buttonText ?? ""}
+                  onChange={(event) => updateForm("buttonText", event.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Qiymət</label>
+                <input
+                  type="text"
+                  value={form.price}
+                  onChange={(event) => updateForm("price", event.target.value)}
+                  placeholder="300 AZN"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Endirimli qiymət</label>
+                <input
+                  type="text"
+                  value={form.discountPrice ?? ""}
+                  onChange={(event) => updateForm("discountPrice", event.target.value)}
+                  placeholder="250 AZN"
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Şəkil</label>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={form.image || "/hero.jpeg"}
+                    alt="Kurs şəkli"
+                    className="h-20 w-32 shrink-0 rounded-lg border border-slate-200 object-cover"
+                  />
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <input
+                      type="text"
+                      value={form.image}
+                      onChange={(event) => updateForm("image", event.target.value)}
+                      className={inputClass}
+                    />
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                      className="text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-200"
+                    />
+                    {uploading && (
+                      <span className="text-[11px] font-semibold text-sky-700">Yüklənir...</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>Neon rəng</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={form.neonColor || "#0ea5e9"}
+                    onChange={(event) => updateForm("neonColor", event.target.value)}
+                    className="h-10 w-12 cursor-pointer rounded-lg border border-slate-200 bg-white p-1"
+                  />
                   <input
                     type="text"
-                    required
-                    value={form.title}
-                    onChange={(event) => handleTitleChange(event.target.value)}
-                    placeholder="Məs: Kompüter, Tibb, Psixologiya..."
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+                    value={form.neonColor ?? ""}
+                    onChange={(event) => updateForm("neonColor", event.target.value)}
+                    className={inputClass}
                   />
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-700">Kateqoriya *</label>
-                    <select
-                      value={form.category}
-                      onChange={(event) => updateForm("category", event.target.value)}
-                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
+              <div>
+                <label className={labelClass}>Glow gradient</label>
+                <input
+                  type="text"
+                  value={form.glowGradient ?? ""}
+                  onChange={(event) => updateForm("glowGradient", event.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className={labelClass}>İkon tipi</label>
+                <input
+                  type="text"
+                  value={form.iconType ?? ""}
+                  onChange={(event) => updateForm("iconType", event.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className={labelClass}>Texnologiyalar</label>
+                <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-white p-2 focus-within:border-[#1e3a47]">
+                  {form.technologies.map((technology) => (
+                    <span
+                      key={technology}
+                      className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-700"
                     >
-                      {CATEGORIES.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                      {!CATEGORIES.includes(form.category) && form.category && (
-                        <option value={form.category}>{form.category}</option>
-                      )}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-700">Link / Slug *</label>
-                    <input
-                      type="text"
-                      value={form.slug}
-                      onChange={(event) => updateForm("slug", event.target.value)}
-                      placeholder="Məs: komputer"
-                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-700">Qısa Təsvir / Alt Başlıq</label>
-                  <textarea
-                    rows={2}
-                    value={form.subtitle || form.description || ""}
-                    onChange={(event) => {
-                      updateForm("subtitle", event.target.value)
-                      updateForm("description", event.target.value)
-                    }}
-                    placeholder="Kurs haqqında qısa izahat..."
-                    className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
-                  />
-                </div>
-
-                {/* Technologies / sub-categories */}
-                <div>
-                  <div className="mb-1 flex items-center justify-between">
-                    <label className="block text-xs font-bold text-slate-700">
-                      Kursun daxili kateqoriyaları (HTML & CSS, JavaScript, Python...)
-                    </label>
-                    <span className="text-[10px] font-semibold text-slate-400">
-                      {form.technologies.filter((item) => item.trim()).length} ədəd
+                      {technology}
+                      <button
+                        type="button"
+                        onClick={() => removeTechnology(technology)}
+                        aria-label={`${technology} sil`}
+                        className="text-sm leading-none text-slate-400 hover:text-rose-600"
+                      >
+                        ×
+                      </button>
                     </span>
-                  </div>
-
-                  <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
-                    {form.technologies.length === 0 && (
-                      <p className="text-[11px] text-slate-400">Hələ heç nə əlavə edilməyib.</p>
-                    )}
-
-                    {form.technologies.map((technology, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={technology}
-                          onChange={(event) =>
-                            updateForm(
-                              "technologies",
-                              form.technologies.map((item, itemIndex) =>
-                                itemIndex === index ? event.target.value : item,
-                              ),
-                            )
-                          }
-                          placeholder="Məs: JavaScript"
-                          className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
-                        />
-                        <button
-                          type="button"
-                          disabled={index === 0}
-                          onClick={() => {
-                            const next = [...form.technologies]
-                            ;[next[index - 1], next[index]] = [next[index], next[index - 1]]
-                            updateForm("technologies", next)
-                          }}
-                          aria-label="Yuxarı daşı"
-                          className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 disabled:opacity-30"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
-                          disabled={index === form.technologies.length - 1}
-                          onClick={() => {
-                            const next = [...form.technologies]
-                            ;[next[index + 1], next[index]] = [next[index], next[index + 1]]
-                            updateForm("technologies", next)
-                          }}
-                          aria-label="Aşağı daşı"
-                          className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 disabled:opacity-30"
-                        >
-                          ↓
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateForm(
-                              "technologies",
-                              form.technologies.filter((_, itemIndex) => itemIndex !== index),
-                            )
-                          }
-                          aria-label="Sil"
-                          className="rounded-lg border border-rose-100 bg-rose-50 px-2.5 py-1.5 text-xs font-bold text-rose-600 hover:bg-rose-100"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-
-                    <button
-                      type="button"
-                      onClick={() => updateForm("technologies", [...form.technologies, ""])}
-                      className="w-full rounded-lg border border-dashed border-slate-300 bg-white py-1.5 text-xs font-bold text-slate-600 transition hover:border-[#1e3a47] hover:text-[#1e3a47]"
-                    >
-                      + Yeni kateqoriya əlavə et
-                    </button>
-                  </div>
+                  ))}
+                  <input
+                    type="text"
+                    value={techInput}
+                    onChange={(event) => setTechInput(event.target.value)}
+                    onKeyDown={handleTechKeyDown}
+                    onBlur={() => addTechnologies(techInput)}
+                    placeholder="Yaz və Enter bas (vergüllə də olar)"
+                    className="min-w-[180px] flex-1 bg-transparent px-1.5 py-1 text-xs font-medium text-slate-800 outline-none"
+                  />
                 </div>
-
-                {/* Course Image Upload */}
-                <div>
-                  <label className="mb-1 block text-xs font-bold text-slate-700">Kurs Şəkli</label>
-                  <div className="flex items-start gap-3">
-                    <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                      {form.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={form.image}
-                          alt="Kurs şəkli"
-                          className="h-full w-full object-cover"
-                          onError={(event) => {
-                            ;(event.target as HTMLImageElement).src = "/hero.jpeg"
-                          }}
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-300">
-                          Şəkil yoxdur
-                        </div>
-                      )}
-                      {uploading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-white/70">
-                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#1e3a47] border-t-transparent" />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex-1 space-y-2">
-                      <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3.5 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-[#1e3a47] hover:bg-slate-100">
-                        {uploading ? "Yüklənir..." : "Şəkil yüklə"}
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={uploading}
-                          onChange={handleImageUpload}
-                        />
-                      </label>
-                      <input
-                        type="text"
-                        value={form.image}
-                        onChange={(event) => updateForm("image", event.target.value)}
-                        placeholder="və ya şəkil yolunu yazın: /courses/img.jpg"
-                        className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-700">Müddət</label>
-                    <input
-                      type="text"
-                      value={form.duration}
-                      onChange={(event) => updateForm("duration", event.target.value)}
-                      placeholder="3 - 6 ay"
-                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-700">Qiymət</label>
-                    <input
-                      type="text"
-                      value={form.price}
-                      onChange={(event) => updateForm("price", event.target.value)}
-                      placeholder="120 AZN / ay"
-                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-1 block text-xs font-bold text-slate-700">Endirimli qiymət</label>
-                    <input
-                      type="text"
-                      value={form.discountPrice ?? ""}
-                      onChange={(event) => updateForm("discountPrice", event.target.value)}
-                      placeholder="99 AZN / ay"
-                      className="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-medium text-slate-800 focus:border-[#1e3a47] focus:outline-hidden"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 border-t border-slate-100 pt-3">
-                  <button
-                    type="button"
-                    onClick={closeModal}
-                    className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                  >
-                    Ləğv et
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving || uploading}
-                    className="rounded-xl bg-[#1e3a47] px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#162c37] disabled:opacity-50"
-                  >
-                    {saving ? "Saxlanılır..." : "Yadda Saxla"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Delete Confirmation Modal */}
-        {deleteId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs">
-            <div className="w-full max-w-sm rounded-2xl border border-slate-100 bg-white p-6 shadow-xl">
-              <h3 className="text-base font-bold text-slate-900">Kursu silmək istədiyinizdən əminsiniz?</h3>
-              <p className="mt-2 text-xs text-slate-500">Bu əməliyyat kursu saytdan dərhal siləcəkdir.</p>
-              <div className="mt-5 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDeleteId(null)}
-                  disabled={deleting}
-                  className="rounded-xl border border-slate-200 px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                >
-                  Ləğv et
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className="rounded-xl bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-rose-700 disabled:opacity-50"
-                >
-                  {deleting ? "Silinir..." : "Bəli, Sil"}
-                </button>
               </div>
             </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={saving || uploading}
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Ləğv et
+              </button>
+              <button
+                type="submit"
+                disabled={saving || uploading}
+                className="rounded-xl bg-[#1e3a47] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#162c37] disabled:opacity-60"
+              >
+                {saving ? "Yadda saxlanılır..." : modal === "edit" ? "Yadda saxla" : "Əlavə et"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Silmə təsdiq modalı */}
+      {deleteId && (
+        <div
+          className="fixed inset-0 z-[9998] flex items-center justify-center bg-slate-900/50 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !deleting) setDeleteId(null)
+          }}
+        >
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+          >
+            <h2 className="text-lg font-black text-slate-900">Kursu sil?</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              {deleteTarget ? `"${deleteTarget.title}" kursu` : "Bu kurs"} həmişəlik silinəcək. Bu
+              əməliyyatı geri qaytarmaq mümkün deyil.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteId(null)}
+                disabled={deleting}
+                className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Ləğv et
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDelete()}
+                disabled={deleting}
+                className="rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-rose-700 disabled:opacity-60"
+              >
+                {deleting ? "Silinir..." : "Bəli, sil"}
+              </button>
+            </div>
           </div>
-        )}
-      </main>
+        </div>
+      )}
     </div>
   )
 }
