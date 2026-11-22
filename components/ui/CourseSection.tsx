@@ -22,6 +22,9 @@ interface CourseData {
   order?: number
 }
 
+const CACHE_KEY = "ugur-courses-v1"
+const FETCH_TIMEOUT_MS = 8000
+
 const academyCourses: CourseData[] = [
   {
     id: 1,
@@ -172,25 +175,63 @@ function sortByOrder(list: CourseData[]): CourseData[] {
   )
 }
 
+/** Brauzer yaddaşından son uğurlu kurs siyahısını oxuyur. */
+function readCache(): CourseData[] | null {
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY)
+    if (!raw) return null
+
+    const parsed: unknown = JSON.parse(raw)
+
+    return Array.isArray(parsed) && parsed.length > 0
+      ? (parsed as CourseData[])
+      : null
+  } catch {
+    return null
+  }
+}
+
+function writeCache(list: CourseData[]) {
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(list))
+  } catch {
+    // yaddaş doludur və ya bağlıdır — vacib deyil
+  }
+}
+
 export default function CourseSection() {
+  // Server və brauzer eyni siyahı ilə başlayır (hydration xətası olmasın)
   const [courses, setCourses] = useState<CourseData[]>(sortByOrder(academyCourses))
 
   useEffect(() => {
     let cancelled = false
 
-    fetch(`/api/courses?t=${Date.now()}`, { cache: "no-store" })
+    // 1) Əvvəlki səfərdən qalan data varsa, dərhal göstər
+    const cached = readCache()
+    if (cached) setCourses(sortByOrder(cached))
+
+    // 2) Arxa planda yenisini yüklə (8 saniyədən çox gözləmə)
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
+    fetch("/api/courses", { cache: "no-store", signal: controller.signal })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: unknown) => {
         if (cancelled) return
 
         if (Array.isArray(data) && data.length > 0) {
-          setCourses(sortByOrder(data as CourseData[]))
+          const next = sortByOrder(data as CourseData[])
+          setCourses(next)
+          writeCache(next)
         }
       })
       .catch(() => {})
+      .finally(() => window.clearTimeout(timer))
 
     return () => {
       cancelled = true
+      window.clearTimeout(timer)
+      controller.abort()
     }
   }, [])
 
@@ -246,6 +287,9 @@ export default function CourseSection() {
                     src={course.image || "/hero.jpeg"}
                     alt={course.title}
                     fill
+                    sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    quality={70}
+                    priority={idx < 4}
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   {/* Number badge */}
@@ -256,9 +300,9 @@ export default function CourseSection() {
 
                 {/* Content */}
                 <div className="flex flex-1 flex-col p-6">
-                  <h2 className="text-xl font-bold tracking-tight text-slate-950">
+                  <h3 className="text-xl font-bold tracking-tight text-slate-950">
                     {course.title}
-                  </h2>
+                  </h3>
                   <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm line-clamp-3">
                     {course.description || course.subtitle}
                   </p>
