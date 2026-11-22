@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { getCourseTags } from "@/lib/courseTags"
 
 interface CourseData {
@@ -22,12 +22,11 @@ interface CourseData {
   order?: number
 }
 
-const CACHE_KEY = "ugur-courses-v2"
-const FETCH_TIMEOUT_MS = 25000
-const FETCH_RETRIES = 1
+const CACHE_KEY = "ugur-courses-v3"
+const FETCH_TIMEOUT_MS = 15000
+const REQUEST_REUSE_MS = 20000
 
-/** Yalnız API tamamilə cavab verməyəndə göstərilir (ehtiyat siyahı). */
-const fallbackCourses: CourseData[] = [
+const academyCourses: CourseData[] = [
   {
     id: 1,
     title: "Kompüter",
@@ -221,93 +220,77 @@ function safeTags(course: CourseData): string[] {
   }
 }
 
-/** Kənar (http) və data: şəkilləri next/image optimizasiyasından keçirmir. */
-function isLocalImage(src: string): boolean {
-  return src.startsWith("/") && !src.startsWith("//")
+/* ------------------------------------------------------------------ */
+/* Sorğu React qalxmamışdan başlayır: JS yüklənən kimi gedir           */
+/* ------------------------------------------------------------------ */
+
+let courseRequest: Promise<CourseData[] | null> | null = null
+let courseRequestAt = 0
+
+function requestCourses(): Promise<CourseData[] | null> {
+  const fresh = courseRequest && Date.now() - courseRequestAt < REQUEST_REUSE_MS
+
+  if (fresh && courseRequest) return courseRequest
+
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
+  courseRequestAt = Date.now()
+  courseRequest = fetch("/api/courses", {
+    cache: "no-store",
+    signal: controller.signal,
+  })
+    .then((response) => (response.ok ? response.json() : null))
+    .then(cleanCourses)
+    .catch(() => null)
+    .then((data) => {
+      window.clearTimeout(timer)
+
+      // Uğursuz nəticə saxlanmasın: növbəti açılışda yenidən cəhd olsun
+      if (!data) courseRequest = null
+
+      return data
+    })
+
+  return courseRequest
 }
 
-async function fetchCourses(signal: AbortSignal): Promise<CourseData[] | null> {
-  const response = await fetch("/api/courses", { cache: "no-store", signal })
-
-  if (!response.ok) return null
-
-  return cleanCourses(await response.json().catch(() => null))
-}
-
-function SkeletonCard() {
-  return (
-    <div
-      aria-hidden="true"
-      className="flex animate-pulse flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm"
-    >
-      <div className="aspect-[16/10] w-full bg-slate-100" />
-      <div className="flex flex-1 flex-col p-6">
-        <div className="h-5 w-2/3 rounded bg-slate-100" />
-        <div className="mt-3 h-3 w-full rounded bg-slate-100" />
-        <div className="mt-2 h-3 w-5/6 rounded bg-slate-100" />
-        <div className="mt-8 h-10 w-full rounded-xl bg-slate-100" />
-      </div>
-    </div>
-  )
+if (typeof window !== "undefined") {
+  void requestCourses()
 }
 
 export default function CourseSection() {
-  const [courses, setCourses] = useState<CourseData[]>([])
-  const [loading, setLoading] = useState(true)
+  // Server və brauzer eyni siyahı ilə başlayır; kartlar dərhal görünür
+  const [courses, setCourses] = useState<CourseData[]>(() => sortByOrder(academyCourses))
 
   useEffect(() => {
     let cancelled = false
-    const controller = new AbortController()
 
-    // 1) Əvvəlki səfərdən qalan data varsa, dərhal göstər
+    // Əvvəlki səfərdən qalan data varsa, ehtiyat siyahının yerinə qoy
     const cached = readCache()
+    if (cached) setCourses(sortByOrder(cached))
 
-    if (cached) {
-      setCourses(sortByOrder(cached))
-      setLoading(false)
-    }
+    // Təzə datanı gözlə və yalnız dəyişibsə yenilə
+    void requestCourses().then((fresh) => {
+      if (cancelled || !fresh) return
 
-    // 2) Serverdən təzə datanı al (bir dəfə təkrar cəhd ilə)
-    async function load() {
-      for (let attempt = 0; attempt <= FETCH_RETRIES; attempt += 1) {
-        const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+      const next = sortByOrder(fresh)
 
-        try {
-          const fresh = await fetchCourses(controller.signal)
-
-          window.clearTimeout(timer)
-
-          if (cancelled) return
-
-          if (fresh) {
-            setCourses(sortByOrder(fresh))
-            writeCache(fresh)
-            setLoading(false)
-            return
-          }
-        } catch {
-          window.clearTimeout(timer)
-
-          if (cancelled) return
-        }
-      }
-
-      if (cancelled) return
-
-      // Server cavab vermədi: yaddaş yoxdursa, ehtiyat siyahını göstər
       setCourses((current) =>
-        current.length > 0 ? current : sortByOrder(fallbackCourses),
+        JSON.stringify(current) === JSON.stringify(next) ? current : next,
       )
-      setLoading(false)
-    }
-
-    void load()
+      writeCache(fresh)
+    })
 
     return () => {
       cancelled = true
-      controller.abort()
     }
   }, [])
+
+  const cards = useMemo(
+    () => courses.map((course) => ({ course, tags: safeTags(course) })),
+    [courses],
+  )
 
   return (
     <section className="relative overflow-hidden px-6 py-24 sm:px-8 lg:px-12 lg:py-32">
@@ -346,82 +329,71 @@ export default function CourseSection() {
         </div>
 
         {/* Course Cards Grid */}
-        <div
-          className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-          aria-busy={loading}
-        >
-          {loading
-            ? Array.from({ length: 8 }, (_, index) => <SkeletonCard key={index} />)
-            : courses.map((course, idx) => {
-                const tags = safeTags(course)
-                const imageSrc = course.image || "/hero.jpeg"
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {cards.map(({ course, tags }, idx) => (
+            <article
+              key={`${course.id}-${course.slug}`}
+              className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl"
+            >
+              {/* Image: serverdə yenidən ölçüləndirilmir, brauzer bir dəfə yükləyib saxlayır */}
+              <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                <Image
+                  src={course.image || "/hero.jpeg"}
+                  alt={course.title}
+                  fill
+                  unoptimized
+                  priority={idx < 4}
+                  className="object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                {/* Number badge */}
+                <div className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-slate-900 backdrop-blur-md shadow">
+                  {String(idx + 1).padStart(2, "0")}
+                </div>
+              </div>
 
-                return (
-                  <article
-                    key={`${course.id}-${course.slug}`}
-                    className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl"
+              {/* Content */}
+              <div className="flex flex-1 flex-col p-6">
+                <h3 className="text-xl font-bold tracking-tight text-slate-950">
+                  {course.title}
+                </h3>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm line-clamp-3">
+                  {course.description || course.subtitle}
+                </p>
+
+                {/* Sub-course tags */}
+                {tags.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div className="mt-auto pt-6">
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-4 text-xs">
+                    <span className="font-semibold text-slate-400">
+                      Müddət:{" "}
+                      <strong className="text-slate-700">{course.duration || "—"}</strong>
+                    </span>
+                  </div>
+
+                  <Link
+                    href={`/kurslar/${course.slug}`}
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
                   >
-                    {/* Image */}
-                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                      <Image
-                        src={imageSrc}
-                        alt={course.title}
-                        fill
-                        sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                        priority={idx < 4}
-                        unoptimized={!isLocalImage(imageSrc)}
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      {/* Number badge */}
-                      <div className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-slate-900 backdrop-blur-md shadow">
-                        {String(idx + 1).padStart(2, "0")}
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex flex-1 flex-col p-6">
-                      <h3 className="text-xl font-bold tracking-tight text-slate-950">
-                        {course.title}
-                      </h3>
-                      <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm line-clamp-3">
-                        {course.description || course.subtitle}
-                      </p>
-
-                      {/* Sub-course tags */}
-                      {tags.length > 0 && (
-                        <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
-                          {tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Footer */}
-                      <div className="mt-auto pt-6">
-                        <div className="flex items-center justify-between border-t border-slate-100 pt-4 text-xs">
-                          <span className="font-semibold text-slate-400">
-                            Müddət:{" "}
-                            <strong className="text-slate-700">{course.duration || "—"}</strong>
-                          </span>
-                        </div>
-
-                        <Link
-                          href={`/kurslar/${course.slug}`}
-                          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
-                        >
-                          <span>Ətraflı tanış ol</span>
-                          <span>→</span>
-                        </Link>
-                      </div>
-                    </div>
-                  </article>
-                )
-              })}
+                    <span>Ətraflı tanış ol</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+              </div>
+            </article>
+          ))}
         </div>
 
         {/* Footer Banner */}
