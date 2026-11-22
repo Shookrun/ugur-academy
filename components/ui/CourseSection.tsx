@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { getCourseTags } from "@/lib/courseTags"
 
 interface CourseData {
@@ -22,150 +22,12 @@ interface CourseData {
   order?: number
 }
 
-const CACHE_KEY = "ugur-courses-v3"
+type Status = "loading" | "ready" | "error"
+
+const CACHE_KEY = "ugur-courses-v4"
 const FETCH_TIMEOUT_MS = 15000
 const REQUEST_REUSE_MS = 20000
-
-const academyCourses: CourseData[] = [
-  {
-    id: 1,
-    title: "Kompüter",
-    subtitle: "Müasir rəqəmsal bacarıqlar, ofis proqramları və praktiki texnologiya tədrisi",
-    description: "Kompüter bilikləri və müasir rəqəmsal bacarıqlar üzrə hərtərəfli tədris proqramları.",
-    slug: "komputer",
-    category: "İT və Texnologiya",
-    image: "/hero.jpeg",
-    duration: "3 - 6 ay",
-    price: "120 AZN / ay",
-    discountPrice: "99 AZN / ay",
-    hasChildren: true,
-    children: ["Kompüter operatoru", "Microsoft Office", "Qrafik dizayn"],
-    order: 0,
-  },
-  {
-    id: 2,
-    title: "Tibb",
-    subtitle: "Tibb bacısı işi, ilkin tibbi yardım və praktiki klinik biliklər",
-    description: "Tibb sahəsində nəzəri və praktiki biliklərin yüksək standartlarla inkişaf etdirilməsi.",
-    slug: "tibb",
-    category: "Səhiyyə və Tibb",
-    image: "/hero.jpeg",
-    duration: "12 - 18 ay",
-    price: "150 AZN / ay",
-    discountPrice: "125 AZN / ay",
-    order: 1,
-  },
-  {
-    id: 3,
-    title: "Psixoloq xidməti",
-    subtitle: "Fərdi inkişaf, emosional balans və peşəkar psixoloji dəstək xidmətləri",
-    description: "Fərdi inkişaf, stress idarəetməsi və psixoloji dəstək üçün peşəkar xidmət və təlimlər.",
-    slug: "psixoloq-xidmeti",
-    category: "Psixologiya və İnkişaf",
-    image: "/hero.jpeg",
-    duration: "-",
-    price: "140 AZN / ay",
-    discountPrice: "115 AZN / ay",
-    order: 2,
-  },
-  {
-    id: 4,
-    title: "Loqoped xidməti",
-    subtitle: "Nitq qüsurlarının aradan qaldırılması, artikulyasiya və defektoloji dəstək",
-    description: "Nitq və danışıq problemlərinin aradan qaldırılması üçün loqoped xidməti və təlimləri.",
-    slug: "loqoped-xidmeti",
-    category: "Loqopediya və Defektologiya",
-    image: "/hero.jpeg",
-    duration: "-",
-    price: "160 AZN / ay",
-    discountPrice: "135 AZN / ay",
-    order: 3,
-  },
-  {
-    id: 5,
-    title: "Baytarlıq",
-    subtitle: "Heyvan sağlamlığı, baytarlıq təbabəti və kliniki qulluq prinsipləri",
-    description: "Heyvan sağlamlığı, diaqnostika və baytarlıq sahəsində peşəkar təhsil proqramı.",
-    slug: "baytarliq",
-    category: "Heyvandarlıq və Baytarlıq",
-    image: "/hero.jpeg",
-    duration: "12 ay",
-    price: "150 AZN / ay",
-    discountPrice: "120 AZN / ay",
-    order: 4,
-  },
-  {
-    id: 6,
-    title: "Məktəbəqədər və ibtidai",
-    subtitle: "Uşaqların erkən inkişafı, məktəbə hazırlıq və müasir pedaqoji metodikalar",
-    description: "Məktəbəqədər və ibtidai təhsil üzrə uşaqların hərtərəfli inkişafına yönəlmiş peşəkar proqramlar.",
-    slug: "mektebeqeder-ve-ibtidai",
-    category: "Pedaqogika və Təhsil",
-    image: "/hero.jpeg",
-    duration: "3 - 6 ay",
-    price: "130 AZN / ay",
-    discountPrice: "105 AZN / ay",
-    order: 5,
-  },
-  {
-    id: 7,
-    title: "MİQ",
-    subtitle: "Müəllimlərin İşə Qəbulu imtahanına hərtərəfli və zəmanətli hazırlıq proqramı",
-    description: "Müəllimlərin işə qəbulu və sertifikasiya imtahanlarına yüksək ballı peşəkar hazırlıq.",
-    slug: "miq",
-    category: "İmtahana Hazırlıq",
-    image: "/hero.jpeg",
-    duration: "-",
-    price: "140 AZN / ay",
-    discountPrice: "110 AZN / ay",
-    order: 6,
-  },
-  {
-    id: 8,
-    title: "Dövlət Qulluğu",
-    subtitle: "Dövlət qulluğuna qəbul imtahanına peşəkar hazırlıq — qanunvericilik, iqtisadiyyat, Azərbaycan tarixi",
-    description: "Dövlət qulluqçusu imtahanına kompleks hazırlıq: hüquq, tarix, iqtisadiyyat, ümumi bilik.",
-    slug: "dovlet-qullugu",
-    category: "İmtahana Hazırlıq",
-    image: "/hero.jpeg",
-    duration: "-",
-    price: "130 AZN / ay",
-    discountPrice: "105 AZN / ay",
-    hasChildren: true,
-    children: ["Qanunvericilik", "Məntiq", "İnformatika", "Azərbaycan Dili"],
-    order: 7,
-  },
-  {
-    id: 9,
-    title: "Magistr Hazırlığı",
-    subtitle: "Ali məktəblərə magistratura qəbul imtahanına dərindən hazırlıq proqramı",
-    description: "Magistratura qəbul imtahanları üzrə peşəkar hazırlıq: ixtisas fənləri, test strategiyası, yazı bacarıqları.",
-    slug: "magistr-hazirligi",
-    category: "İmtahana Hazırlıq",
-    image: "/hero.jpeg",
-    duration: "-",
-    price: "145 AZN / ay",
-    discountPrice: "120 AZN / ay",
-    hasChildren: true,
-    children: ["Azərbaycan dili", "İngilis dili", "İxtisas fənləri", "Test strategiyası"],
-    order: 8,
-  },
-  {
-    id: 10,
-    title: "İT Proqramlaşdırma",
-    subtitle: "Web inkişafı, mobil tətbiqlər və müasir proqramlaşdırma texnologiyaları üzrə peşəkar kurs",
-    description: "Sıfırdan başlayaraq proqramçı olmaq istəyənlər üçün intensiv və praktiki İT proqramlaşdırma kursu.",
-    slug: "it-proqramlasdirma",
-    category: "İT və Texnologiya",
-    image: "/hero.jpeg",
-    duration: "8 - 12 ay",
-    price: "160 AZN / ay",
-    discountPrice: "135 AZN / ay",
-    hasChildren: true,
-    children: ["HTML & CSS", "JavaScript", "Python", "React", "Mobile App", "Backend"],
-    order: 9,
-  },
-]
+const SKELETON_COUNT = 8
 
 /** order-ə görə düzür; order olmayan kurslar öz yerini saxlayır. */
 function sortByOrder(list: CourseData[]): CourseData[] {
@@ -220,6 +82,11 @@ function safeTags(course: CourseData): string[] {
   }
 }
 
+/** Yerli şəkillər Next optimizasiyasından keçir; kənar və data: şəkillər keçmir. */
+function isLocalImage(src: string): boolean {
+  return src.startsWith("/") && !src.startsWith("//")
+}
+
 /* ------------------------------------------------------------------ */
 /* Sorğu React qalxmamışdan başlayır: JS yüklənən kimi gedir           */
 /* ------------------------------------------------------------------ */
@@ -227,10 +94,11 @@ function safeTags(course: CourseData): string[] {
 let courseRequest: Promise<CourseData[] | null> | null = null
 let courseRequestAt = 0
 
-function requestCourses(): Promise<CourseData[] | null> {
-  const fresh = courseRequest && Date.now() - courseRequestAt < REQUEST_REUSE_MS
+function requestCourses(force = false): Promise<CourseData[] | null> {
+  const reusable =
+    !force && courseRequest && Date.now() - courseRequestAt < REQUEST_REUSE_MS
 
-  if (fresh && courseRequest) return courseRequest
+  if (reusable && courseRequest) return courseRequest
 
   const controller = new AbortController()
   const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
@@ -246,7 +114,7 @@ function requestCourses(): Promise<CourseData[] | null> {
     .then((data) => {
       window.clearTimeout(timer)
 
-      // Uğursuz nəticə saxlanmasın: növbəti açılışda yenidən cəhd olsun
+      // Uğursuz nəticə saxlanmasın: növbəti cəhd yenidən sorğu göndərsin
       if (!data) courseRequest = null
 
       return data
@@ -259,33 +127,74 @@ if (typeof window !== "undefined") {
   void requestCourses()
 }
 
+function SkeletonCard() {
+  return (
+    <div
+      aria-hidden="true"
+      className="flex animate-pulse flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm"
+    >
+      <div className="aspect-[16/10] w-full bg-slate-100" />
+      <div className="flex flex-1 flex-col p-6">
+        <div className="h-5 w-2/3 rounded bg-slate-100" />
+        <div className="mt-3 h-3 w-full rounded bg-slate-100" />
+        <div className="mt-2 h-3 w-5/6 rounded bg-slate-100" />
+        <div className="mt-4 flex gap-1.5 border-t border-slate-100 pt-3">
+          <div className="h-5 w-16 rounded-md bg-slate-100" />
+          <div className="h-5 w-20 rounded-md bg-slate-100" />
+        </div>
+        <div className="mt-8 h-3 w-1/3 rounded bg-slate-100" />
+        <div className="mt-4 h-10 w-full rounded-xl bg-slate-100" />
+      </div>
+    </div>
+  )
+}
+
 export default function CourseSection() {
-  // Server və brauzer eyni siyahı ilə başlayır; kartlar dərhal görünür
-  const [courses, setCourses] = useState<CourseData[]>(() => sortByOrder(academyCourses))
+  const [courses, setCourses] = useState<CourseData[]>([])
+  const [status, setStatus] = useState<Status>("loading")
+
+  const load = useCallback((force: boolean, isCancelled: () => boolean) => {
+    void requestCourses(force).then((fresh) => {
+      if (isCancelled()) return
+
+      if (fresh) {
+        const next = sortByOrder(fresh)
+
+        setCourses((current) =>
+          JSON.stringify(current) === JSON.stringify(next) ? current : next,
+        )
+        setStatus("ready")
+        writeCache(fresh)
+        return
+      }
+
+      // Server cavab vermədi: yaddaşdan göstərilən kurs yoxdursa, xəta mesajı
+      setStatus((current) => (current === "ready" ? current : "error"))
+    })
+  }, [])
 
   useEffect(() => {
     let cancelled = false
 
-    // Əvvəlki səfərdən qalan data varsa, ehtiyat siyahının yerinə qoy
+    // Əvvəlki səfərdən qalan real data varsa, dərhal göstər
     const cached = readCache()
-    if (cached) setCourses(sortByOrder(cached))
 
-    // Təzə datanı gözlə və yalnız dəyişibsə yenilə
-    void requestCourses().then((fresh) => {
-      if (cancelled || !fresh) return
+    if (cached) {
+      setCourses(sortByOrder(cached))
+      setStatus("ready")
+    }
 
-      const next = sortByOrder(fresh)
-
-      setCourses((current) =>
-        JSON.stringify(current) === JSON.stringify(next) ? current : next,
-      )
-      writeCache(fresh)
-    })
+    load(false, () => cancelled)
 
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [load])
+
+  const retry = () => {
+    setStatus("loading")
+    load(true, () => false)
+  }
 
   const cards = useMemo(
     () => courses.map((course) => ({ course, tags: safeTags(course) })),
@@ -328,73 +237,105 @@ export default function CourseSection() {
           </Link>
         </div>
 
-        {/* Course Cards Grid */}
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {cards.map(({ course, tags }, idx) => (
-            <article
-              key={`${course.id}-${course.slug}`}
-              className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl"
+        {/* Error state */}
+        {status === "error" && (
+          <div className="flex flex-col items-center gap-4 rounded-[2rem] border border-slate-200/80 bg-white/80 p-10 text-center shadow-sm">
+            <p className="text-sm text-slate-600 sm:text-base">
+              Kurslar yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd et.
+            </p>
+            <button
+              type="button"
+              onClick={retry}
+              className="rounded-full bg-slate-950 px-6 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
             >
-              {/* Image: serverdə yenidən ölçüləndirilmir, brauzer bir dəfə yükləyib saxlayır */}
-              <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                <Image
-                  src={course.image || "/hero.jpeg"}
-                  alt={course.title}
-                  fill
-                  unoptimized
-                  priority={idx < 4}
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                {/* Number badge */}
-                <div className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-slate-900 backdrop-blur-md shadow">
-                  {String(idx + 1).padStart(2, "0")}
-                </div>
-              </div>
+              Yenidən yüklə
+            </button>
+          </div>
+        )}
 
-              {/* Content */}
-              <div className="flex flex-1 flex-col p-6">
-                <h3 className="text-xl font-bold tracking-tight text-slate-950">
-                  {course.title}
-                </h3>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm line-clamp-3">
-                  {course.description || course.subtitle}
-                </p>
+        {/* Course Cards Grid */}
+        {status !== "error" && (
+          <div
+            className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            aria-busy={status === "loading"}
+          >
+            {status === "loading"
+              ? Array.from({ length: SKELETON_COUNT }, (_, index) => (
+                  <SkeletonCard key={index} />
+                ))
+              : cards.map(({ course, tags }, idx) => {
+                  const imageSrc = course.image || "/hero.jpeg"
 
-                {/* Sub-course tags */}
-                {tags.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
-                    {tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                  return (
+                    <article
+                      key={`${course.id}-${course.slug}`}
+                      className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl"
+                    >
+                      {/* Image */}
+                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                        <Image
+                          src={imageSrc}
+                          alt={course.title}
+                          fill
+                          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          priority={idx < 4}
+                          unoptimized={!isLocalImage(imageSrc)}
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        {/* Number badge */}
+                        <div className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-slate-900 backdrop-blur-md shadow">
+                          {String(idx + 1).padStart(2, "0")}
+                        </div>
+                      </div>
 
-                {/* Footer */}
-                <div className="mt-auto pt-6">
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-4 text-xs">
-                    <span className="font-semibold text-slate-400">
-                      Müddət:{" "}
-                      <strong className="text-slate-700">{course.duration || "—"}</strong>
-                    </span>
-                  </div>
+                      {/* Content */}
+                      <div className="flex flex-1 flex-col p-6">
+                        <h3 className="text-xl font-bold tracking-tight text-slate-950">
+                          {course.title}
+                        </h3>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm line-clamp-3">
+                          {course.description || course.subtitle}
+                        </p>
 
-                  <Link
-                    href={`/kurslar/${course.slug}`}
-                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
-                  >
-                    <span>Ətraflı tanış ol</span>
-                    <span>→</span>
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+                        {/* Sub-course tags */}
+                        {tags.length > 0 && (
+                          <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
+                            {tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Footer */}
+                        <div className="mt-auto pt-6">
+                          <div className="flex items-center justify-between border-t border-slate-100 pt-4 text-xs">
+                            <span className="font-semibold text-slate-400">
+                              Müddət:{" "}
+                              <strong className="text-slate-700">
+                                {course.duration || "—"}
+                              </strong>
+                            </span>
+                          </div>
+
+                          <Link
+                            href={`/kurslar/${course.slug}`}
+                            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
+                          >
+                            <span>Ətraflı tanış ol</span>
+                            <span>→</span>
+                          </Link>
+                        </div>
+                      </div>
+                    </article>
+                  )
+                })}
+          </div>
+        )}
 
         {/* Footer Banner */}
         <div className="mt-16 flex flex-col items-center justify-between gap-6 rounded-[2.2rem] border border-slate-200/80 bg-white/80 p-8 shadow-sm backdrop-blur-md sm:flex-row sm:p-10">
