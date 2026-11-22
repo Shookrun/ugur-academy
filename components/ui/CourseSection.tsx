@@ -22,10 +22,12 @@ interface CourseData {
   order?: number
 }
 
-const CACHE_KEY = "ugur-courses-v1"
-const FETCH_TIMEOUT_MS = 8000
+const CACHE_KEY = "ugur-courses-v2"
+const FETCH_TIMEOUT_MS = 25000
+const FETCH_RETRIES = 1
 
-const academyCourses: CourseData[] = [
+/** Yalnız API tamamilə cavab verməyəndə göstərilir (ehtiyat siyahı). */
+const fallbackCourses: CourseData[] = [
   {
     id: 1,
     title: "Kompüter",
@@ -175,17 +177,27 @@ function sortByOrder(list: CourseData[]): CourseData[] {
   )
 }
 
-/** Brauzer yaddaşından son uğurlu kurs siyahısını oxuyur. */
+/** Yalnız düzgün formalı kursları saxlayır (title və slug mütləqdir). */
+function cleanCourses(data: unknown): CourseData[] | null {
+  if (!Array.isArray(data)) return null
+
+  const valid = data.filter(
+    (item): item is CourseData =>
+      Boolean(item) &&
+      typeof item === "object" &&
+      typeof (item as CourseData).title === "string" &&
+      typeof (item as CourseData).slug === "string" &&
+      (item as CourseData).title.trim().length > 0 &&
+      (item as CourseData).slug.trim().length > 0,
+  )
+
+  return valid.length > 0 ? valid : null
+}
+
 function readCache(): CourseData[] | null {
   try {
     const raw = window.localStorage.getItem(CACHE_KEY)
-    if (!raw) return null
-
-    const parsed: unknown = JSON.parse(raw)
-
-    return Array.isArray(parsed) && parsed.length > 0
-      ? (parsed as CourseData[])
-      : null
+    return raw ? cleanCourses(JSON.parse(raw)) : null
   } catch {
     return null
   }
@@ -199,38 +211,100 @@ function writeCache(list: CourseData[]) {
   }
 }
 
+/** Kurs etiketləri xəta versə, bütün bölmə çökməsin. */
+function safeTags(course: CourseData): string[] {
+  try {
+    const tags = getCourseTags(course)
+    return Array.isArray(tags) ? tags : []
+  } catch {
+    return []
+  }
+}
+
+/** Kənar (http) və data: şəkilləri next/image optimizasiyasından keçirmir. */
+function isLocalImage(src: string): boolean {
+  return src.startsWith("/") && !src.startsWith("//")
+}
+
+async function fetchCourses(signal: AbortSignal): Promise<CourseData[] | null> {
+  const response = await fetch("/api/courses", { cache: "no-store", signal })
+
+  if (!response.ok) return null
+
+  return cleanCourses(await response.json().catch(() => null))
+}
+
+function SkeletonCard() {
+  return (
+    <div
+      aria-hidden="true"
+      className="flex animate-pulse flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm"
+    >
+      <div className="aspect-[16/10] w-full bg-slate-100" />
+      <div className="flex flex-1 flex-col p-6">
+        <div className="h-5 w-2/3 rounded bg-slate-100" />
+        <div className="mt-3 h-3 w-full rounded bg-slate-100" />
+        <div className="mt-2 h-3 w-5/6 rounded bg-slate-100" />
+        <div className="mt-8 h-10 w-full rounded-xl bg-slate-100" />
+      </div>
+    </div>
+  )
+}
+
 export default function CourseSection() {
-  // Server və brauzer eyni siyahı ilə başlayır (hydration xətası olmasın)
-  const [courses, setCourses] = useState<CourseData[]>(sortByOrder(academyCourses))
+  const [courses, setCourses] = useState<CourseData[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
+    const controller = new AbortController()
 
     // 1) Əvvəlki səfərdən qalan data varsa, dərhal göstər
     const cached = readCache()
-    if (cached) setCourses(sortByOrder(cached))
 
-    // 2) Arxa planda yenisini yüklə (8 saniyədən çox gözləmə)
-    const controller = new AbortController()
-    const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+    if (cached) {
+      setCourses(sortByOrder(cached))
+      setLoading(false)
+    }
 
-    fetch("/api/courses", { cache: "no-store", signal: controller.signal })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: unknown) => {
-        if (cancelled) return
+    // 2) Serverdən təzə datanı al (bir dəfə təkrar cəhd ilə)
+    async function load() {
+      for (let attempt = 0; attempt <= FETCH_RETRIES; attempt += 1) {
+        const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
 
-        if (Array.isArray(data) && data.length > 0) {
-          const next = sortByOrder(data as CourseData[])
-          setCourses(next)
-          writeCache(next)
+        try {
+          const fresh = await fetchCourses(controller.signal)
+
+          window.clearTimeout(timer)
+
+          if (cancelled) return
+
+          if (fresh) {
+            setCourses(sortByOrder(fresh))
+            writeCache(fresh)
+            setLoading(false)
+            return
+          }
+        } catch {
+          window.clearTimeout(timer)
+
+          if (cancelled) return
         }
-      })
-      .catch(() => {})
-      .finally(() => window.clearTimeout(timer))
+      }
+
+      if (cancelled) return
+
+      // Server cavab vermədi: yaddaş yoxdursa, ehtiyat siyahını göstər
+      setCourses((current) =>
+        current.length > 0 ? current : sortByOrder(fallbackCourses),
+      )
+      setLoading(false)
+    }
+
+    void load()
 
     return () => {
       cancelled = true
-      window.clearTimeout(timer)
       controller.abort()
     }
   }, [])
@@ -271,77 +345,83 @@ export default function CourseSection() {
           </Link>
         </div>
 
-        {/* Course Cards Grid — identical to /kurslar page */}
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {courses.map((course, idx) => {
-            const tags: string[] = getCourseTags(course)
+        {/* Course Cards Grid */}
+        <div
+          className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          aria-busy={loading}
+        >
+          {loading
+            ? Array.from({ length: 8 }, (_, index) => <SkeletonCard key={index} />)
+            : courses.map((course, idx) => {
+                const tags = safeTags(course)
+                const imageSrc = course.image || "/hero.jpeg"
 
-            return (
-              <article
-                key={course.id}
-                className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl"
-              >
-                {/* Image */}
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                  <Image
-                    src={course.image || "/hero.jpeg"}
-                    alt={course.title}
-                    fill
-                    sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    quality={70}
-                    priority={idx < 4}
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  {/* Number badge */}
-                  <div className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-slate-900 backdrop-blur-md shadow">
-                    {String(idx + 1).padStart(2, "0")}
-                  </div>
-                </div>
+                return (
+                  <article
+                    key={`${course.id}-${course.slug}`}
+                    className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl"
+                  >
+                    {/* Image */}
+                    <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                      <Image
+                        src={imageSrc}
+                        alt={course.title}
+                        fill
+                        sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        priority={idx < 4}
+                        unoptimized={!isLocalImage(imageSrc)}
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      {/* Number badge */}
+                      <div className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-slate-900 backdrop-blur-md shadow">
+                        {String(idx + 1).padStart(2, "0")}
+                      </div>
+                    </div>
 
-                {/* Content */}
-                <div className="flex flex-1 flex-col p-6">
-                  <h3 className="text-xl font-bold tracking-tight text-slate-950">
-                    {course.title}
-                  </h3>
-                  <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm line-clamp-3">
-                    {course.description || course.subtitle}
-                  </p>
+                    {/* Content */}
+                    <div className="flex flex-1 flex-col p-6">
+                      <h3 className="text-xl font-bold tracking-tight text-slate-950">
+                        {course.title}
+                      </h3>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm line-clamp-3">
+                        {course.description || course.subtitle}
+                      </p>
 
-                  {/* Sub-course tags */}
-                  {tags.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
-                      {tags.map((tag: string) => (
-                        <span
-                          key={tag}
-                          className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                      {/* Sub-course tags */}
+                      {tags.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
+                          {tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Footer */}
+                      <div className="mt-auto pt-6">
+                        <div className="flex items-center justify-between border-t border-slate-100 pt-4 text-xs">
+                          <span className="font-semibold text-slate-400">
+                            Müddət:{" "}
+                            <strong className="text-slate-700">{course.duration || "—"}</strong>
+                          </span>
+                        </div>
+
+                        <Link
+                          href={`/kurslar/${course.slug}`}
+                          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
                         >
-                          {tag}
-                        </span>
-                      ))}
+                          <span>Ətraflı tanış ol</span>
+                          <span>→</span>
+                        </Link>
+                      </div>
                     </div>
-                  )}
-
-                  {/* Footer */}
-                  <div className="mt-auto pt-6">
-                    <div className="flex items-center justify-between border-t border-slate-100 pt-4 text-xs">
-                      <span className="font-semibold text-slate-400">
-                        Müddət:{" "}
-                        <strong className="text-slate-700">{course.duration || "—"}</strong>
-                      </span>
-                    </div>
-
-                    <Link
-                      href={`/kurslar/${course.slug}`}
-                      className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
-                    >
-                      <span>Ətraflı tanış ol</span>
-                      <span>→</span>
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            )
-          })}
+                  </article>
+                )
+              })}
         </div>
 
         {/* Footer Banner */}
