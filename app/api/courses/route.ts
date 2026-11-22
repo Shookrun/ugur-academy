@@ -4,11 +4,14 @@ import fs from "fs/promises"
 import path from "path"
 import { coursesData } from "@/data/courses"
 import { getCollection, setCollection } from "@/lib/db"
+import { cached, invalidate } from "@/lib/memoryCache"
 
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 const COLLECTION_KEY = "courses"
+const CACHE_KEY = "courses"
+const CACHE_TTL_MS = 30_000
 const seedFilePath = path.join(process.cwd(), "data", "dynamic_courses.json")
 
 type CourseRecord = Record<string, unknown> & {
@@ -131,7 +134,8 @@ const initialCourses: CourseRecord[] = coursesData.map((course, index) =>
   }),
 )
 
-async function readCourses(): Promise<CourseRecord[]> {
+/** Bazadan oxuyur (yavaş hissə). Birbaşa çağırılmır, keş vasitəsilə çağırılır. */
+async function loadCourses(): Promise<CourseRecord[]> {
   const stored = await getCollection(COLLECTION_KEY)
 
   if (Array.isArray(stored)) {
@@ -157,8 +161,22 @@ async function readCourses(): Promise<CourseRecord[]> {
   return sortedSeed
 }
 
+/**
+ * Keşdən oxuyur: ilk sorğudan sonra cavab millisaniyələrlə gəlir.
+ * Nüsxə qaytarılır ki, POST/PUT/PATCH/DELETE keşdəki massivi təsadüfən dəyişməsin.
+ */
+async function readCourses(): Promise<CourseRecord[]> {
+  const courses = await cached(CACHE_KEY, CACHE_TTL_MS, loadCourses)
+
+  return structuredClone(courses)
+}
+
 async function writeCourses(data: CourseRecord[]): Promise<void> {
   await setCollection(COLLECTION_KEY, sortCourses(data))
+
+  // Köhnə keşi sil və təzəsini dərhal arxa planda hazırla
+  invalidate(CACHE_KEY)
+  void cached(CACHE_KEY, CACHE_TTL_MS, loadCourses).catch(() => {})
 }
 
 function revalidateCoursePages(): void {
