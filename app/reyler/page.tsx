@@ -8,8 +8,6 @@ type Review = {
   title: string
   description: string
   videoId: string
-  type: "STUDENT" | "PARENT"
-  course: string
 }
 
 export default function ReviewsPage() {
@@ -55,8 +53,8 @@ export default function ReviewsPage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <span className="inline-flex rounded-full border border-[#1e3a47]/10 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-[#1e3a47] shadow-sm">Uğur Academy</span>
-          <h1 className="mt-6 text-4xl font-black tracking-tight text-[#1e3a47] sm:text-5xl lg:text-6xl">Tələbələrimizin <span className="text-sky-600">rəyləri</span></h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-500 sm:text-lg">Uğur Academy ailəsinin üzvləri təcrübələrini bölüşür. Uğur hekayələrini öz dilindən dinlə.</p>
+          <h1 className="mt-6 text-4xl font-black tracking-tight text-[#1e3a47] sm:text-5xl lg:text-6xl">Rəylərimiz</h1>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-500 sm:text-lg">Uğur Academy haqqında fikirlər, təcrübələr və səmimi video rəylər.</p>
         </div>
 
         {loading ? (
@@ -75,12 +73,11 @@ export default function ReviewsPage() {
                   <span className="absolute inset-0 flex items-center justify-center bg-slate-950/10 transition group-hover:bg-slate-950/25">
                     <span className="flex h-16 w-16 items-center justify-center rounded-full border border-white/70 bg-white/90 text-2xl text-[#1e3a47] shadow-xl transition group-hover:scale-110">▶</span>
                   </span>
-                  <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#1e3a47]">{review.type === "STUDENT" ? "Tələbə rəyi" : "Valideyn rəyi"}</span>
+                  <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#1e3a47]">Video rəy</span>
                 </button>
                 <div className="p-5 sm:p-6">
                   <h2 className="text-lg font-black text-[#1e3a47]">{review.name}</h2>
                   <p className="mt-1 text-sm font-semibold text-sky-700">{review.title}</p>
-                  {review.course && <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-400">{review.course}</p>}
                   {review.description && <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-500">{review.description}</p>}
                   <button type="button" onClick={() => setActiveVideo(review)} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#1e3a47] transition hover:text-sky-700">Videoya bax <span aria-hidden="true">↗</span></button>
                 </div>
