@@ -150,12 +150,7 @@ export default function AdminLoginPage() {
               ) : (
                 "Daxil ol →"
               )}
-            </button>
-
-            <p className="text-center text-xs text-slate-400 font-medium">
-              Giriş: admin / Ugur@2024!
-            </p>
-          </form>
+            </button></form>
         </div>
       </div>
     </div>
