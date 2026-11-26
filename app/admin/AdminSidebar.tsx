@@ -49,6 +49,15 @@ export default function AdminSidebar() {
       ),
     },
     {
+      name: "Video rəylər",
+      href: "/admin/reyler",
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14m-8 5h6a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    {
       name: "Qalereya",
       href: "/admin/qalereya",
       icon: (
