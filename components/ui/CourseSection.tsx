@@ -1,8 +1,6 @@
-"use client"
-
 import Image from "next/image"
 import Link from "next/link"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { getCollection } from "@/lib/db"
 import { getCourseTags } from "@/lib/courseTags"
 
 interface CourseData {
@@ -22,12 +20,9 @@ interface CourseData {
   order?: number
 }
 
-type Status = "loading" | "ready" | "error"
-
-const CACHE_KEY = "ugur-courses-v4"
-const FETCH_TIMEOUT_MS = 15000
-const REQUEST_REUSE_MS = 20000
-const SKELETON_COUNT = 8
+const COLLECTION_KEY = "courses"
+const CACHE_TTL_MS = 15_000
+const SERVER_WAIT_MS = 3_000
 
 /** order-ə görə düzür; order olmayan kurslar öz yerini saxlayır. */
 function sortByOrder(list: CourseData[]): CourseData[] {
@@ -39,10 +34,8 @@ function sortByOrder(list: CourseData[]): CourseData[] {
 }
 
 /** Yalnız düzgün formalı kursları saxlayır (title və slug mütləqdir). */
-function cleanCourses(data: unknown): CourseData[] | null {
-  if (!Array.isArray(data)) return null
-
-  const valid = data.filter(
+function cleanCourses(data: unknown[]): CourseData[] {
+  return data.filter(
     (item): item is CourseData =>
       Boolean(item) &&
       typeof item === "object" &&
@@ -51,25 +44,6 @@ function cleanCourses(data: unknown): CourseData[] | null {
       (item as CourseData).title.trim().length > 0 &&
       (item as CourseData).slug.trim().length > 0,
   )
-
-  return valid.length > 0 ? valid : null
-}
-
-function readCache(): CourseData[] | null {
-  try {
-    const raw = window.localStorage.getItem(CACHE_KEY)
-    return raw ? cleanCourses(JSON.parse(raw)) : null
-  } catch {
-    return null
-  }
-}
-
-function writeCache(list: CourseData[]) {
-  try {
-    window.localStorage.setItem(CACHE_KEY, JSON.stringify(list))
-  } catch {
-    // yaddaş doludur və ya bağlıdır — vacib deyil
-  }
 }
 
 /** Kurs etiketləri xəta versə, bütün bölmə çökməsin. */
@@ -88,118 +62,80 @@ function isLocalImage(src: string): boolean {
 }
 
 /* ------------------------------------------------------------------ */
-/* Sorğu React qalxmamışdan başlayır: JS yüklənən kimi gedir           */
+/* Server keşi: bazaya hər ziyarətçi üçün yox, 15 saniyədən bir gedir   */
 /* ------------------------------------------------------------------ */
 
-let courseRequest: Promise<CourseData[] | null> | null = null
-let courseRequestAt = 0
-
-function requestCourses(force = false): Promise<CourseData[] | null> {
-  const reusable =
-    !force && courseRequest && Date.now() - courseRequestAt < REQUEST_REUSE_MS
-
-  if (reusable && courseRequest) return courseRequest
-
-  const controller = new AbortController()
-  const timer = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
-
-  courseRequestAt = Date.now()
-  courseRequest = fetch("/api/courses", {
-    cache: "no-store",
-    signal: controller.signal,
-  })
-    .then((response) => (response.ok ? response.json() : null))
-    .then(cleanCourses)
-    .catch(() => null)
-    .then((data) => {
-      window.clearTimeout(timer)
-
-      // Uğursuz nəticə saxlanmasın: növbəti cəhd yenidən sorğu göndərsin
-      if (!data) courseRequest = null
-
-      return data
-    })
-
-  return courseRequest
+type CacheState = {
+  entry?: { value: CourseData[]; at: number }
+  inflight?: Promise<CourseData[]>
 }
 
-if (typeof window !== "undefined") {
-  void requestCourses()
+const globalRef = globalThis as typeof globalThis & {
+  __ugurHomeCourses?: CacheState
 }
 
-function SkeletonCard() {
-  return (
-    <div
-      aria-hidden="true"
-      className="flex animate-pulse flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm"
-    >
-      <div className="aspect-[16/10] w-full bg-slate-100" />
-      <div className="flex flex-1 flex-col p-6">
-        <div className="h-5 w-2/3 rounded bg-slate-100" />
-        <div className="mt-3 h-3 w-full rounded bg-slate-100" />
-        <div className="mt-2 h-3 w-5/6 rounded bg-slate-100" />
-        <div className="mt-4 flex gap-1.5 border-t border-slate-100 pt-3">
-          <div className="h-5 w-16 rounded-md bg-slate-100" />
-          <div className="h-5 w-20 rounded-md bg-slate-100" />
-        </div>
-        <div className="mt-8 h-3 w-1/3 rounded bg-slate-100" />
-        <div className="mt-4 h-10 w-full rounded-xl bg-slate-100" />
-      </div>
-    </div>
-  )
-}
+const cacheState: CacheState =
+  globalRef.__ugurHomeCourses ?? (globalRef.__ugurHomeCourses = {})
 
-export default function CourseSection() {
-  const [courses, setCourses] = useState<CourseData[]>([])
-  const [status, setStatus] = useState<Status>("loading")
+async function loadCourses(): Promise<CourseData[]> {
+  const stored: unknown = await getCollection(COLLECTION_KEY)
 
-  const load = useCallback((force: boolean, isCancelled: () => boolean) => {
-    void requestCourses(force).then((fresh) => {
-      if (isCancelled()) return
-
-      if (fresh) {
-        const next = sortByOrder(fresh)
-
-        setCourses((current) =>
-          JSON.stringify(current) === JSON.stringify(next) ? current : next,
-        )
-        setStatus("ready")
-        writeCache(fresh)
-        return
-      }
-
-      // Server cavab vermədi: yaddaşdan göstərilən kurs yoxdursa, xəta mesajı
-      setStatus((current) => (current === "ready" ? current : "error"))
-    })
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
-
-    // Əvvəlki səfərdən qalan real data varsa, dərhal göstər
-    const cached = readCache()
-
-    if (cached) {
-      setCourses(sortByOrder(cached))
-      setStatus("ready")
-    }
-
-    load(false, () => cancelled)
-
-    return () => {
-      cancelled = true
-    }
-  }, [load])
-
-  const retry = () => {
-    setStatus("loading")
-    load(true, () => false)
+  if (!Array.isArray(stored)) {
+    throw new Error("courses collection is not available")
   }
 
-  const cards = useMemo(
-    () => courses.map((course) => ({ course, tags: safeTags(course) })),
-    [courses],
-  )
+  return sortByOrder(cleanCourses(stored))
+}
+
+function refreshCourses(): Promise<CourseData[]> {
+  if (cacheState.inflight) return cacheState.inflight
+
+  const promise = loadCourses()
+    .then((value) => {
+      cacheState.entry = { value, at: Date.now() }
+      return value
+    })
+    .finally(() => {
+      cacheState.inflight = undefined
+    })
+
+  cacheState.inflight = promise
+
+  return promise
+}
+
+function timeout(ms: number): Promise<null> {
+  return new Promise((resolve) => setTimeout(() => resolve(null), ms))
+}
+
+/** Keş doludursa dərhal qaytarır; boşdursa ən çox 3 saniyə gözləyir. */
+async function getCourses(): Promise<CourseData[] | null> {
+  const entry = cacheState.entry
+
+  if (entry) {
+    // Müddət bitib: köhnəni dərhal göstər, yenisini arxa planda yüklə
+    if (Date.now() - entry.at > CACHE_TTL_MS) {
+      void refreshCourses().catch(() => {})
+    }
+
+    return entry.value
+  }
+
+  const pending = refreshCourses()
+
+  // Gözləmə bitəndən sonra gələ biləcək xəta işlənməmiş qalmasın
+  pending.catch(() => {})
+
+  try {
+    return await Promise.race([pending, timeout(SERVER_WAIT_MS)])
+  } catch (error) {
+    console.error("CourseSection read failed:", error)
+    return null
+  }
+}
+
+export default async function CourseSection() {
+  const courses = await getCourses()
 
   return (
     <section className="relative overflow-hidden px-6 py-24 sm:px-8 lg:px-12 lg:py-32">
@@ -237,103 +173,103 @@ export default function CourseSection() {
           </Link>
         </div>
 
-        {/* Error state */}
-        {status === "error" && (
+        {/* Error state: baza cavab vermədi */}
+        {courses === null && (
           <div className="flex flex-col items-center gap-4 rounded-[2rem] border border-slate-200/80 bg-white/80 p-10 text-center shadow-sm">
             <p className="text-sm text-slate-600 sm:text-base">
-              Kurslar yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd et.
+              Kurslar yüklənmədi. Bir neçə saniyə sonra səhifəni yeniləyin.
             </p>
-            <button
-              type="button"
-              onClick={retry}
+            <a
+              href="/"
               className="rounded-full bg-slate-950 px-6 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
             >
-              Yenidən yüklə
-            </button>
+              Səhifəni yenilə
+            </a>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {courses !== null && courses.length === 0 && (
+          <div className="rounded-[2rem] border border-slate-200/80 bg-white/80 p-10 text-center text-sm text-slate-600 shadow-sm sm:text-base">
+            Hələ kurs əlavə edilməyib.
           </div>
         )}
 
         {/* Course Cards Grid */}
-        {status !== "error" && (
-          <div
-            className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-            aria-busy={status === "loading"}
-          >
-            {status === "loading"
-              ? Array.from({ length: SKELETON_COUNT }, (_, index) => (
-                  <SkeletonCard key={index} />
-                ))
-              : cards.map(({ course, tags }, idx) => {
-                  const imageSrc = course.image || "/hero.jpeg"
+        {courses !== null && courses.length > 0 && (
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {courses.map((course, idx) => {
+              const tags = safeTags(course)
+              const imageSrc = course.image || "/hero.jpeg"
 
-                  return (
-                    <article
-                      key={`${course.id}-${course.slug}`}
-                      className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl"
-                    >
-                      {/* Image */}
-                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                        <Image
-                          src={imageSrc}
-                          alt={course.title}
-                          fill
-                          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                          priority={idx < 4}
-                          unoptimized={!isLocalImage(imageSrc)}
-                          className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                        {/* Number badge */}
-                        <div className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-slate-900 backdrop-blur-md shadow">
-                          {String(idx + 1).padStart(2, "0")}
-                        </div>
-                      </div>
+              return (
+                <article
+                  key={`${course.id}-${course.slug}`}
+                  className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white/90 shadow-sm backdrop-blur-md transition-all duration-500 hover:-translate-y-2 hover:border-slate-300 hover:shadow-xl"
+                >
+                  {/* Image */}
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
+                    <Image
+                      src={imageSrc}
+                      alt={course.title}
+                      fill
+                      sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      priority={idx < 4}
+                      unoptimized={!isLocalImage(imageSrc)}
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    {/* Number badge */}
+                    <div className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-slate-900 backdrop-blur-md shadow">
+                      {String(idx + 1).padStart(2, "0")}
+                    </div>
+                  </div>
 
-                      {/* Content */}
-                      <div className="flex flex-1 flex-col p-6">
-                        <h3 className="text-xl font-bold tracking-tight text-slate-950">
-                          {course.title}
-                        </h3>
-                        <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm line-clamp-3">
-                          {course.description || course.subtitle}
-                        </p>
+                  {/* Content */}
+                  <div className="flex flex-1 flex-col p-6">
+                    <h3 className="text-xl font-bold tracking-tight text-slate-950">
+                      {course.title}
+                    </h3>
+                    <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm line-clamp-3">
+                      {course.description || course.subtitle}
+                    </p>
 
-                        {/* Sub-course tags */}
-                        {tags.length > 0 && (
-                          <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
-                            {tags.map((tag) => (
-                              <span
-                                key={tag}
-                                className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Footer */}
-                        <div className="mt-auto pt-6">
-                          <div className="flex items-center justify-between border-t border-slate-100 pt-4 text-xs">
-                            <span className="font-semibold text-slate-400">
-                              Müddət:{" "}
-                              <strong className="text-slate-700">
-                                {course.duration || "—"}
-                              </strong>
-                            </span>
-                          </div>
-
-                          <Link
-                            href={`/kurslar/${course.slug}`}
-                            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
+                    {/* Sub-course tags */}
+                    {tags.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-1.5 border-t border-slate-100 pt-3">
+                        {tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700"
                           >
-                            <span>Ətraflı tanış ol</span>
-                            <span>→</span>
-                          </Link>
-                        </div>
+                            {tag}
+                          </span>
+                        ))}
                       </div>
-                    </article>
-                  )
-                })}
+                    )}
+
+                    {/* Footer */}
+                    <div className="mt-auto pt-6">
+                      <div className="flex items-center justify-between border-t border-slate-100 pt-4 text-xs">
+                        <span className="font-semibold text-slate-400">
+                          Müddət:{" "}
+                          <strong className="text-slate-700">
+                            {course.duration || "—"}
+                          </strong>
+                        </span>
+                      </div>
+
+                      <Link
+                        href={`/kurslar/${course.slug}`}
+                        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 py-3 text-xs font-bold text-white transition hover:bg-slate-800"
+                      >
+                        <span>Ətraflı tanış ol</span>
+                        <span>→</span>
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              )
+            })}
           </div>
         )}
 
