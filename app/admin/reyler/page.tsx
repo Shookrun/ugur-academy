@@ -277,7 +277,6 @@ export default function AdminReviewsPage() {
                   <div className="p-4">
                     <h2 className="font-black text-[#1e3a47]">{review.name}</h2>
                     <p className="mt-1 text-sm font-semibold text-slate-600">{review.title}</p>
-                    {review.course && <p className="mt-2 text-xs text-slate-400">{review.course}</p>}
                     {review.description && <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-500">{review.description}</p>}
                     <div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                       <button type="button" onClick={() => openEdit(review)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">Redaktə et</button>
