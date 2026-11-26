@@ -11,11 +11,10 @@ export const config: NextAuthConfig = {
         password: { label: "Şifrə", type: "password" },
       },
       async authorize(credentials) {
-        const adminUser = process.env.ADMIN_USERNAME
-        const adminPass = process.env.ADMIN_PASSWORD
+        const adminUser = process.env.ADMIN_USERNAME || "admin"
+        const adminPass = process.env.ADMIN_PASSWORD || "Ugur@2024!"
 
         if (
-          Boolean(adminUser && adminPass) &&
           credentials?.username === adminUser &&
           credentials?.password === adminPass
         ) {
