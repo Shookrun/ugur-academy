@@ -32,7 +32,7 @@ export const config: NextAuthConfig = {
     signIn: "/admin",
     error: "/admin",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET ?? "ugur-admin-secret-key-2024",
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth(config)
