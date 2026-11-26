@@ -11,8 +11,8 @@ export const config: NextAuthConfig = {
         password: { label: "Şifrə", type: "password" },
       },
       async authorize(credentials) {
-        const adminUser = process.env.ADMIN_USERNAME || "admin"
-        const adminPass = process.env.ADMIN_PASSWORD || "Ugur@2024!"
+        const adminUser = process.env.ADMIN_USERNAME ?? "admin"
+        const adminPass = process.env.ADMIN_PASSWORD ?? "Ugur@2024!"
 
         if (
           credentials?.username === adminUser &&
