@@ -28,8 +28,7 @@ function jsonError(message: string, status: number) {
 }
 
 async function isAdmin() {
-  const session = await auth()
-  return Boolean(session)
+  return Boolean(await auth())
 }
 
 async function readReviews(): Promise<Review[]> {
@@ -40,19 +39,17 @@ async function readReviews(): Promise<Review[]> {
 function getYouTubeVideoId(value: string): string | null {
   try {
     const url = new URL(value)
-    const host = url.hostname.replace(/^www\./, "").toLowerCase()
+    const host = url.hostname.replace(/^www\\./, "").toLowerCase()
     let videoId = ""
 
     if (host === "youtu.be") {
       videoId = url.pathname.split("/").filter(Boolean)[0] ?? ""
-    } else if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+    } else if (["youtube.com", "m.youtube.com", "youtube-nocookie.com"].includes(host)) {
       if (url.pathname === "/watch") {
         videoId = url.searchParams.get("v") ?? ""
       } else {
         const parts = url.pathname.split("/").filter(Boolean)
-        if (["embed", "shorts", "live"].includes(parts[0] ?? "")) {
-          videoId = parts[1] ?? ""
-        }
+        if (["embed", "shorts", "live"].includes(parts[0] ?? "")) videoId = parts[1] ?? ""
       }
     }
 
@@ -70,9 +67,11 @@ function parseReview(body: unknown, current?: Review): Review | null {
   const description = typeof value.description === "string" ? value.description.trim() : ""
   const youtubeUrl = typeof value.youtubeUrl === "string" ? value.youtubeUrl.trim() : ""
   const videoId = getYouTubeVideoId(youtubeUrl)
-  const type = value.type === "PARENT" ? "PARENT" : value.type === "STUDENT" ? "STUDENT" : null
+  const type = value.type === "PARENT" || value.type === "STUDENT" ? value.type : null
 
-  if (!name || !title || !youtubeUrl || !videoId || !type) return null
+  if (!name || !title || !videoId || !type) return null
+
+  const requestedOrder = Number(value.order)
 
   return {
     id: current?.id ?? (typeof value.id === "string" && value.id.trim() ? value.id.trim() : crypto.randomUUID()),
@@ -84,7 +83,7 @@ function parseReview(body: unknown, current?: Review): Review | null {
     type,
     course: typeof value.course === "string" ? value.course.trim().slice(0, 120) : "",
     isActive: typeof value.isActive === "boolean" ? value.isActive : current?.isActive ?? true,
-    order: Number.isFinite(Number(value.order)) ? Math.max(0, Math.trunc(Number(value.order))) : current?.order ?? 0,
+    order: Number.isFinite(requestedOrder) ? Math.max(0, Math.trunc(requestedOrder)) : current?.order ?? 0,
     createdAt: current?.createdAt ?? new Date().toISOString(),
   }
 }
@@ -96,15 +95,16 @@ function revalidateReviews() {
 }
 
 export async function GET() {
+  if (!(await isAdmin())) return jsonError("İcazə yoxdur.", 401)
+
   try {
     const reviews = await readReviews()
-    const visibleReviews = reviews
-      .filter((review) => review.isActive)
-      .sort((a, b) => a.order - b.order || b.createdAt.localeCompare(a.createdAt))
-
-    return NextResponse.json(visibleReviews, { headers: NO_STORE })
+    return NextResponse.json(
+      reviews.sort((a, b) => a.order - b.order || b.createdAt.localeCompare(a.createdAt)),
+      { headers: NO_STORE }
+    )
   } catch (error) {
-    console.error("GET /api/reviews error:", error)
+    console.error("GET /api/reviews/manage error:", error)
     return jsonError("Rəyləri yükləmək mümkün olmadı.", 500)
   }
 }
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(item, { status: 201, headers: NO_STORE })
   } catch (error) {
-    console.error("POST /api/reviews error:", error)
+    console.error("POST /api/reviews/manage error:", error)
     return jsonError("Rəy əlavə edilərkən xəta baş verdi.", 500)
   }
 }
@@ -150,7 +150,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(item, { headers: NO_STORE })
   } catch (error) {
-    console.error("PUT /api/reviews error:", error)
+    console.error("PUT /api/reviews/manage error:", error)
     return jsonError("Rəy yenilənərkən xəta baş verdi.", 500)
   }
 }
@@ -171,7 +171,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { headers: NO_STORE })
   } catch (error) {
-    console.error("DELETE /api/reviews error:", error)
+    console.error("DELETE /api/reviews/manage error:", error)
     return jsonError("Rəy silinərkən xəta baş verdi.", 500)
   }
 }
