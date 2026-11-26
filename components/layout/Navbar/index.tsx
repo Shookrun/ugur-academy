@@ -11,6 +11,7 @@ const navItems = [
   { name: "Kampaniyalar", href: "/kampaniyalar" },
   { name: "Haqqımızda", href: "/haqqimizda" },
   { name: "Galereya", href: "/galereya" },
+  { name: "Rəylər", href: "/reyler" },
   { name: "Əlaqə", href: "/elaqe" },
   { name: "Arxiv", href: "/#arxiv" },
 ]
