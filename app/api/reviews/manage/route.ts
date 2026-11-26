@@ -16,8 +16,6 @@ type Review = {
   description: string
   youtubeUrl: string
   videoId: string
-  type: "STUDENT" | "PARENT"
-  course: string
   isActive: boolean
   order: number
   createdAt: string
@@ -67,9 +65,8 @@ function parseReview(body: unknown, current?: Review): Review | null {
   const description = typeof value.description === "string" ? value.description.trim() : ""
   const youtubeUrl = typeof value.youtubeUrl === "string" ? value.youtubeUrl.trim() : ""
   const videoId = getYouTubeVideoId(youtubeUrl)
-  const type = value.type === "PARENT" || value.type === "STUDENT" ? value.type : null
 
-  if (!name || !title || !videoId || !type) return null
+  if (!name || !title || !videoId) return null
 
   const requestedOrder = Number(value.order)
 
@@ -80,8 +77,6 @@ function parseReview(body: unknown, current?: Review): Review | null {
     description: description.slice(0, 1000),
     youtubeUrl,
     videoId,
-    type,
-    course: typeof value.course === "string" ? value.course.trim().slice(0, 120) : "",
     isActive: typeof value.isActive === "boolean" ? value.isActive : current?.isActive ?? true,
     order: Number.isFinite(requestedOrder) ? Math.max(0, Math.trunc(requestedOrder)) : current?.order ?? 0,
     createdAt: current?.createdAt ?? new Date().toISOString(),
@@ -114,7 +109,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const item = parseReview(await request.json().catch(() => null))
-    if (!item) return jsonError("Ad, başlıq, rəy növü və düzgün YouTube linki tələb olunur.", 400)
+    if (!item) return jsonError("Ad, başlıq və düzgün YouTube linki tələb olunur.", 400)
 
     const reviews = await readReviews()
     reviews.push(item)
@@ -142,7 +137,7 @@ export async function PUT(request: NextRequest) {
     if (index < 0) return jsonError("Rəy tapılmadı.", 404)
 
     const item = parseReview(body, reviews[index])
-    if (!item) return jsonError("Ad, başlıq, rəy növü və düzgün YouTube linki tələb olunur.", 400)
+    if (!item) return jsonError("Ad, başlıq və düzgün YouTube linki tələb olunur.", 400)
 
     reviews[index] = item
     await setCollection(COLLECTION_KEY, reviews)
