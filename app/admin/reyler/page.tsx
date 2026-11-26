@@ -12,8 +12,6 @@ type Review = {
   description: string
   youtubeUrl: string
   videoId: string
-  type: "STUDENT" | "PARENT"
-  course: string
   isActive: boolean
   order: number
   createdAt: string
@@ -26,8 +24,6 @@ const EMPTY_FORM: ReviewForm = {
   title: "",
   description: "",
   youtubeUrl: "",
-  type: "STUDENT",
-  course: "",
   isActive: true,
   order: 0,
 }
@@ -127,8 +123,6 @@ export default function AdminReviewsPage() {
       title: review.title,
       description: review.description,
       youtubeUrl: review.youtubeUrl,
-      type: review.type,
-      course: review.course,
       isActive: review.isActive,
       order: review.order,
     })
@@ -156,7 +150,6 @@ export default function AdminReviewsPage() {
         title: form.title.trim(),
         description: form.description.trim(),
         youtubeUrl: form.youtubeUrl.trim(),
-        course: form.course.trim(),
         order: Number(form.order) || 0,
         ...(editingId ? { id: editingId } : {}),
       }
@@ -236,7 +229,7 @@ export default function AdminReviewsPage() {
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Kontent idarəetməsi</p>
               <h1 className="mt-2 text-2xl font-black tracking-tight text-[#1e3a47] sm:text-3xl">Video rəylər</h1>
-              <p className="mt-2 max-w-xl text-sm text-slate-500">Tələbə və valideyn rəylərini YouTube linki ilə əlavə et, redaktə et və saytda göstərilməsini idarə et.</p>
+              <p className="mt-2 max-w-xl text-sm text-slate-500">Müxtəlif şəxslərin video rəylərini YouTube linki ilə əlavə et, redaktə et və saytda göstərilməsini idarə et.</p>
             </div>
             <button type="button" onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1e3a47] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[#162c37]">
               <span className="text-lg leading-none">+</span> Yeni rəy əlavə et
@@ -278,7 +271,7 @@ export default function AdminReviewsPage() {
                 <article key={review.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                   <div className="relative aspect-video bg-slate-100">
                     <img src={`https://img.youtube.com/vi/${review.videoId}/hqdefault.jpg`} alt={review.title} className="h-full w-full object-cover" />
-                    <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[#1e3a47]">{review.type === "STUDENT" ? "Tələbə" : "Valideyn"}</span>
+                    <span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-[#1e3a47]">Video rəy</span>
                     <span className={`absolute right-3 top-3 rounded-full px-3 py-1 text-[10px] font-bold ${review.isActive ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-600"}`}>{review.isActive ? "Aktiv" : "Gizli"}</span>
                   </div>
                   <div className="p-4">
@@ -317,19 +310,8 @@ export default function AdminReviewsPage() {
                   <input id="review-name" required maxLength={120} value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} className={inputClass} placeholder="Məsələn, Aysel Məmmədova" />
                 </div>
                 <div>
-                  <label htmlFor="review-title" className={labelClass}>Başlıq / status *</label>
-                  <input id="review-title" required maxLength={160} value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className={inputClass} placeholder="Məsələn, İngilis dili tələbəsi" />
-                </div>
-                <div>
-                  <label htmlFor="review-type" className={labelClass}>Rəy sahibi *</label>
-                  <select id="review-type" value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value as ReviewForm["type"] }))} className={inputClass}>
-                    <option value="STUDENT">Tələbə</option>
-                    <option value="PARENT">Valideyn</option>
-                  </select>
-                </div>
-                <div>
-                  <label htmlFor="review-course" className={labelClass}>Kurs (istəyə bağlı)</label>
-                  <input id="review-course" maxLength={120} value={form.course} onChange={(event) => setForm((current) => ({ ...current, course: event.target.value }))} className={inputClass} placeholder="Məsələn, Məktəbəqədər hazırlıq" />
+                  <label htmlFor="review-title" className={labelClass}>Qısa başlıq *</label>
+                  <input id="review-title" required maxLength={160} value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className={inputClass} placeholder="Məsələn, Tədris və xidmətlərimiz haqqında" />
                 </div>
                 <div className="sm:col-span-2">
                   <label htmlFor="review-youtube" className={labelClass}>YouTube video linki *</label>
@@ -337,8 +319,8 @@ export default function AdminReviewsPage() {
                   {form.youtubeUrl && <p className={`mt-2 text-xs font-semibold ${getVideoId(form.youtubeUrl) ? "text-emerald-600" : "text-rose-600"}`}>{getVideoId(form.youtubeUrl) ? "✓ YouTube videosu tanındı" : "Düzgün YouTube linki daxil et"}</p>}
                 </div>
                 <div className="sm:col-span-2">
-                  <label htmlFor="review-description" className={labelClass}>Qısa açıqlama</label>
-                  <textarea id="review-description" rows={3} maxLength={1000} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className={inputClass} placeholder="Rəy haqqında qısa məlumat..." />
+                  <label htmlFor="review-description" className={labelClass}>Rəy haqqında</label>
+                  <textarea id="review-description" rows={3} maxLength={1000} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className={inputClass} placeholder="Rəyin məzmunu haqqında qısa məlumat..." />
                 </div>
                 <div>
                   <label htmlFor="review-order" className={labelClass}>Sıralama</label>
