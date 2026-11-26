@@ -11,10 +11,11 @@ export const config: NextAuthConfig = {
         password: { label: "Şifrə", type: "password" },
       },
       async authorize(credentials) {
-        const adminUser = process.env.ADMIN_USERNAME ?? "admin"
-        const adminPass = process.env.ADMIN_PASSWORD ?? "Ugur@2024!"
+        const adminUser = process.env.ADMIN_USERNAME
+        const adminPass = process.env.ADMIN_PASSWORD
 
         if (
+          Boolean(adminUser && adminPass) &&
           credentials?.username === adminUser &&
           credentials?.password === adminPass
         ) {
@@ -32,7 +33,7 @@ export const config: NextAuthConfig = {
     signIn: "/admin",
     error: "/admin",
   },
-  secret: process.env.NEXTAUTH_SECRET ?? "ugur-admin-secret-key-2024",
+  secret: process.env.NEXTAUTH_SECRET,
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth(config)
